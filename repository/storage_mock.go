@@ -19,16 +19,17 @@ date 		| balance (transaction)
 
 type mockDb struct{}
 
-func (database *mockDb) init() {}
+func (repo *mockDb) init()  {}
+func (repo *mockDb) close() {}
 
-func (s *mockDb) ListBalances() []models.Balance {
+func (repo *mockDb) ListBalances() []models.Balance {
 	return []models.Balance{
 		{Date: "2000/01/01", Amount: 50},
 		{Date: "2000/01/05", Amount: 100},
 	}
 }
 
-func (s *mockDb) ListTransactions() []models.Transaction {
+func (repo *mockDb) ListTransactions() []models.Transaction {
 	return []models.Transaction{
 		{Date: "1999/12/31", Amount: -10},
 		{Date: "2000/01/02", Amount: -20},
@@ -38,10 +39,10 @@ func (s *mockDb) ListTransactions() []models.Transaction {
 	}
 }
 
-func (s *mockDb) InsertBalance(amount float64, date string) models.Balance {
+func (repo *mockDb) InsertBalance(amount float64, date string) models.Balance {
 	return models.Balance{Amount: amount, Date: date}
 }
 
-func (s *mockDb) InsertTransaction(transaction models.Transaction) models.Transaction {
+func (repo *mockDb) InsertTransaction(transaction models.Transaction) models.Transaction {
 	panic(fmt.Errorf("not implemented: InsertTransaction"))
 }

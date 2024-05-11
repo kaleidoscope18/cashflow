@@ -4,15 +4,14 @@ import (
 	"cashflow/api"
 	"cashflow/domain/transactions"
 	"cashflow/models"
-	"cashflow/reporting"
 	"cashflow/repository"
 )
 
 func main() {
-	storage := repository.New("Mocked")
+	storage := repository.New("Local")
+	defer repository.Close()
 
 	ts := transactions.New(storage)
-	reporting.PrintCommandLine(ts)
 
 	app := &models.App{
 		TransactionService: ts,
