@@ -1,0 +1,47 @@
+enum Status {
+  DONE
+  TODO
+}
+
+type Transaction {
+  id: ID!
+  amount: Float!
+  date: String!
+  description: String
+}
+
+type ComputedTransaction {
+  id: ID!
+  amount: Float!
+  date: String!
+  balance: Float!
+}
+
+type Balance {
+  date: String!
+  amount: Float!
+}
+
+input NewTransaction {
+  date: String!
+  amount: Float!
+  description: String
+}
+
+input NewBalance {
+  date: String
+  amount: Float!
+}
+
+type Query {
+  listTransactions: [ComputedTransaction!]!
+  listBalances: [Balance!]!
+}
+
+type Mutation {
+  createBalance(input: NewBalance!): Balance!
+  createTransaction(input: NewTransaction!): Transaction!
+  createTransactions(input: [NewTransaction!]!): [Transaction!]!
+  deleteTransaction(id: ID!): String!
+  removeBalance(input: NewBalance!): String!
+}
