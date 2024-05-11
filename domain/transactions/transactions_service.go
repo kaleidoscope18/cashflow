@@ -7,20 +7,18 @@ import (
 	"github.com/dchest/uniuri"
 )
 
-type (
-	service struct {
-		repo models.Repository
-	}
-)
+type service struct {
+	repository models.Repository
+}
 
-func New(db models.Repository) models.TransactionService {
+func New(injectedRepo models.Repository) models.TransactionService {
 	return service{
-		repo: db,
+		repository: injectedRepo,
 	}
 }
 
 func (s service) ListTransactions(today *string) []*models.ComputedTransaction {
-	return listTransactions(today, s.repo)
+	return listTransactions(today, s.repository)
 }
 
 func (s service) WriteTransaction(date string, amount float64, description string) *models.Transaction {
@@ -30,21 +28,21 @@ func (s service) WriteTransaction(date string, amount float64, description strin
 		Date:        utils.ParseDate(&date),
 		Description: description,
 	}
-	s.repo.InsertTransaction(newTransaction)
+	s.repository.InsertTransaction(newTransaction)
 
 	return &newTransaction
 }
 
 func (s service) WriteBalance(balance float64, date *string) *models.Balance {
 	if date != nil {
-		newBalance := s.repo.InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
+		newBalance := s.repository.InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
 		return &newBalance
 	}
 
-	newBalance := s.repo.InsertBalance(balance, utils.GetTodayDate())
+	newBalance := s.repository.InsertBalance(balance, utils.GetTodayDate())
 	return &newBalance
 }
 
 func (s service) ListBalances() []*models.Balance {
-	return utils.ConvertStructToPointersArray(s.repo.ListBalances())
+	return utils.ConvertStructToPointersArray(s.repository.ListBalances())
 }
