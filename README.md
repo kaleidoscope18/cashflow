@@ -55,4 +55,10 @@ mysql> CREATE TABLE transactions
 );
 mysql> SHOW TABLES;
 mysql> DESCRIBE transactions;
+mysql> CREATE TABLE balances
+(
+  amount          decimal(10,2) NOT NULL,               # Balance amount
+  date            DATE NOT NULL,                        # Balance date
+  PRIMARY KEY     (date)                                # Make the id the primary key
+);
 ```

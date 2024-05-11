@@ -40,7 +40,6 @@ func (repo *localDatabase) close() {
 }
 
 func (repo *localDatabase) ListTransactions() []models.Transaction {
-	fmt.Println("Querying the DB with SELECT * FROM transactions;")
 	rows, err := repo.db.Query("SELECT * FROM transactions;")
 	if err != nil {
 		panic(err.Error())
@@ -75,9 +74,35 @@ func (repo *localDatabase) InsertTransaction(transaction models.Transaction) mod
 
 func (repo *localDatabase) InsertBalance(amount float64, date string) models.Balance {
 	panic(fmt.Errorf("not implemented"))
-
+	// INSERT INTO products (product_code, product_name, price)
+	// VALUES ('P001', 'Product A', 9.99)
+	// ON DUPLICATE KEY UPDATE product_name='Product A', price=9.99;
 }
 
 func (repo *localDatabase) ListBalances() []models.Balance {
-	panic(fmt.Errorf("not implemented"))
+	rows, err := repo.db.Query("SELECT * FROM balances;")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer rows.Close()
+
+	var balances []models.Balance
+	for rows.Next() {
+		var balance models.Balance
+		err = rows.Scan(&balance.Amount, &balance.Date)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		js, _ := json.MarshalIndent(balance, "", " ")
+		fmt.Println(string(js))
+
+		balances = append(balances, balance)
+	}
+
+	if err = rows.Err(); err != nil {
+		panic(err.Error())
+	}
+
+	return balances
 }
