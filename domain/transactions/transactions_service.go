@@ -12,9 +12,9 @@ type service struct {
 }
 
 func New(injectedRepo models.Repository) models.TransactionService {
-	return service{
-		repository: injectedRepo,
-	}
+	service := new(service)
+	service.repository = injectedRepo
+	return service
 }
 
 func (s service) ListTransactions(today *string) []*models.ComputedTransaction {
@@ -33,16 +33,16 @@ func (s service) WriteTransaction(date string, amount float64, description strin
 	return &newTransaction
 }
 
-func (s service) WriteBalance(balance float64, date *string) *models.Balance {
+func (service service) WriteBalance(balance float64, date *string) *models.Balance {
 	if date != nil {
-		newBalance := s.repository.InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
+		newBalance := service.repository.InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
 		return &newBalance
 	}
 
-	newBalance := s.repository.InsertBalance(balance, utils.GetTodayDate())
+	newBalance := service.repository.InsertBalance(balance, utils.GetTodayDate())
 	return &newBalance
 }
 
-func (s service) ListBalances() []*models.Balance {
-	return utils.ConvertStructToPointersArray(s.repository.ListBalances())
+func (service service) ListBalances() []*models.Balance {
+	return utils.ConvertStructToPointersArray(service.repository.ListBalances())
 }
