@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	repository.Init("Local")
+	tr, br := repository.Init("Local")
 	defer repository.Close()
 
-	bs := domain.NewBalanceService(repository.GetBalanceRepo())
-	ts := domain.NewTransactionService(repository.GetTransactionRepo(), &bs)
+	bs := domain.NewBalanceService(br)
+	ts := domain.NewTransactionService(tr, &bs)
 
 	app := &models.App{
 		TransactionService: &ts,

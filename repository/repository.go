@@ -14,10 +14,10 @@ type store struct {
 var singleInstance *store
 var lock = &sync.Mutex{}
 
-func Init(storageType string) *store {
+func Init(storageType string) (*models.TransactionRepository, *models.BalanceRepository) {
 	if singleInstance != nil {
 		fmt.Println("Store instance already created")
-		return singleInstance
+		return getRepos()
 	}
 
 	lock.Lock()
@@ -25,7 +25,7 @@ func Init(storageType string) *store {
 
 	if singleInstance != nil {
 		fmt.Println("Database already created")
-		return singleInstance
+		return getRepos()
 	}
 
 	switch storageType {
@@ -48,7 +48,7 @@ func Init(storageType string) *store {
 	singleInstance.transactionsRepository.Init()
 	singleInstance.balancesRepository.Init()
 
-	return singleInstance
+	return getRepos()
 }
 
 func Close() {
@@ -56,40 +56,7 @@ func Close() {
 	singleInstance.balancesRepository.Close()
 }
 
-func GetBalanceRepo() *models.BalanceRepository {
-	return &singleInstance.balancesRepository
+func getRepos() (*models.TransactionRepository, *models.BalanceRepository) {
+	return &singleInstance.transactionsRepository,
+		&singleInstance.balancesRepository
 }
-
-func GetTransactionRepo() *models.TransactionRepository {
-	return &singleInstance.transactionsRepository
-}
-
-// func (s *store) ListTransactions() []models.Transaction {
-// 	lock.Lock()
-// 	defer lock.Unlock()
-
-// 	unorderedTransactions := s.transactionsRepository.ListTransactions()
-// 	return utils.SortByDate(unorderedTransactions)
-// }
-
-// func (s *store) InsertTransaction(transaction models.Transaction) models.Transaction {
-// 	lock.Lock()
-// 	defer lock.Unlock()
-
-// 	return s.transactionsRepository.InsertTransaction(transaction)
-// }
-
-// func (s *store) InsertBalance(amount float64, date string) models.Balance {
-// 	lock.Lock()
-// 	defer lock.Unlock()
-
-// 	return s.transactionsRepository.InsertBalance(amount, date)
-// }
-
-// func (s *store) ListBalances() []models.Balance {
-// 	lock.Lock()
-// 	defer lock.Unlock()
-
-// 	unorderedBalances := s.transactionsRepository.ListBalances()
-// 	return utils.SortByDate(unorderedBalances)
-// }

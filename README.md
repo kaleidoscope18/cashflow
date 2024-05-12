@@ -4,10 +4,17 @@
 
 ### Persistence
 
-`repository.go` will return the proper storage specified at instantiation.
-It holds the repo singleton and returns the pointer to it.
-In DDD, all interfaces are defined in Domain Layer.
+`main.go` will bootstrap the App. Depending on the storage strategy, it will instantiate the correct repository instances from `repository` package, and then inject them into the newly created services from `domain` package. The services are used by api handlers (REST) or resolvers (GraphQL) in `api` package. All the domain logic is in `domain` package alongside services that use them and all domain models are in `models` package.
 
+Packages:
+| Name        | Description                       |
+| ---         | ---                               |
+| domain      | all business logic                |
+| models      | all domain models                 |
+| api         | graphql and rest                  |
+| e2e         | e2e tests                         |
+| repository  | infrastructure                    |
+| utils       | functions independent from domain |
 
 ## Getting started
 
@@ -34,7 +41,7 @@ Follow this : https://github.com/golang/vscode-go/wiki/debugging
 - to regenerate do:
 
 ```sh
-cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
+cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate && cd ..
 ```
 
 ## Database
