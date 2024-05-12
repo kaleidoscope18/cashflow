@@ -1,12 +1,15 @@
 package models
 
-type Status string
+type TransactionRepository interface {
+	Init()
+	Close()
+	ListTransactions() []Transaction
+	InsertTransaction(transaction Transaction) Transaction
+}
 
 type TransactionService interface {
-	ListTransactions(todayDate *string) []*ComputedTransaction
-	WriteTransaction(date string, amount float64, description string) *Transaction
-	WriteBalance(balance float64, date *string) *Balance
-	ListBalances() []*Balance
+	ListTransactions(todayDate string) ([]*ComputedTransaction, error)
+	WriteTransaction(date string, amount float64, description string) (*Transaction, error)
 }
 
 type Transaction struct {
@@ -16,19 +19,15 @@ type Transaction struct {
 	Description string
 }
 
-type ComputedTransaction struct {
-	*Transaction
-	Balance float64
-	Status  Status
-}
-
-// balance on a given day is the balance at the very end of this day
-type Balance struct {
-	Amount float64
-	Date   string
-}
+type Status string
 
 const (
 	StatusDone Status = "DONE"
 	StatusTodo Status = "TODO"
 )
+
+type ComputedTransaction struct {
+	*Transaction
+	Balance float64
+	Status  Status
+}

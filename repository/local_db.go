@@ -12,7 +12,7 @@ type localDatabase struct {
 	db *sql.DB
 }
 
-func (repo *localDatabase) init() {
+func (repo *localDatabase) Init() {
 	db, err := sql.Open("mysql", "root:new_password@tcp(127.0.0.1:3306)/cashflow")
 	if err != nil {
 		panic(err.Error())
@@ -32,7 +32,7 @@ func (repo *localDatabase) init() {
 	repo.db.SetMaxIdleConns(10)
 }
 
-func (repo *localDatabase) close() {
+func (repo *localDatabase) Close() {
 	fmt.Println("Closing the mysql DB connection")
 	repo.db.Close()
 }
