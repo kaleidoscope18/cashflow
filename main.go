@@ -2,19 +2,21 @@ package main
 
 import (
 	"cashflow/api"
-	"cashflow/domain/transactions"
+	"cashflow/domain"
 	"cashflow/models"
 	"cashflow/repository"
 )
 
 func main() {
-	storage := repository.New("Local")
+	repository.Init("Local")
 	defer repository.Close()
 
-	ts := transactions.New(storage)
+	bs := domain.NewBalanceService(repository.GetBalanceRepo())
+	ts := domain.NewTransactionService(repository.GetTransactionRepo(), &bs)
 
 	app := &models.App{
-		TransactionService: ts,
+		TransactionService: &ts,
+		BalanceService:     &bs,
 	}
 
 	defer api.Run(app)

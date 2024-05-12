@@ -7,21 +7,22 @@ package graph
 import (
 	"cashflow/api/graph/generated"
 	"cashflow/models"
+	"cashflow/utils"
 	"context"
 	"fmt"
 )
 
 // CreateBalance is the resolver for the createBalance field.
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	return r.TransactionService.WriteBalance(input.Amount, input.Date), nil
+	return (*r.BalanceService).WriteBalance(input.Amount, input.Date)
 }
 
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (*models.Transaction, error) {
 	if input.Description == nil {
-		return r.TransactionService.WriteTransaction(input.Date, input.Amount, ""), nil
+		return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, "")
 	}
-	return r.TransactionService.WriteTransaction(input.Date, input.Amount, *input.Description), nil
+	return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, *input.Description)
 }
 
 // CreateTransactions is the resolver for the createTransactions field.
@@ -29,9 +30,15 @@ func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*gene
 	results := make([]*models.Transaction, 0)
 	for _, transaction := range input {
 		if transaction.Description == nil {
-			results = append(results, r.TransactionService.WriteTransaction(transaction.Date, transaction.Amount, ""))
+			t, err := (*r.TransactionService).WriteTransaction(transaction.Date, transaction.Amount, "")
+			if err == nil {
+				results = append(results, t)
+			}
 		} else {
-			results = append(results, r.TransactionService.WriteTransaction(transaction.Date, transaction.Amount, *transaction.Description))
+			t, err := (*r.TransactionService).WriteTransaction(transaction.Date, transaction.Amount, *transaction.Description)
+			if err == nil {
+				results = append(results, t)
+			}
 		}
 	}
 
@@ -50,13 +57,12 @@ func (r *mutationResolver) RemoveBalance(ctx context.Context, input generated.Ne
 
 // ListTransactions is the resolver for the listTransactions field.
 func (r *queryResolver) ListTransactions(ctx context.Context) ([]*models.ComputedTransaction, error) {
-	today := "11/12/2023"
-	return r.TransactionService.ListTransactions(&today), nil
+	return (*r.TransactionService).ListTransactions(utils.GetTodayDate())
 }
 
 // ListBalances is the resolver for the listBalances field.
 func (r *queryResolver) ListBalances(ctx context.Context) ([]*models.Balance, error) {
-	return r.TransactionService.ListBalances(), nil
+	return (*r.BalanceService).ListBalances()
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -2,6 +2,11 @@
 
 ## Structure
 
+### Persistence
+
+`repository.go` will return the proper storage specified at instantiation.
+It holds the repo singleton and returns the pointer to it.
+In DDD, all interfaces are defined in Domain Layer.
 
 
 ## Getting started

@@ -19,8 +19,8 @@ date 		| balance (transaction)
 
 type mockDb struct{}
 
-func (repo *mockDb) init()  {}
-func (repo *mockDb) close() {}
+func (repo *mockDb) Init()  {}
+func (repo *mockDb) Close() {}
 
 func (repo *mockDb) ListBalances() []models.Balance {
 	return []models.Balance{

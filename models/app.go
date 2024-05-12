@@ -1,5 +1,6 @@
 package models
 
 type App struct {
-	TransactionService TransactionService
+	TransactionService *TransactionService
+	BalanceService     *BalanceService
 }

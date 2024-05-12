@@ -1,4 +1,4 @@
-package transactions
+package domain
 
 import (
 	"cashflow/models"
