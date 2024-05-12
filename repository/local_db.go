@@ -3,7 +3,6 @@ package repository
 import (
 	"cashflow/models"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -14,7 +13,6 @@ type localDatabase struct {
 }
 
 func (repo *localDatabase) init() {
-	// Open a connection to the MySQL database
 	db, err := sql.Open("mysql", "root:new_password@tcp(127.0.0.1:3306)/cashflow")
 	if err != nil {
 		panic(err.Error())
@@ -53,10 +51,6 @@ func (repo *localDatabase) ListTransactions() []models.Transaction {
 		if err != nil {
 			panic(err.Error())
 		}
-
-		js, _ := json.MarshalIndent(transaction, "", " ")
-		fmt.Println(string(js))
-
 		transactions = append(transactions, transaction)
 	}
 
@@ -68,15 +62,32 @@ func (repo *localDatabase) ListTransactions() []models.Transaction {
 }
 
 func (repo *localDatabase) InsertTransaction(transaction models.Transaction) models.Transaction {
-	panic(fmt.Errorf("not implemented"))
+	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description) 
+										VALUES (%.2f, "%s", "%s")`,
+		transaction.Amount, transaction.Date, transaction.Description))
+	if err != nil {
+		panic(err)
+	}
 
+	return transaction
 }
 
 func (repo *localDatabase) InsertBalance(amount float64, date string) models.Balance {
-	panic(fmt.Errorf("not implemented"))
-	// INSERT INTO products (product_code, product_name, price)
-	// VALUES ('P001', 'Product A', 9.99)
-	// ON DUPLICATE KEY UPDATE product_name='Product A', price=9.99;
+	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO balances (amount, date) 
+										VALUES (%.2f, "%s") 
+										ON DUPLICATE KEY UPDATE
+											date="%s", 
+											amount=%.2f;`, amount, date, date, amount))
+	if err != nil {
+		panic(err)
+	}
+
+	balance := models.Balance{
+		Amount: amount,
+		Date:   date,
+	}
+
+	return balance
 }
 
 func (repo *localDatabase) ListBalances() []models.Balance {
@@ -93,9 +104,6 @@ func (repo *localDatabase) ListBalances() []models.Balance {
 		if err != nil {
 			panic(err.Error())
 		}
-
-		js, _ := json.MarshalIndent(balance, "", " ")
-		fmt.Println(string(js))
 
 		balances = append(balances, balance)
 	}

@@ -18,6 +18,9 @@ func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.Ne
 
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (*models.Transaction, error) {
+	if input.Description == nil {
+		return r.TransactionService.WriteTransaction(input.Date, input.Amount, ""), nil
+	}
 	return r.TransactionService.WriteTransaction(input.Date, input.Amount, *input.Description), nil
 }
 
@@ -25,7 +28,11 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]*models.Transaction, error) {
 	results := make([]*models.Transaction, 0)
 	for _, transaction := range input {
-		results = append(results, r.TransactionService.WriteTransaction(transaction.Date, transaction.Amount, *transaction.Description))
+		if transaction.Description == nil {
+			results = append(results, r.TransactionService.WriteTransaction(transaction.Date, transaction.Amount, ""))
+		} else {
+			results = append(results, r.TransactionService.WriteTransaction(transaction.Date, transaction.Amount, *transaction.Description))
+		}
 	}
 
 	return results, nil
