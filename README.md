@@ -15,6 +15,7 @@ Packages:
 | e2e         | e2e tests                         |
 | repository  | infrastructure                    |
 | utils       | functions independent from domain |
+| bdd         | bdd tests - gherkin language      |
 
 ## Getting started
 
@@ -74,3 +75,20 @@ mysql> CREATE TABLE balances
   PRIMARY KEY     (date)                                # Make the id the primary key
 );
 ```
+
+## BDD
+
+BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
+[Godog](https://github.com/cucumber/godog/) library is used to run these tests.
+
+to run specific BDD tests, simply tag the scenario in the `.feature` file and run `go test --godog.tags=<tag name>`.
+
+Example:
+```feature
+  @wip
+  Scenario: Eat 5 out of 12
+    Given there are 12 godogs
+    When I eat 5
+    Then there should be 7 remaining
+```
+executing `go test --godog.tags=wip` will run this specific scenario.
