@@ -68,7 +68,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		ListBalances     func(childComplexity int) int
-		ListTransactions func(childComplexity int) int
+		ListTransactions func(childComplexity int, fromDate *string) int
 	}
 
 	Transaction struct {
@@ -87,7 +87,7 @@ type MutationResolver interface {
 	RemoveBalance(ctx context.Context, input NewBalance) (string, error)
 }
 type QueryResolver interface {
-	ListTransactions(ctx context.Context) ([]*models.ComputedTransaction, error)
+	ListTransactions(ctx context.Context, fromDate *string) ([]*models.ComputedTransaction, error)
 	ListBalances(ctx context.Context) ([]*models.Balance, error)
 }
 
@@ -224,7 +224,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.ListTransactions(childComplexity), true
+		args, err := ec.field_Query_listTransactions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListTransactions(childComplexity, args["fromDate"].(*string)), true
 
 	case "Transaction.amount":
 		if e.complexity.Transaction.Amount == nil {
@@ -397,7 +402,7 @@ input NewBalance {
 }
 
 type Query {
-  listTransactions: [ComputedTransaction!]!
+  listTransactions(fromDate: String): [ComputedTransaction!]!
   listBalances: [Balance!]!
 }
 
@@ -503,6 +508,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_listTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["fromDate"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["fromDate"] = arg0
 	return args, nil
 }
 
@@ -1123,7 +1143,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListTransactions(rctx)
+		return ec.resolvers.Query().ListTransactions(rctx, fc.Args["fromDate"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1140,7 +1160,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 	return ec.marshalNComputedTransaction2ᚕᚖcashflowᚋmodelsᚐComputedTransactionᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_listTransactions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_listTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1159,6 +1179,17 @@ func (ec *executionContext) fieldContext_Query_listTransactions(_ context.Contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComputedTransaction", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_listTransactions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }

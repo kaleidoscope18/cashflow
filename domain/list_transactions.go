@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func listTransactions(today string, repo *models.TransactionRepository, balancesService *models.BalanceService) ([]*models.ComputedTransaction, error) {
+func listTransactions(today *string, repo *models.TransactionRepository, balancesService *models.BalanceService) ([]*models.ComputedTransaction, error) {
 	transactions := (*repo).ListTransactions()
 	balances, err := (*balancesService).ListBalances()
 	if err != nil {
@@ -20,7 +20,7 @@ func listTransactions(today string, repo *models.TransactionRepository, balances
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
-		enrichedTransactions[i] = &models.ComputedTransaction{Transaction: &(transactions)[i], Status: utils.GetStatusFromDate(&today, &transactions[i].Date)}
+		enrichedTransactions[i] = &models.ComputedTransaction{Transaction: &(transactions)[i], Status: utils.GetStatusFromDate(&t.Date, &transactions[i].Date)}
 
 		switch {
 		case latestBalanceError != nil && previousTransactionError != nil:
@@ -30,7 +30,7 @@ func listTransactions(today string, repo *models.TransactionRepository, balances
 		case previousTransactionError != nil:
 			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(latestBalance.Amount + t.Amount)
 		default:
-			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(getBalanceForTransaction(t, *previousTransaction, *latestBalance))
+			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(getBalanceForTransaction(t, *previousTransaction, latestBalance))
 		}
 	}
 
@@ -44,9 +44,9 @@ func getBalanceForTransaction(transaction models.Transaction, previousTransactio
 	return previousTransaction.Balance + transaction.Amount
 }
 
-func getLatestBalanceBefore(date string, orderedBalances []*models.Balance) (*models.Balance, error) {
+func getLatestBalanceBefore(date string, orderedBalances []models.Balance) (models.Balance, error) {
 	if len(orderedBalances) == 0 || !utils.IsDateBefore(orderedBalances[0].Date, date) {
-		return nil, errors.New("no balance before " + date)
+		return models.Balance{}, errors.New("no balance before " + date)
 	}
 
 	var currentBalance models.Balance
@@ -54,10 +54,10 @@ func getLatestBalanceBefore(date string, orderedBalances []*models.Balance) (*mo
 		if !utils.IsDateBefore(b.Date, date) {
 			break
 		}
-		currentBalance = *b
+		currentBalance = b
 	}
 
-	return &currentBalance, nil
+	return currentBalance, nil
 }
 
 func getPreviousTransaction(index int, transactionsWithBalances []*models.ComputedTransaction) (*models.ComputedTransaction, error) {

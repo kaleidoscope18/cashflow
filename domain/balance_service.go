@@ -15,16 +15,16 @@ func NewBalanceService(repo *models.BalanceRepository) models.BalanceService {
 	return s
 }
 
-func (s balanceService) WriteBalance(balance float64, date *string) (*models.Balance, error) {
+func (s *balanceService) WriteBalance(balance float64, date *string) (models.Balance, error) {
 	if date != nil {
 		newBalance := (*s.repository).InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
-		return &newBalance, nil
+		return newBalance, nil
 	}
 
 	newBalance := (*s.repository).InsertBalance(balance, utils.GetTodayDate())
-	return &newBalance, nil
+	return newBalance, nil
 }
 
-func (s balanceService) ListBalances() ([]*models.Balance, error) {
-	return utils.ConvertStructToPointersArray((*s.repository).ListBalances()), nil
+func (s *balanceService) ListBalances() ([]models.Balance, error) {
+	return (*s.repository).ListBalances(), nil
 }

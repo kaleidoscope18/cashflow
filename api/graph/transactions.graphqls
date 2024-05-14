@@ -34,7 +34,7 @@ input NewBalance {
 }
 
 type Query {
-  listTransactions: [ComputedTransaction!]!
+  listTransactions(fromDate: String): [ComputedTransaction!]!
   listBalances: [Balance!]!
 }
 

@@ -14,7 +14,8 @@ import (
 
 // CreateBalance is the resolver for the createBalance field.
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	return (*r.BalanceService).WriteBalance(input.Amount, input.Date)
+	newBalance, err := (*r.BalanceService).WriteBalance(input.Amount, input.Date)
+	return &newBalance, err
 }
 
 // CreateTransaction is the resolver for the createTransaction field.
@@ -56,13 +57,19 @@ func (r *mutationResolver) RemoveBalance(ctx context.Context, input generated.Ne
 }
 
 // ListTransactions is the resolver for the listTransactions field.
-func (r *queryResolver) ListTransactions(ctx context.Context) ([]*models.ComputedTransaction, error) {
-	return (*r.TransactionService).ListTransactions(utils.GetTodayDate())
+func (r *queryResolver) ListTransactions(ctx context.Context, fromDate *string) ([]*models.ComputedTransaction, error) {
+	if fromDate == nil {
+		today := utils.GetTodayDate()
+		fromDate = &today
+	}
+
+	return (*r.TransactionService).ListTransactions(fromDate)
 }
 
 // ListBalances is the resolver for the listBalances field.
 func (r *queryResolver) ListBalances(ctx context.Context) ([]*models.Balance, error) {
-	return (*r.BalanceService).ListBalances()
+	balances, err := (*r.BalanceService).ListBalances()
+	return utils.ConvertStructToPointersArray(balances), err
 }
 
 // Mutation returns generated.MutationResolver implementation.
