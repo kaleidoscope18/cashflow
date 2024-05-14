@@ -2,7 +2,6 @@ Feature: Managing transactions
     As a customer
     I need to be able to manage my transactions
 
-    @wip
     Scenario: Adding a transaction
         Given there is a chequing account
         When I add a transaction to it

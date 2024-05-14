@@ -14,7 +14,7 @@ type store struct {
 var singleInstance *store
 var lock = &sync.Mutex{}
 
-func Init(storageType string) (*models.TransactionRepository, *models.BalanceRepository) {
+func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *models.BalanceRepository) {
 	if singleInstance != nil {
 		fmt.Println("Store instance already created")
 		return getRepos()

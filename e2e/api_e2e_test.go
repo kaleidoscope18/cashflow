@@ -15,7 +15,7 @@ import (
 )
 
 func initialize() *client.Client {
-	tr, br := repository.Init("InMemory")
+	tr, br := repository.Init(models.InMemory)
 	defer repository.Close()
 
 	bs := domain.NewBalanceService(br)
