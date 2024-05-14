@@ -9,7 +9,7 @@ import (
 )
 
 func setupBalanceService() models.BalanceService {
-	_, br := repository.Init("Local")
+	_, br := repository.Init(models.InMemory)
 	defer repository.Close()
 
 	bs := NewBalanceService(br)

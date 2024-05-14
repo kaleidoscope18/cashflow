@@ -7,11 +7,7 @@ import (
 	"testing"
 )
 
-func setupListTransactions() {
-	tr, br = repository.Init("Mocked")
-}
-
-var tr, br = repository.Init("Mocked")
+var tr, br = repository.Init(models.Mocked)
 var balances = (*br).ListBalances()
 var transactions = (*tr).ListTransactions()
 var transactionsWithBalances = []*models.ComputedTransaction{
@@ -118,7 +114,7 @@ func TestGetBalanceForTransaction(t *testing.T) {
 }
 
 func TestListTransactionsWithBalances(t *testing.T) {
-	tr, br := repository.Init("Mocked")
+	tr, br := repository.Init(models.Mocked)
 	bs := NewBalanceService(br)
 	ts := NewTransactionService(tr, &bs)
 	result, _ := ts.ListTransactions(nil)

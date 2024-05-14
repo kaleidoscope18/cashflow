@@ -1,10 +1,17 @@
 # Cashflow
 
+Ledger application that allows you to know if your account will be overdraft someday. 
+
+- Transaction and balance tracking for different accounts.
+- Server runs simultaneous REST and GraphQL APIs.
+
 ## Structure
 
-### Persistence
-
-`main.go` will bootstrap the App. Depending on the storage strategy, it will instantiate the correct repository instances from `repository` package, and then inject them into the newly created services from `domain` package. The services are used by api handlers (REST) or resolvers (GraphQL) in `api` package. All the domain logic is in `domain` package alongside services that use them and all domain models are in `models` package.
+Initial bootstrap is done in `main.go`, which is the entry file.
+Depending on the storage strategy, it will instantiate the correct repository instances from `repository` package, and then inject them into the newly created services from `domain` package.
+The services are used by api handlers (REST) or resolvers (GraphQL) in `api` package.
+All the domain logic is in `domain` package alongside services that use them.
+All domain models are in `models` package.
 
 Packages:
 | Name        | Description                       |
@@ -25,25 +32,32 @@ Packages:
 3. `go build`
 4. `./cashflow`
 
+Endpoints URLs will be provided by the running process logs.
+
 ## Debugging
 
 Follow this : https://github.com/golang/vscode-go/wiki/debugging
 
 ## Features
 
-- Add balance on a specified date
-- Add transaction on a specified date
-- List transactions
+This project's whole functionnality set is documented in Gherkin natural language. You can find them in the `*.feature` files under `bdd/`.
 
 ## Graphql (graphqlgen)
 
 - All files under `api/graph/generated` will be regenerated
-- You might have to backup the contents of the resolvers. Sometimes there are breaking changes.
+- You might have to backup the contents of the resolvers when there are breaking changes.
 - to regenerate do:
 
 ```sh
 cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate && cd ..
 ```
+
+## BDD
+
+BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
+[Godog](https://github.com/cucumber/godog/) library is used to run these tests.
+
+These tests are included in test run with `go test ./...` command from root.
 
 ## Database
 
@@ -56,7 +70,7 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 
 ```sh
 mysql> SHOW DATABASES;
-mysql> CREATE DATABASE cashflow; # DROP DATABASE cashflow;
+mysql> CREATE DATABASE cashflow;                        # to remove: DROP DATABASE cashflow;
 mysql> USE cashflow;
 mysql> CREATE TABLE transactions
 (
@@ -75,20 +89,3 @@ mysql> CREATE TABLE balances
   PRIMARY KEY     (date)                                # Make the id the primary key
 );
 ```
-
-## BDD
-
-BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
-[Godog](https://github.com/cucumber/godog/) library is used to run these tests.
-
-to run specific BDD tests, simply tag the scenario in the `.feature` file and run `go test --godog.tags=<tag name>`.
-
-Example:
-```feature
-  @wip
-  Scenario: Eat 5 out of 12
-    Given there are 12 godogs
-    When I eat 5
-    Then there should be 7 remaining
-```
-executing `go test --godog.tags=wip` will run this specific scenario.
