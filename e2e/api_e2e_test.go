@@ -3,7 +3,7 @@ package e2e
 import (
 	"cashflow/api/graph"
 	"cashflow/api/graph/generated"
-	"cashflow/domain/transactions"
+	"cashflow/domain"
 	"cashflow/models"
 	"cashflow/repository"
 	"testing"
@@ -15,11 +15,17 @@ import (
 )
 
 func initialize() *client.Client {
-	storage := repository.New("InMemory")
-	ts := transactions.New(storage)
+	tr, br := repository.Init("InMemory")
+	defer repository.Close()
+
+	bs := domain.NewBalanceService(br)
+	ts := domain.NewTransactionService(tr, &bs)
+
 	app := &models.App{
-		TransactionService: ts,
+		TransactionService: &ts,
+		BalanceService:     &bs,
 	}
+
 	client := client.New(handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}})))
 	return client
 }
@@ -109,7 +115,7 @@ func TestEnd2End(t *testing.T) {
 		require.Equal(t, 885.00, results.ListTransactions[0].Balance)
 
 		require.Equal(t, "2022/11/01", results.ListTransactions[1].Date)
-		require.True(t, results.ListTransactions[1].Balance == 768.00 || results.ListTransactions[1].Balance == -448.00) // it depends on the order on same day (2 transactions on 1 date)
+		require.True(t, results.ListTransactions[1].Balance == 768.00)
 
 		require.Equal(t, "2022/11/01", results.ListTransactions[2].Date)
 		require.Equal(t, -565.00, results.ListTransactions[2].Balance)

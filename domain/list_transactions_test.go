@@ -7,9 +7,13 @@ import (
 	"testing"
 )
 
-var mockedStorage = repository.New("Mocked")
-var balances = mockedStorage.ListBalances()
-var transactions = mockedStorage.ListTransactions()
+func setupListTransactions() {
+	tr, br = repository.Init("Mocked")
+}
+
+var tr, br = repository.Init("Mocked")
+var balances = (*br).ListBalances()
+var transactions = (*tr).ListTransactions()
 var transactionsWithBalances = []*models.ComputedTransaction{
 	{Transaction: &transactions[0], Balance: -10},
 	{Transaction: &transactions[1], Balance: 30},
@@ -114,9 +118,10 @@ func TestGetBalanceForTransaction(t *testing.T) {
 }
 
 func TestListTransactionsWithBalances(t *testing.T) {
-	today := "11/11/2023"
-	mockedStorage := repository.New("Mocked")
-	result := listTransactions(&today, mockedStorage)
+	tr, br := repository.Init("Mocked")
+	bs := NewBalanceService(br)
+	ts := NewTransactionService(tr, &bs)
+	result, _ := ts.ListTransactions(nil)
 
 	for i, r := range result {
 		if transactionsWithBalances[i].Balance != r.Balance || transactionsWithBalances[i].Date != r.Date {

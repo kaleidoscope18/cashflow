@@ -2,7 +2,6 @@ package rest
 
 import (
 	"cashflow/models"
-	"cashflow/utils"
 )
 
 type TransactionsHandler struct {
@@ -10,9 +9,9 @@ type TransactionsHandler struct {
 }
 
 func (t TransactionsHandler) ListTransactions(today string) []*models.ComputedTransaction {
-	transactions, err := t.App.TransactionService.ListTransactions(utils.GetTodayDate())
+	transactions, err := (*t.App.TransactionService).ListTransactions(nil)
 	if err != nil {
 		panic(err.Error())
 	}
-	return t.App.TransactionService.ListTransactions(utils.GetTodayDate())
+	return transactions
 }

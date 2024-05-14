@@ -8,7 +8,7 @@ type TransactionRepository interface {
 }
 
 type TransactionService interface {
-	ListTransactions(todayDate string) ([]*ComputedTransaction, error)
+	ListTransactions(todayDate *string) ([]*ComputedTransaction, error)
 	WriteTransaction(date string, amount float64, description string) (*Transaction, error)
 }
 

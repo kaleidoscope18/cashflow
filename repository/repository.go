@@ -35,7 +35,10 @@ func Init(storageType string) (*models.TransactionRepository, *models.BalanceRep
 			balancesRepository:     &inMemoryBalanceDatabase{},
 		}
 	case "Mocked":
-		singleInstance = &store{transactionsRepository: &mockDb{}}
+		singleInstance = &store{
+			transactionsRepository: &mockTransactionDb{},
+			balancesRepository:     &mockBalanceDb{},
+		}
 	case "Local":
 		singleInstance = &store{
 			transactionsRepository: &localDatabase{},
