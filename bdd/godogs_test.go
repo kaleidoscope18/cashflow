@@ -2,33 +2,12 @@ package bdd
 
 import (
 	"context"
-	"os"
-	"testing"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/colors"
-	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
-var opts = godog.Options{Output: colors.Colored(os.Stdout)}
-
-func init() {
-	godog.BindCommandLineFlags("godog.", &opts)
-}
-
-func TestMain(m *testing.M) {
-	pflag.Parse()
-	opts.Paths = pflag.Args()
-
-	status := godog.TestSuite{
-		Name:                "godogs",
-		ScenarioInitializer: InitializeScenario,
-		Options:             &opts,
-	}.Run()
-
-	os.Exit(status)
-}
+var NumberOfGodogs = 0
 
 func thereAreGodogs(available int) error {
 	NumberOfGodogs = available
@@ -53,7 +32,7 @@ func thereShouldBeNoneRemaining(ctx context.Context) error {
 	return nil
 }
 
-func InitializeScenario(ctx *godog.ScenarioContext) {
+func InitializeGodogsScenario(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		NumberOfGodogs = 0 // clean the state before every scenario
 		return ctx, nil
