@@ -1,0 +1,7 @@
+name: cashflow
+runtime: go
+description: AWS Go Pulumi Cashflow infra
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ""

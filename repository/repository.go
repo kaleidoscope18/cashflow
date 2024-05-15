@@ -15,16 +15,11 @@ var singleInstance *store
 var lock = &sync.Mutex{}
 
 func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *models.BalanceRepository) {
-	if singleInstance != nil {
-		fmt.Println("Store instance already created")
-		return getRepos()
-	}
-
 	lock.Lock()
 	defer lock.Unlock()
 
 	if singleInstance != nil {
-		fmt.Println("Database already created")
+		fmt.Println("Repositories already created, do not call repository.Init() again")
 		return getRepos()
 	}
 
@@ -45,7 +40,7 @@ func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *m
 			balancesRepository:     &localDatabase{},
 		}
 	default:
-		panic(fmt.Sprintln("Did not create an instance"))
+		panic(fmt.Sprintln("Did not create repositories"))
 	}
 
 	singleInstance.transactionsRepository.Init()
