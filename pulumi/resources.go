@@ -1,10 +1,5 @@
 package main
 
-// pulumi exports
-var DefaultVPCId = "cashflow-default-vpc-id"
-var VPCSubnetsIds = "cashflow-default-vpc-subnets-ids"
-var InternetGatewayId = "cashflow-internet-gateway-id"
-
 var VPCSubnetGroup = "cashflow-db-subnet-group"
 
 var VPCInternetGateway = "cashflow-default-vpc-internet-gateway"
@@ -18,8 +13,11 @@ var BastionHostKeynamePrefix = "cashflow-bastion-key-"
 var BastionHostSecurityGroup = "cashflow-bastion-host-security-group"
 
 var DbSecurityGroup = "cashflow-db-security-group"
-var DatabaseName = "cashflow-db"
+var DatabaseInstanceName = "cashflow-db"
+
+// Exports
 var DatabaseEndpoint = "cashflow-db-endpoint"
+var BastionHostPublicIp = "cashflow-bastion-host-public-ip"
 
 // CIDR blocks
 // current VPC CIDR block is 172.31.0.0/16
