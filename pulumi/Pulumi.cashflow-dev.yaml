@@ -1,2 +1,8 @@
 config:
   aws:region: us-east-1
+  cashflow:environmentName: dev
+  cashflow:vpcId: cashflow-default-vpc-ids
+  VPCSubnetsIds: cashflow-default-vpc-subnets-ids
+  InternetGatewayId: cashflow-internet-gateway-id
+  VPCSubnetGroup: cashflow-db-subnet-group
+  public-key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDItZfvS20Alwu51A0lJdr62dgU/NTZYdt8Qvc8Ix4vXCr5kQd85DkMHEkFfZBZgxemPBAb3F/8fmcgzJyQGCemVzLGCO0EMpeXozymmOm3kgWD3iN9vf5+s6/pgroTlAV4j9uVWE+iHmqpayN/i1hwOmJfV/NgTNOQwaaRKff6aXFNhlLPVb5zmGuYsPXN+SnfSEIFDFLV5ajKN/2vjykXCpxZ2T6k+ANdx9qtE40VhkkXUQRMcu4HWqjXhvu2KXsQ89scNkb9kdGgiFWotrIR/Dwe2c2pT1lbcJVDxQf9lnQJ9j9CQR7CyoTkKG/EmXwcpcqQSWsA1i1h4nboQ38lJrx/Q/mo2IwVHuS0+1T5bGBkY5lMvVplCN83kBjHK8nWdE5CKdPKi7bHxS5z5K+hS+POxHIT87ZBTYOPhNDCgVt9AybTxHximTeNFmZgDC3KTGyBom/1QxpcuZqtZWUFW2GabysRkUNSAJ0B7jTGJi5aJ3r7ht5jLMRo7jHLYB8= nc@Nadias-Mac-mini.ht.home
