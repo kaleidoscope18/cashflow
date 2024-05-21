@@ -35,7 +35,7 @@ func main() {
 		igw, err := ec2.NewInternetGateway(ctx, VPCInternetGateway, &ec2.InternetGatewayArgs{
 			VpcId: pulumi.StringPtr(defaultVPC.Id),
 			Tags: pulumi.StringMap{
-				"Name": pulumi.String("VPCInternetGateway"),
+				"ApplicationName": pulumi.String("cashflow"),
 			},
 		})
 		if err != nil {
@@ -47,22 +47,10 @@ func main() {
 			CidrBlock:        pulumi.String(PublicSubnetCIDR_1_1),
 			AvailabilityZone: pulumi.String(availabilityZone),
 			// MapPublicIpOnLaunch: pulumi.Bool(true),
-		})
-		if err != nil {
-			return err
-		}
-
-		// get the existing subnets within that VPC
-		// TODO: verify that it will not take the new public subnet as well next time?
-		subnets, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
-			Filters: []ec2.GetSubnetsFilter{
-				{
-					Name:   "vpc-id",
-					Values: []string{defaultVPC.Id},
-				},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
 			},
 		})
-
 		if err != nil {
 			return err
 		}
@@ -76,6 +64,9 @@ func main() {
 					CidrBlock: pulumi.String("0.0.0.0/0"),
 					GatewayId: igw.ID(),
 				},
+			},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
 			},
 		})
 		if err != nil {
@@ -95,13 +86,13 @@ func main() {
 			with a route table that directs all internet trafic to the internet gateway
 		*/
 
-		ctx.Export(DefaultVPCId, pulumi.String(defaultVPC.Id))
-		ctx.Export(VPCSubnetsIds, pulumi.ToStringArray(subnets.Ids))
-
 		// create a key pair resource to SSH access the bastion host
 		keyPair, err := ec2.NewKeyPair(ctx, BastionHostKeyPair, &ec2.KeyPairArgs{
 			KeyNamePrefix: pulumi.String(BastionHostKeynamePrefix),
 			PublicKey:     pulumi.String(conf.Get("public-key")),
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
@@ -128,6 +119,9 @@ func main() {
 					CidrBlocks:  pulumi.StringArray{pulumi.String("0.0.0.0/0")},
 				},
 			},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
@@ -141,21 +135,30 @@ func main() {
 			SubnetId:                 publicSubnet.ID(),
 			Ami:                      pulumi.StringPtr("ami-0bb84b8ffd87024d8"), // Amazon Linux 2023 AMI 2023.4.20240513.0 x86_64 HVM kernel-6.1
 			AssociatePublicIpAddress: pulumi.Bool(true),
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
 		}
 
-		ctx.Export("bastion-host-ip", bastionHost.PublicIp)
+		ctx.Export(BastionHostPublicIp, bastionHost.PublicIp)
 
 		// create a subnet group spanning the subnets for RDS instance
 		subnetGroup, err := rds.NewSubnetGroup(ctx, VPCSubnetGroup, &rds.SubnetGroupArgs{
-			SubnetIds: pulumi.ToStringArray(subnets.Ids),
+			SubnetIds: pulumi.StringArray{
+				pulumi.String("subnet-0e33cbf0fa4156170").ToStringOutput(),
+				pulumi.String("subnet-0bca036976b482b60").ToStringOutput(),
+				pulumi.String("subnet-0d3bb1a6d4a115122").ToStringOutput(),
+			},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
 		}
-		ctx.Export(VPCSubnetGroup, subnetGroup.ID())
 
 		dbSecurityGroup, err := ec2.NewSecurityGroup(ctx, DbSecurityGroup, &ec2.SecurityGroupArgs{
 			VpcId:       pulumi.String(defaultVPC.Id),
@@ -178,6 +181,9 @@ func main() {
 					CidrBlocks:  pulumi.StringArray{pulumi.String("0.0.0.0/0")},
 				},
 			},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
@@ -188,7 +194,7 @@ func main() {
 		dbUsername := os.Getenv("DB_USERNAME")
 		dbPassword := os.Getenv("DB_PASSWORD")
 
-		instance, err := rds.NewInstance(ctx, DatabaseName, &rds.InstanceArgs{
+		rdsInstance, err := rds.NewInstance(ctx, DatabaseInstanceName, &rds.InstanceArgs{
 			InstanceClass:       pulumi.String("db.t3.micro"), // Free tier eligible
 			AllocatedStorage:    pulumi.Int(5),                // Free tier eligible
 			Engine:              pulumi.String("mysql"),
@@ -199,13 +205,15 @@ func main() {
 			SkipFinalSnapshot:   pulumi.Bool(true),
 			DbSubnetGroupName:   subnetGroup.Name,
 			VpcSecurityGroupIds: pulumi.StringArray{dbSecurityGroup.ID().ToStringOutput()},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
 		})
 		if err != nil {
 			return err
 		}
 
-		// Export the DB instance endpoint
-		ctx.Export(DatabaseEndpoint, instance.Endpoint)
+		ctx.Export(DatabaseEndpoint, rdsInstance.Endpoint)
 
 		return nil
 	})
