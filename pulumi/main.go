@@ -46,7 +46,6 @@ func main() {
 			VpcId:            pulumi.String(defaultVPC.Id),
 			CidrBlock:        pulumi.String(PublicSubnetCIDR_1_1),
 			AvailabilityZone: pulumi.String(availabilityZone),
-			// MapPublicIpOnLaunch: pulumi.Bool(true),
 			Tags: pulumi.StringMap{
 				"ApplicationName": pulumi.String("cashflow"),
 			},
@@ -82,14 +81,14 @@ func main() {
 		}
 
 		/*
-			Summary: created an internet gateway for the VPC then created a public subnet
-			with a route table that directs all internet trafic to the internet gateway
+			Summary: attached internet gateway to VPC
+			created a public subnet + route table that directs all internet trafic to internet gateway
 		*/
 
 		// create a key pair resource to SSH access the bastion host
-		keyPair, err := ec2.NewKeyPair(ctx, BastionHostKeyPair, &ec2.KeyPairArgs{
+		keyPair, err := ec2.NewKeyPair(ctx, SSHKeyPair, &ec2.KeyPairArgs{
 			KeyNamePrefix: pulumi.String(BastionHostKeynamePrefix),
-			PublicKey:     pulumi.String(conf.Get("public-key")),
+			PublicKey:     pulumi.String(conf.Get("publicKey")),
 			Tags: pulumi.StringMap{
 				"ApplicationName": pulumi.String("cashflow"),
 			},
@@ -98,16 +97,16 @@ func main() {
 			return err
 		}
 
-		// Allow SSH access from internet -> bastion host & bastion host -> everywhere
 		bastionSecurityGroup, err := ec2.NewSecurityGroup(ctx, BastionHostSecurityGroup, &ec2.SecurityGroupArgs{
-			VpcId: pulumi.StringPtr(defaultVPC.Id),
+			VpcId:       pulumi.StringPtr(defaultVPC.Id),
+			Description: pulumi.String("Bastion host security group"),
 			Ingress: ec2.SecurityGroupIngressArray{
 				ec2.SecurityGroupIngressArgs{
-					Description: pulumi.String("Allows SSH inbound traffic from anywhere"),
+					Description: pulumi.String("Allows SSH inbound traffic from my computer"),
 					Protocol:    pulumi.String("tcp"),
 					FromPort:    pulumi.Int(22),
 					ToPort:      pulumi.Int(22),
-					CidrBlocks:  pulumi.StringArray{pulumi.String("0.0.0.0/0")},
+					CidrBlocks:  pulumi.StringArray{pulumi.String("184.162.158.114/32")},
 				},
 			},
 			Egress: ec2.SecurityGroupEgressArray{
@@ -130,11 +129,11 @@ func main() {
 		// create the EC2 instance that will serve as the bastion host
 		bastionHost, err := ec2.NewInstance(ctx, BasionHostName, &ec2.InstanceArgs{
 			InstanceType:             ec2.InstanceType("t2.micro"),
-			VpcSecurityGroupIds:      pulumi.StringArray{bastionSecurityGroup.ID().ToStringOutput()},
 			KeyName:                  keyPair.KeyName,
 			SubnetId:                 publicSubnet.ID(),
 			Ami:                      pulumi.StringPtr("ami-0bb84b8ffd87024d8"), // Amazon Linux 2023 AMI 2023.4.20240513.0 x86_64 HVM kernel-6.1
 			AssociatePublicIpAddress: pulumi.Bool(true),
+			VpcSecurityGroupIds:      pulumi.StringArray{bastionSecurityGroup.ID().ToStringOutput()},
 			Tags: pulumi.StringMap{
 				"ApplicationName": pulumi.String("cashflow"),
 			},
@@ -165,7 +164,7 @@ func main() {
 			Description: pulumi.String("Allow TCP access from bastion host"),
 			Ingress: ec2.SecurityGroupIngressArray{
 				ec2.SecurityGroupIngressArgs{
-					Description:    pulumi.String("Allow tcp from bastion"),
+					Description:    pulumi.String("Allow tcp from ec2 bastion"),
 					Protocol:       pulumi.String("tcp"),
 					FromPort:       pulumi.Int(3306), // MySQL port, use 5432 for PostgreSQL
 					ToPort:         pulumi.Int(3306),
@@ -195,16 +194,17 @@ func main() {
 		dbPassword := os.Getenv("DB_PASSWORD")
 
 		rdsInstance, err := rds.NewInstance(ctx, DatabaseInstanceName, &rds.InstanceArgs{
-			InstanceClass:       pulumi.String("db.t3.micro"), // Free tier eligible
-			AllocatedStorage:    pulumi.Int(5),                // Free tier eligible
-			Engine:              pulumi.String("mysql"),
-			EngineVersion:       pulumi.String("8.0.35"),
-			DbName:              pulumi.String(dbName),
-			Username:            pulumi.String(dbUsername),
-			Password:            pulumi.String(dbPassword),
-			SkipFinalSnapshot:   pulumi.Bool(true),
-			DbSubnetGroupName:   subnetGroup.Name,
-			VpcSecurityGroupIds: pulumi.StringArray{dbSecurityGroup.ID().ToStringOutput()},
+			InstanceClass:           pulumi.String("db.t3.micro"), // Free tier eligible
+			AllocatedStorage:        pulumi.Int(5),                // Free tier eligible
+			Engine:                  pulumi.String("mysql"),
+			EngineVersion:           pulumi.String("8.0.35"),
+			AutoMinorVersionUpgrade: pulumi.Bool(true),
+			DbName:                  pulumi.String(dbName),
+			Username:                pulumi.String(dbUsername),
+			Password:                pulumi.String(dbPassword),
+			SkipFinalSnapshot:       pulumi.Bool(true),
+			DbSubnetGroupName:       subnetGroup.Name,
+			VpcSecurityGroupIds:     pulumi.StringArray{dbSecurityGroup.ID().ToStringOutput()},
 			Tags: pulumi.StringMap{
 				"ApplicationName": pulumi.String("cashflow"),
 			},
