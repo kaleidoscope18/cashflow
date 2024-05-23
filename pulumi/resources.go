@@ -8,8 +8,8 @@ var PublicRouteTable = "cashflow-public-route-table"
 var PublicRouteTableAssociation = "cashflow-public-route-table"
 
 var BasionHostName = "cashflow-bastion-host"
-var BastionHostKeyPair = "cashflow-bastion-host-keypair"
-var BastionHostKeynamePrefix = "cashflow-bastion-key-"
+var SSHKeyPair = "cashflow-bastion-host-keypair"
+var BastionHostKeynamePrefix = "cashflow-bastion-host-key-"
 var BastionHostSecurityGroup = "cashflow-bastion-host-security-group"
 
 var DbSecurityGroup = "cashflow-db-security-group"
