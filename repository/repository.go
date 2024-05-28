@@ -24,17 +24,17 @@ func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *m
 	}
 
 	switch storageType {
-	case "InMemory":
+	case models.InMemory:
 		singleInstance = &store{
 			transactionsRepository: &inMemoryTransactionDatabase{},
 			balancesRepository:     &inMemoryBalanceDatabase{},
 		}
-	case "Mocked":
+	case models.Mocked:
 		singleInstance = &store{
 			transactionsRepository: &mockTransactionDb{},
 			balancesRepository:     &mockBalanceDb{},
 		}
-	case "Local":
+	case models.Local:
 		singleInstance = &store{
 			transactionsRepository: &localDatabase{},
 			balancesRepository:     &localDatabase{},

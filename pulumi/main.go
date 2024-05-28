@@ -24,88 +24,33 @@ func main() {
 		if err != nil {
 			log.Fatal("Error loading .env file")
 		}
-		availabilityZone := os.Getenv("AZ")
 
-		// control tower creates a unique vpc and removes the default one
-		defaultVPC, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{})
+		err = Containerize(ctx)
 		if err != nil {
 			return err
 		}
 
-		igw, err := ec2.NewInternetGateway(ctx, VPCInternetGateway, &ec2.InternetGatewayArgs{
-			VpcId: pulumi.StringPtr(defaultVPC.Id),
-			Tags: pulumi.StringMap{
-				"ApplicationName": pulumi.String("cashflow"),
-			},
-		})
+		defaultVPC, publicSubnet, err := Network(ctx)
 		if err != nil {
 			return err
 		}
 
-		publicSubnet, err := ec2.NewSubnet(ctx, PublicSubnet, &ec2.SubnetArgs{
-			VpcId:            pulumi.String(defaultVPC.Id),
-			CidrBlock:        pulumi.String(PublicSubnetCIDR_1_1),
-			AvailabilityZone: pulumi.String(availabilityZone),
-			Tags: pulumi.StringMap{
-				"ApplicationName": pulumi.String("cashflow"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		// To make a subnet public (internet accessible):
-		// its route table must have a route that sends all destined internet traffic (0.0.0.0/0) to an internet gateway
-		publicRouteTable, err := ec2.NewRouteTable(ctx, PublicRouteTable, &ec2.RouteTableArgs{
-			VpcId: pulumi.String(defaultVPC.Id),
-			Routes: ec2.RouteTableRouteArray{
-				ec2.RouteTableRouteArgs{
-					CidrBlock: pulumi.String("0.0.0.0/0"),
-					GatewayId: igw.ID(),
-				},
-			},
-			Tags: pulumi.StringMap{
-				"ApplicationName": pulumi.String("cashflow"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = ec2.NewRouteTableAssociation(ctx, PublicRouteTableAssociation, &ec2.RouteTableAssociationArgs{
-			SubnetId:     publicSubnet.ID(),
-			RouteTableId: publicRouteTable.ID(),
-		})
-		if err != nil {
-			return err
-		}
-
-		/*
-			Summary: attached internet gateway to VPC
-			created a public subnet + route table that directs all internet trafic to internet gateway
-		*/
-
-		// create a key pair resource to SSH access the bastion host
-		keyPair, err := ec2.NewKeyPair(ctx, SSHKeyPair, &ec2.KeyPairArgs{
-			KeyNamePrefix: pulumi.String(BastionHostKeynamePrefix),
-			PublicKey:     pulumi.String(conf.Get("publicKey")),
-			Tags: pulumi.StringMap{
-				"ApplicationName": pulumi.String("cashflow"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		bastionSecurityGroup, err := ec2.NewSecurityGroup(ctx, BastionHostSecurityGroup, &ec2.SecurityGroupArgs{
+		ec2SecurityGroup, err := ec2.NewSecurityGroup(ctx, ServerSecurityGroup, &ec2.SecurityGroupArgs{
 			VpcId:       pulumi.StringPtr(defaultVPC.Id),
 			Description: pulumi.String("Bastion host security group"),
 			Ingress: ec2.SecurityGroupIngressArray{
 				ec2.SecurityGroupIngressArgs{
-					Description: pulumi.String("Allows SSH inbound traffic from my computer"),
+					Description: pulumi.String("SSH from my computer"),
 					Protocol:    pulumi.String("tcp"),
 					FromPort:    pulumi.Int(22),
 					ToPort:      pulumi.Int(22),
+					CidrBlocks:  pulumi.StringArray{pulumi.String("184.162.158.114/32")},
+				},
+				ec2.SecurityGroupIngressArgs{
+					Description: pulumi.String("HTTP from my computer"),
+					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(80),
+					ToPort:      pulumi.Int(80),
 					CidrBlocks:  pulumi.StringArray{pulumi.String("184.162.158.114/32")},
 				},
 			},
@@ -125,24 +70,6 @@ func main() {
 		if err != nil {
 			return err
 		}
-
-		// create the EC2 instance that will serve as the bastion host
-		bastionHost, err := ec2.NewInstance(ctx, BasionHostName, &ec2.InstanceArgs{
-			InstanceType:             ec2.InstanceType("t2.micro"),
-			KeyName:                  keyPair.KeyName,
-			SubnetId:                 publicSubnet.ID(),
-			Ami:                      pulumi.StringPtr("ami-0bb84b8ffd87024d8"), // Amazon Linux 2023 AMI 2023.4.20240513.0 x86_64 HVM kernel-6.1
-			AssociatePublicIpAddress: pulumi.Bool(true),
-			VpcSecurityGroupIds:      pulumi.StringArray{bastionSecurityGroup.ID().ToStringOutput()},
-			Tags: pulumi.StringMap{
-				"ApplicationName": pulumi.String("cashflow"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		ctx.Export(BastionHostPublicIp, bastionHost.PublicIp)
 
 		// create a subnet group spanning the subnets for RDS instance
 		subnetGroup, err := rds.NewSubnetGroup(ctx, VPCSubnetGroup, &rds.SubnetGroupArgs{
@@ -168,7 +95,7 @@ func main() {
 					Protocol:       pulumi.String("tcp"),
 					FromPort:       pulumi.Int(3306), // MySQL port, use 5432 for PostgreSQL
 					ToPort:         pulumi.Int(3306),
-					SecurityGroups: pulumi.StringArray{bastionSecurityGroup.ID().ToStringOutput()},
+					SecurityGroups: pulumi.StringArray{ec2SecurityGroup.ID().ToStringOutput()},
 				},
 			},
 			Egress: ec2.SecurityGroupEgressArray{
@@ -188,7 +115,6 @@ func main() {
 			return err
 		}
 
-		// create the RDS MySQL database in subnet group
 		dbName := os.Getenv("DB_NAME")
 		dbUsername := os.Getenv("DB_USERNAME")
 		dbPassword := os.Getenv("DB_PASSWORD")
@@ -214,6 +140,37 @@ func main() {
 		}
 
 		ctx.Export(DatabaseEndpoint, rdsInstance.Endpoint)
+
+		// create a key pair resource to SSH access the bastion host
+		keyPair, err := ec2.NewKeyPair(ctx, SSHKeyPair, &ec2.KeyPairArgs{
+			KeyNamePrefix: pulumi.String(BastionHostKeynamePrefix),
+			PublicKey:     pulumi.String(conf.Get("publicKey")),
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		ec2Instance, err := ec2.NewInstance(ctx, ServerHostName, &ec2.InstanceArgs{
+			InstanceType:             ec2.InstanceType("t2.micro"),
+			KeyName:                  keyPair.KeyName,
+			SubnetId:                 publicSubnet.ID(),
+			Ami:                      pulumi.StringPtr("ami-0bb84b8ffd87024d8"), // Amazon Linux 2023 AMI 2023.4.20240513.0 x86_64 HVM kernel-6.1
+			AssociatePublicIpAddress: pulumi.Bool(true),
+			VpcSecurityGroupIds:      pulumi.StringArray{ec2SecurityGroup.ID().ToStringOutput()},
+			Tags: pulumi.StringMap{
+				"ApplicationName": pulumi.String("cashflow"),
+			},
+		}, pulumi.DependsOn([]pulumi.Resource{
+			rdsInstance,
+		}))
+		if err != nil {
+			return err
+		}
+
+		ctx.Export(BastionHostPublicIp, ec2Instance.PublicIp)
 
 		return nil
 	})

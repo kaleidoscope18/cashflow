@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	tr, br := repository.Init(models.Local)
+	tr, br := repository.Init(models.InMemory)
 	defer repository.Close()
 
 	bs := domain.NewBalanceService(br)
