@@ -7,10 +7,10 @@ var PublicSubnet = "cashflow-public-subnet"
 var PublicRouteTable = "cashflow-public-route-table"
 var PublicRouteTableAssociation = "cashflow-public-route-table"
 
-var BasionHostName = "cashflow-bastion-host"
+var ServerHostName = "cashflow-bastion-host"
 var SSHKeyPair = "cashflow-bastion-host-keypair"
 var BastionHostKeynamePrefix = "cashflow-bastion-host-key-"
-var BastionHostSecurityGroup = "cashflow-bastion-host-security-group"
+var ServerSecurityGroup = "cashflow-bastion-host-security-group"
 
 var DbSecurityGroup = "cashflow-db-security-group"
 var DatabaseInstanceName = "cashflow-db"

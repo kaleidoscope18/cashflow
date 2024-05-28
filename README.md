@@ -117,3 +117,13 @@ mysql -h cashflow-db9b3ad36.c9gia6eo0ryf.us-east-1.rds.amazonaws.com -u admin -p
 ```
 
 type `exit` to exit all instances.
+
+## Docker
+
+```sh
+docker build -t kaleidoscope18/cashflow:1 ./ # docker build -t <USER>/<CONTAINER>:<VERSION> ./
+docker image list
+docker run -p 8080:8080 kaleidoscope18/cashflow:1
+```
+
+Note: to cleanup old docker images and containers do `docker rm $(docker ps -a -q) && docker rmi $(docker images -a -q)`
