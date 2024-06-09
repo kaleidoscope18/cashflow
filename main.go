@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
-	tr, br := repository.Init(models.InMemory)
+	tr, br, err := repository.Init(models.InMemory)
+	if err != nil {
+		panic("Could not initiate the app : " + err.Error())
+	}
 	defer repository.Close()
 
 	bs := domain.NewBalanceService(br)

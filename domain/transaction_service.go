@@ -3,6 +3,7 @@ package domain
 import (
 	"cashflow/models"
 	"cashflow/utils"
+	"time"
 
 	"github.com/dchest/uniuri"
 )
@@ -19,18 +20,31 @@ func NewTransactionService(transactionRepository *models.TransactionRepository, 
 	return s
 }
 
-func (s *transactionService) ListTransactions(today *string) ([]*models.ComputedTransaction, error) {
-	return listTransactions(today, s.repository, s.balanceService)
+func (s *transactionService) ListTransactions(from time.Time, to time.Time) ([]models.ComputedTransaction, error) {
+	transactions, err := (*s.repository).ListTransactions(from, to)
+	if err != nil {
+		return make([]models.ComputedTransaction, 0), err
+	}
+
+	balances, err := (*s.balanceService).ListBalances(from, to)
+	if err != nil {
+		return make([]models.ComputedTransaction, 0), err
+	}
+
+	return listTransactions(utils.SortByDate(transactions), balances)
 }
 
 func (s *transactionService) WriteTransaction(date string, amount float64, description string) (*models.Transaction, error) {
-	newTransaction := models.Transaction{
+	t, err := (*s.repository).InsertTransaction(models.Transaction{
 		Id:          uniuri.NewLen(5),
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(&date),
 		Description: description,
-	}
-	(*s.repository).InsertTransaction(newTransaction)
+	})
 
-	return &newTransaction, nil
+	if err != nil {
+		return &models.Transaction{}, err
+	}
+
+	return &t, nil
 }

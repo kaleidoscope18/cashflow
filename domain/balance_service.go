@@ -3,6 +3,7 @@ package domain
 import (
 	"cashflow/models"
 	"cashflow/utils"
+	"time"
 )
 
 type balanceService struct {
@@ -17,14 +18,25 @@ func NewBalanceService(repo *models.BalanceRepository) models.BalanceService {
 
 func (s *balanceService) WriteBalance(balance float64, date *string) (models.Balance, error) {
 	if date != nil {
-		newBalance := (*s.repository).InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
+		newBalance, err := (*s.repository).InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
+		if err != nil {
+			return models.Balance{}, err
+		}
 		return newBalance, nil
 	}
 
-	newBalance := (*s.repository).InsertBalance(balance, utils.GetTodayDate())
+	newBalance, err := (*s.repository).InsertBalance(balance, utils.GetTodayDate())
+	if err != nil {
+		return models.Balance{}, err
+	}
 	return newBalance, nil
 }
 
-func (s *balanceService) ListBalances() ([]models.Balance, error) {
-	return (*s.repository).ListBalances(), nil
+func (s *balanceService) ListBalances(from time.Time, to time.Time) ([]models.Balance, error) {
+	result, err := (*s.repository).ListBalances(from, to)
+	if err != nil {
+		return make([]models.Balance, 0), err
+	}
+
+	return utils.SortByDate(result), nil
 }

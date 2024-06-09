@@ -3,7 +3,12 @@
 Ledger application that allows you to know if your account will be overdraft someday. 
 
 - Transaction and balance tracking for different accounts.
-- Server runs simultaneous REST and GraphQL APIs.
+- Server runs GraphQL API.
+
+## TODO
+
+- fix tests
+- logging
 
 ## Structure
 
@@ -18,7 +23,7 @@ Packages:
 | ---         | ---                               |
 | domain      | all business logic                |
 | models      | all domain models                 |
-| api         | graphql and rest                  |
+| api         | graphql api                       |
 | e2e         | e2e tests                         |
 | repository  | infrastructure                    |
 | utils       | functions independent from domain |

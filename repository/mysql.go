@@ -11,7 +11,7 @@ type localDatabase struct {
 	db *sql.DB
 }
 
-func (repo *localDatabase) Init() {
+func (repo *localDatabase) Init() error {
 	db, err := sql.Open("mysql", "root:new_password@tcp(127.0.0.1:3306)/cashflow")
 	if err != nil {
 		panic(err.Error())
@@ -21,7 +21,7 @@ func (repo *localDatabase) Init() {
 	// Ping the database to verify connection
 	err = repo.db.Ping()
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	fmt.Println("Connected to MySQL database!")
@@ -29,11 +29,13 @@ func (repo *localDatabase) Init() {
 	// Set connection pool options
 	repo.db.SetMaxOpenConns(20)
 	repo.db.SetMaxIdleConns(10)
+
+	return nil
 }
 
-func (repo *localDatabase) Close() {
+func (repo *localDatabase) Close() error {
 	fmt.Println("Closing the mysql DB connection")
-	repo.db.Close()
+	return repo.db.Close()
 }
 
 func (repo *localDatabase) CheckConnection() error {

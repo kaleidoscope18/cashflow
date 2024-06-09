@@ -10,6 +10,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"time"
 )
 
 // CreateBalance is the resolver for the createBalance field.
@@ -51,24 +52,34 @@ func (r *mutationResolver) DeleteTransaction(ctx context.Context, id string) (st
 	panic(fmt.Errorf("not implemented: DeleteTransaction - deleteTransaction"))
 }
 
-// RemoveBalance is the resolver for the removeBalance field.
-func (r *mutationResolver) RemoveBalance(ctx context.Context, input generated.NewBalance) (string, error) {
-	panic(fmt.Errorf("not implemented: RemoveBalance - removeBalance"))
+// DeleteBalance is the resolver for the deleteBalance field.
+func (r *mutationResolver) DeleteBalance(ctx context.Context, input generated.NewBalance) (string, error) {
+	panic(fmt.Errorf("not implemented: DeleteBalance - deleteBalance"))
 }
 
 // ListTransactions is the resolver for the listTransactions field.
-func (r *queryResolver) ListTransactions(ctx context.Context, fromDate *string) ([]*models.ComputedTransaction, error) {
-	if fromDate == nil {
-		today := utils.GetTodayDate()
-		fromDate = &today
+func (r *queryResolver) ListTransactions(ctx context.Context, from *time.Time, to *time.Time) ([]*models.ComputedTransaction, error) {
+	if from == nil || to == nil {
+		err := fmt.Errorf("please provide from and to dates")
+		return nil, err
 	}
 
-	return (*r.TransactionService).ListTransactions(fromDate)
+	result, err := (*r.TransactionService).ListTransactions(*from, *to)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.ConvertStructToPointersArray(result), nil
 }
 
 // ListBalances is the resolver for the listBalances field.
-func (r *queryResolver) ListBalances(ctx context.Context) ([]*models.Balance, error) {
-	balances, err := (*r.BalanceService).ListBalances()
+func (r *queryResolver) ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error) {
+	if from == nil || to == nil {
+		err := fmt.Errorf("please provide from and to dates")
+		return nil, err
+	}
+
+	balances, err := (*r.BalanceService).ListBalances(*from, *to)
 	return utils.ConvertStructToPointersArray(balances), err
 }
 

@@ -31,7 +31,6 @@ func Run(app *models.App) {
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
 	fmt.Fprintf(w, "GraphQL playground:\thttp://localhost:%s/playground\t\n", port)
 	fmt.Fprintf(w, "GraphQL endpoint:\thttp://localhost:%s/graphql\t\n", port)
-	fmt.Fprintf(w, "REST API endpoints:\thttp://localhost:%s/\t\n", port)
 	w.Flush()
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

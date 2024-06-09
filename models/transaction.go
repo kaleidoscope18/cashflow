@@ -1,15 +1,17 @@
 package models
 
-type TransactionRepository interface {
-	Init()
-	Close()
-	ListTransactions() []Transaction
-	InsertTransaction(transaction Transaction) Transaction
-}
+import "time"
 
 type TransactionService interface {
-	ListTransactions(todayDate *string) ([]*ComputedTransaction, error)
+	ListTransactions(from time.Time, to time.Time) ([]ComputedTransaction, error)
 	WriteTransaction(date string, amount float64, description string) (*Transaction, error)
+}
+
+type TransactionRepository interface {
+	Init() error
+	Close() error
+	ListTransactions(from time.Time, to time.Time) ([]Transaction, error)
+	InsertTransaction(transaction Transaction) (Transaction, error)
 }
 
 type Transaction struct {

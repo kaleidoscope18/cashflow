@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -62,13 +63,13 @@ type ComplexityRoot struct {
 		CreateBalance      func(childComplexity int, input NewBalance) int
 		CreateTransaction  func(childComplexity int, input NewTransaction) int
 		CreateTransactions func(childComplexity int, input []*NewTransaction) int
+		DeleteBalance      func(childComplexity int, input NewBalance) int
 		DeleteTransaction  func(childComplexity int, id string) int
-		RemoveBalance      func(childComplexity int, input NewBalance) int
 	}
 
 	Query struct {
-		ListBalances     func(childComplexity int) int
-		ListTransactions func(childComplexity int, fromDate *string) int
+		ListBalances     func(childComplexity int, from *time.Time, to *time.Time) int
+		ListTransactions func(childComplexity int, from *time.Time, to *time.Time) int
 	}
 
 	Transaction struct {
@@ -84,11 +85,11 @@ type MutationResolver interface {
 	CreateTransaction(ctx context.Context, input NewTransaction) (*models.Transaction, error)
 	CreateTransactions(ctx context.Context, input []*NewTransaction) ([]*models.Transaction, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
-	RemoveBalance(ctx context.Context, input NewBalance) (string, error)
+	DeleteBalance(ctx context.Context, input NewBalance) (string, error)
 }
 type QueryResolver interface {
-	ListTransactions(ctx context.Context, fromDate *string) ([]*models.ComputedTransaction, error)
-	ListBalances(ctx context.Context) ([]*models.Balance, error)
+	ListTransactions(ctx context.Context, from *time.Time, to *time.Time) ([]*models.ComputedTransaction, error)
+	ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error)
 }
 
 type executableSchema struct {
@@ -188,6 +189,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateTransactions(childComplexity, args["input"].([]*NewTransaction)), true
 
+	case "Mutation.deleteBalance":
+		if e.complexity.Mutation.DeleteBalance == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteBalance_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteBalance(childComplexity, args["input"].(NewBalance)), true
+
 	case "Mutation.deleteTransaction":
 		if e.complexity.Mutation.DeleteTransaction == nil {
 			break
@@ -200,24 +213,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteTransaction(childComplexity, args["id"].(string)), true
 
-	case "Mutation.removeBalance":
-		if e.complexity.Mutation.RemoveBalance == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removeBalance_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemoveBalance(childComplexity, args["input"].(NewBalance)), true
-
 	case "Query.listBalances":
 		if e.complexity.Query.ListBalances == nil {
 			break
 		}
 
-		return e.complexity.Query.ListBalances(childComplexity), true
+		args, err := ec.field_Query_listBalances_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListBalances(childComplexity, args["from"].(*time.Time), args["to"].(*time.Time)), true
 
 	case "Query.listTransactions":
 		if e.complexity.Query.ListTransactions == nil {
@@ -229,7 +235,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListTransactions(childComplexity, args["fromDate"].(*string)), true
+		return e.complexity.Query.ListTransactions(childComplexity, args["from"].(*time.Time), args["to"].(*time.Time)), true
 
 	case "Transaction.amount":
 		if e.complexity.Transaction.Amount == nil {
@@ -366,7 +372,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../transactions.graphqls", Input: `enum Status {
+	{Name: "../transactions.graphqls", Input: `scalar Date
+
+enum Status {
   DONE
   TODO
 }
@@ -402,8 +410,8 @@ input NewBalance {
 }
 
 type Query {
-  listTransactions(fromDate: String): [ComputedTransaction!]!
-  listBalances: [Balance!]!
+  listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+  listBalances(from: Date, to: Date): [Balance!]!
 }
 
 type Mutation {
@@ -411,7 +419,7 @@ type Mutation {
   createTransaction(input: NewTransaction!): Transaction!
   createTransactions(input: [NewTransaction!]!): [Transaction!]!
   deleteTransaction(id: ID!): String!
-  removeBalance(input: NewBalance!): String!
+  deleteBalance(input: NewBalance!): String!
 }
 `, BuiltIn: false},
 }
@@ -466,6 +474,21 @@ func (ec *executionContext) field_Mutation_createTransactions_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 NewBalance
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewBalance2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalance(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -478,21 +501,6 @@ func (ec *executionContext) field_Mutation_deleteTransaction_args(ctx context.Co
 		}
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_removeBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 NewBalance
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewBalance2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalance(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -511,18 +519,51 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_listTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_listBalances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["fromDate"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg0 *time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg0, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["fromDate"] = arg0
+	args["from"] = arg0
+	var arg1 *time.Time
+	if tmp, ok := rawArgs["to"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+		arg1, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["to"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_listTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *time.Time
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg0, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg0
+	var arg1 *time.Time
+	if tmp, ok := rawArgs["to"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+		arg1, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["to"] = arg1
 	return args, nil
 }
 
@@ -1074,8 +1115,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteTransaction(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_removeBalance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_removeBalance(ctx, field)
+func (ec *executionContext) _Mutation_deleteBalance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteBalance(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1088,7 +1129,7 @@ func (ec *executionContext) _Mutation_removeBalance(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveBalance(rctx, fc.Args["input"].(NewBalance))
+		return ec.resolvers.Mutation().DeleteBalance(rctx, fc.Args["input"].(NewBalance))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1105,7 +1146,7 @@ func (ec *executionContext) _Mutation_removeBalance(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_removeBalance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteBalance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1122,7 +1163,7 @@ func (ec *executionContext) fieldContext_Mutation_removeBalance(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removeBalance_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteBalance_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1143,7 +1184,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListTransactions(rctx, fc.Args["fromDate"].(*string))
+		return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1208,7 +1249,7 @@ func (ec *executionContext) _Query_listBalances(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListBalances(rctx)
+		return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1225,7 +1266,7 @@ func (ec *executionContext) _Query_listBalances(ctx context.Context, field graph
 	return ec.marshalNBalance2ᚕᚖcashflowᚋmodelsᚐBalanceᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_listBalances(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_listBalances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1240,6 +1281,17 @@ func (ec *executionContext) fieldContext_Query_listBalances(_ context.Context, f
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Balance", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_listBalances_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3547,9 +3599,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "removeBalance":
+		case "deleteBalance":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removeBalance(ctx, field)
+				return ec._Mutation_deleteBalance(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4586,6 +4638,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalODate2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODate2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	return res
 }
 
