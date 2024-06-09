@@ -11,11 +11,12 @@ import (
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 )
 
 func initialize() *client.Client {
-	tr, br := repository.Init(models.InMemory)
+	tr, br, _ := repository.Init(models.InMemory)
 	defer repository.Close()
 
 	bs := domain.NewBalanceService(br)
@@ -26,7 +27,8 @@ func initialize() *client.Client {
 		BalanceService:     &bs,
 	}
 
-	client := client.New(handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}})))
+	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}}))
+	client := client.New(server)
 	return client
 }
 
@@ -104,18 +106,19 @@ func TestEnd2End(t *testing.T) {
 		}
 
 		client.MustPost(`query {
-			listTransactions {
+			listTransactions(from: "2000-01-01T00:00:00.000Z", to: "2020-01-01T00:00:00.000Z") {
 				amount
 				balance
 				date
 			}
 		}`, &results)
 
+		spew.Dump(results.ListTransactions)
 		require.Equal(t, "2022/10/27", results.ListTransactions[0].Date)
 		require.Equal(t, 885.00, results.ListTransactions[0].Balance)
 
 		require.Equal(t, "2022/11/01", results.ListTransactions[1].Date)
-		require.True(t, results.ListTransactions[1].Balance == 768.00)
+		require.Equal(t, 768.00, results.ListTransactions[1].Balance)
 
 		require.Equal(t, "2022/11/01", results.ListTransactions[2].Date)
 		require.Equal(t, -565.00, results.ListTransactions[2].Balance)
@@ -132,14 +135,11 @@ func TestEnd2End(t *testing.T) {
 
 	t.Run("query balances", func(t *testing.T) {
 		var results struct {
-			ListBalances []struct {
-				Amount float64
-				Date   string
-			}
+			ListBalances []models.Balance
 		}
 
 		client.MustPost(`query {
-			listBalances {
+			listBalances(from: "2000-01-01T00:00:00.000Z", to: "2020-01-01T00:00:00.000Z") {
 				amount
 				date
 			}

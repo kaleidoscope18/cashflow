@@ -1,3 +1,5 @@
+scalar Date
+
 enum Status {
   DONE
   TODO
@@ -34,8 +36,8 @@ input NewBalance {
 }
 
 type Query {
-  listTransactions(fromDate: String): [ComputedTransaction!]!
-  listBalances: [Balance!]!
+  listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+  listBalances(from: Date, to: Date): [Balance!]!
 }
 
 type Mutation {
@@ -43,5 +45,5 @@ type Mutation {
   createTransaction(input: NewTransaction!): Transaction!
   createTransactions(input: [NewTransaction!]!): [Transaction!]!
   deleteTransaction(id: ID!): String!
-  removeBalance(input: NewBalance!): String!
+  deleteBalance(input: NewBalance!): String!
 }

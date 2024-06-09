@@ -6,7 +6,7 @@ import (
 )
 
 func setup() models.TransactionService {
-	tr, br := repository.Init(models.Local)
+	tr, br, _ := repository.Init(models.Local)
 	defer repository.Close()
 
 	bs := NewBalanceService(br)

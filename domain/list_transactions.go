@@ -7,41 +7,42 @@ import (
 	"strconv"
 )
 
-func listTransactions(today *string, repo *models.TransactionRepository, balancesService *models.BalanceService) ([]*models.ComputedTransaction, error) {
-	transactions := (*repo).ListTransactions()
-	balances, err := (*balancesService).ListBalances()
-	if err != nil {
-		return make([]*models.ComputedTransaction, 0), err
-	}
-
-	enrichedTransactions := make([]*models.ComputedTransaction, len(transactions))
+func listTransactions(transactions []models.Transaction, balances []models.Balance) ([]models.ComputedTransaction, error) {
+	enrichedTransactions := make([]models.ComputedTransaction, len(transactions))
 
 	for i, t := range transactions {
+		balanceOnSameDay := getBalanceOnSameDay(t.Date, balances)
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
-		enrichedTransactions[i] = &models.ComputedTransaction{Transaction: &(transactions)[i], Status: utils.GetStatusFromDate(&t.Date, &transactions[i].Date)}
+		enrichedTransactions[i] = models.ComputedTransaction{Transaction: &(transactions)[i], Status: utils.GetStatusFromDate(utils.GetTodayDate(), transactions[i].Date)}
 
 		switch {
+		case balanceOnSameDay != nil:
+			enrichedTransactions[i].Balance = balanceOnSameDay.Amount
 		case latestBalanceError != nil && previousTransactionError != nil:
-			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(t.Amount)
+			enrichedTransactions[i].Balance = t.Amount
 		case latestBalanceError != nil:
-			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(previousTransaction.Balance + t.Amount)
+			enrichedTransactions[i].Balance = previousTransaction.Balance + t.Amount
 		case previousTransactionError != nil:
-			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(latestBalance.Amount + t.Amount)
+			enrichedTransactions[i].Balance = latestBalance.Amount + t.Amount
 		default:
-			enrichedTransactions[i].Balance = utils.RoundToTwoDigits(getBalanceForTransaction(t, *previousTransaction, latestBalance))
+			enrichedTransactions[i].Balance = getBalanceForTransaction(t, *previousTransaction, latestBalance)
 		}
+
+		enrichedTransactions[i].Balance = utils.RoundToTwoDigits(enrichedTransactions[i].Balance)
 	}
 
 	return enrichedTransactions, nil
 }
 
-func getBalanceForTransaction(transaction models.Transaction, previousTransaction models.ComputedTransaction, latestBalance models.Balance) float64 {
-	if utils.IsDateBefore(previousTransaction.Date, latestBalance.Date) || previousTransaction.Date == latestBalance.Date {
-		return latestBalance.Amount + transaction.Amount
+func getBalanceOnSameDay(date string, balances []models.Balance) *models.Balance {
+	for _, b := range balances {
+		if b.Date == date {
+			return &b
+		}
 	}
-	return previousTransaction.Balance + transaction.Amount
+	return nil
 }
 
 func getLatestBalanceBefore(date string, orderedBalances []models.Balance) (models.Balance, error) {
@@ -60,10 +61,22 @@ func getLatestBalanceBefore(date string, orderedBalances []models.Balance) (mode
 	return currentBalance, nil
 }
 
-func getPreviousTransaction(index int, transactionsWithBalances []*models.ComputedTransaction) (*models.ComputedTransaction, error) {
+func getPreviousTransaction(index int, transactionsWithBalances []models.ComputedTransaction) (*models.ComputedTransaction, error) {
 	if index > 0 {
-		return transactionsWithBalances[index-1], nil
+		return &transactionsWithBalances[index-1], nil
 	}
 
 	return nil, errors.New("no transaction precedes transaction #" + strconv.Itoa(index))
+}
+
+func getBalanceForTransaction(transaction models.Transaction, previousTransaction models.ComputedTransaction, latestBalance models.Balance) float64 {
+	if transaction.Date == latestBalance.Date {
+		return latestBalance.Amount
+	}
+
+	if utils.IsDateBefore(previousTransaction.Date, latestBalance.Date) || previousTransaction.Date == latestBalance.Date {
+		return latestBalance.Amount + transaction.Amount
+	}
+
+	return previousTransaction.Balance + transaction.Amount
 }

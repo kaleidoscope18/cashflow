@@ -6,18 +6,14 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
-func setupBalanceService() models.BalanceService {
-	_, br := repository.Init(models.InMemory)
+func TestWriteBalanceWithoutDate(t *testing.T) {
+	_, br, _ := repository.Init(models.InMemory)
 	defer repository.Close()
 
-	bs := NewBalanceService(br)
-	return bs
-}
-
-func TestWriteBalanceWithoutDate(t *testing.T) {
-	service := setupBalanceService()
+	service := NewBalanceService(br)
 
 	result, _ := service.WriteBalance(23.22, nil)
 	if result.Amount != 23.22 {
@@ -26,7 +22,10 @@ func TestWriteBalanceWithoutDate(t *testing.T) {
 }
 
 func TestWriteBalanceRoundedToTwoDecimalsWithDate(t *testing.T) {
-	service := setupBalanceService()
+	_, br, _ := repository.Init(models.InMemory)
+	defer repository.Close()
+
+	service := NewBalanceService(br)
 
 	dateInput := "2000/01/02"
 
@@ -42,12 +41,20 @@ func TestWriteBalanceRoundedToTwoDecimalsWithDate(t *testing.T) {
 }
 
 func TestListBalances(t *testing.T) {
-	service := setupBalanceService()
-	result, _ := service.ListBalances()
+	_, br, _ := repository.Init(models.InMemory)
+	defer repository.Close()
+
+	service := NewBalanceService(br)
+
 	expected := []models.Balance{
 		{Date: "2000/01/01", Amount: 50},
 		{Date: "2000/01/05", Amount: 100},
 	}
+
+	service.WriteBalance(expected[1].Amount, &expected[1].Date)
+	service.WriteBalance(expected[0].Amount, &expected[0].Date)
+
+	result, _ := service.ListBalances(time.Now(), time.Now())
 
 	if len(result) == 0 || reflect.ValueOf(result[0]).Kind() == reflect.Ptr || !reflect.DeepEqual(expected, result) {
 		t.Errorf(`Wrong data, expected %s, instead got %s`, fmt.Sprint(expected), fmt.Sprint(result))
