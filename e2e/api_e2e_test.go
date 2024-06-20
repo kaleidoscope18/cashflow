@@ -32,7 +32,7 @@ func initialize() *client.Client {
 	return client
 }
 
-func TestEnd2End(t *testing.T) {
+func TestGraphQLApiE2E(t *testing.T) {
 	client := initialize()
 
 	t.Run("introspection", func(t *testing.T) {

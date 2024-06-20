@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	tr, br, err := repository.Init(models.InMemory)
+	tr, br, err := repository.Init(models.Local)
 	if err != nil {
 		panic("Could not initiate the app : " + err.Error())
 	}

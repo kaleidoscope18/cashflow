@@ -7,8 +7,10 @@ Ledger application that allows you to know if your account will be overdraft som
 
 ## TODO
 
-- fix tests
-- logging
+- add correct filtering for from and to dates
+- sorting from repository or service?
+- e2e should not be flaky
+- bdd tests
 
 ## Structure
 
@@ -49,13 +51,14 @@ This project's whole functionnality set is documented in Gherkin natural languag
 
 ## Graphql (graphqlgen)
 
-- All files under `api/graph/generated` will be regenerated
-- You might have to backup the contents of the resolvers when there are breaking changes.
-- to regenerate do:
+When changes are made in `.graphqls` files, you will need to regenerate code by using this command:
 
 ```sh
 cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate && cd ..
 ```
+
+- All files under `api/graph/generated` will be regenerated
+- If the regeneration throws an error, check your schemas first and backup the resolver files and erase their contents for a clean slate and try again.
 
 ## BDD
 
@@ -65,6 +68,10 @@ BDD testing is in `bdd` package and gherkin natural language is used with `featu
 These tests are included in test run with `go test ./...` command from root.
 
 ## Database
+
+### In memory
+
+For testing purposes, there's an in-memory strategy and for production, this app is set to use a mysql db.
 
 ### MySQL
 
@@ -95,7 +102,23 @@ mysql> CREATE TABLE balances
 );
 ```
 
-## SSH
+## Infra
+
+The infra is on AWS written in pulumi.
+
+### Deployment
+
+See pulumi's documentation for more details.
+
+(login to AWS first)
+
+```sh
+cd pulumi/
+pulumi stack select <environment>
+pulumi up
+```
+
+### SSH
 
 To connect to the public ec2 instance (bastion host)
 ```sh
@@ -123,11 +146,10 @@ mysql -h cashflow-db9b3ad36.c9gia6eo0ryf.us-east-1.rds.amazonaws.com -u admin -p
 
 type `exit` to exit all instances.
 
-## Docker
+### Docker
 
 ```sh
 docker build -t kaleidoscope18/cashflow:1 ./ # docker build -t <USER>/<CONTAINER>:<VERSION> ./
-docker image list
 docker run -p 8080:8080 kaleidoscope18/cashflow:1
 ```
 

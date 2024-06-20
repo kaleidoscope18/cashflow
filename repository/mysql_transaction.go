@@ -1,15 +1,35 @@
 package repository
 
 import (
+	"bytes"
 	"cashflow/models"
 	"fmt"
+	"log"
+	"text/template"
 	"time"
 )
 
+const listTransactionsQuery = `SELECT * FROM transactions 
+    							WHERE date 
+    							BETWEEN '{{.from}}' AND '{{.to}}';`
+
 func (repo *localDatabase) ListTransactions(from time.Time, to time.Time) ([]models.Transaction, error) {
-	rows, err := repo.db.Query("SELECT * FROM transactions;") // TODO filter with from and to + get the latest transaction before from date
+	queryTemplate := template.Must(template.New("listTransactionsQueryTemplate").Parse(listTransactionsQuery))
+
+	var query bytes.Buffer
+	data := map[string]interface{}{
+		"from": from,
+		"to":   to,
+	}
+	err := queryTemplate.Execute(&query, data)
 	if err != nil {
-		return make([]models.Transaction, 0), nil
+		log.Printf("Failed to execute listTransactionsQueryTemplate: %v", err)
+		return nil, err
+	}
+
+	rows, err := repo.db.Query(query.String())
+	if err != nil {
+		return make([]models.Transaction, 0), err
 	}
 
 	defer rows.Close()
@@ -19,13 +39,13 @@ func (repo *localDatabase) ListTransactions(from time.Time, to time.Time) ([]mod
 		var transaction models.Transaction
 		err = rows.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date)
 		if err != nil {
-			return make([]models.Transaction, 0), nil
+			return make([]models.Transaction, 0), err
 		}
 		transactions = append(transactions, transaction)
 	}
 
 	if err = rows.Err(); err != nil {
-		return make([]models.Transaction, 0), nil
+		return make([]models.Transaction, 0), err
 	}
 
 	return transactions, nil
