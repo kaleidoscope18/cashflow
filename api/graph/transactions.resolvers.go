@@ -14,17 +14,6 @@ import (
 	"time"
 )
 
-// CreateBalance is the resolver for the createBalance field.
-func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	newBalance, err := (*r.BalanceService).WriteBalance(input.Amount, input.Date)
-	return &newBalance, err
-}
-
-// DeleteBalance is the resolver for the deleteBalance field.
-func (r *mutationResolver) DeleteBalance(ctx context.Context, date string) (string, error) {
-	return date, (*r.BalanceService).DeleteBalance(ctx, date)
-}
-
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (*models.Transaction, error) {
 	if input.Description == nil {
@@ -99,23 +88,3 @@ func (r *queryResolver) ListTransactions(ctx context.Context, from *time.Time, t
 
 	return utils.ConvertStructToPointersArray(result), nil
 }
-
-// ListBalances is the resolver for the listBalances field.
-func (r *queryResolver) ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error) {
-	if from == nil || to == nil {
-		err := fmt.Errorf("please provide from and to dates")
-		return nil, err
-	}
-
-	balances, err := (*r.BalanceService).ListBalances(*from, *to)
-	return utils.ConvertStructToPointersArray(balances), err
-}
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }

@@ -1,5 +1,3 @@
-scalar Date
-
 enum Status {
   DONE
   TODO
@@ -19,31 +17,17 @@ type ComputedTransaction {
   balance: Float!
 }
 
-type Balance {
-  date: String!
-  amount: Float!
-}
-
 input NewTransaction {
   date: String!
   amount: Float!
   description: String
 }
 
-input NewBalance {
-  date: String
-  amount: Float!
-}
-
-type Query {
+extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
-  listBalances(from: Date, to: Date): [Balance!]!
 }
 
-type Mutation {
-  createBalance(input: NewBalance!): Balance!
-  deleteBalance(date: String!): String!
-
+extend type Mutation {
   createTransaction(input: NewTransaction!): Transaction!
   createTransactions(input: [NewTransaction!]!): [Transaction!]!
 
