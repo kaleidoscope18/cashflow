@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cashflow/models"
+	"context"
 	"time"
 )
 
@@ -27,4 +28,16 @@ func (db *inMemoryBalanceDatabase) InsertBalance(amount float64, date string) (m
 
 func (db *inMemoryBalanceDatabase) ListBalances(from time.Time, to time.Time) ([]models.Balance, error) {
 	return balances, nil
+}
+
+func (db *inMemoryBalanceDatabase) DeleteBalance(ctx context.Context, date string) error {
+	newList := make([]models.Balance, 0)
+	for _, balance := range balances {
+		if balance.Date != date {
+			newList = append(newList, balance)
+		}
+	}
+
+	balances = newList
+	return nil
 }

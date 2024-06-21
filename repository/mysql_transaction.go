@@ -3,18 +3,20 @@ package repository
 import (
 	"bytes"
 	"cashflow/models"
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"text/template"
 	"time"
 )
 
-const listTransactionsQuery = `SELECT * FROM transactions 
-    							WHERE date 
-    							BETWEEN '{{.from}}' AND '{{.to}}';`
-
-func (repo *localDatabase) ListTransactions(from time.Time, to time.Time) ([]models.Transaction, error) {
-	queryTemplate := template.Must(template.New("listTransactionsQueryTemplate").Parse(listTransactionsQuery))
+func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.Transaction, error) {
+	queryTemplate := template.Must(template.New("listTransactionsQueryTemplate").Parse(`
+		SELECT * FROM transactions 
+		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
+		ORDER BY date ASC';
+	`))
 
 	var query bytes.Buffer
 	data := map[string]interface{}{
@@ -60,4 +62,19 @@ func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (mo
 	}
 
 	return transaction, nil
+}
+
+func (repo *localDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {
+	result, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM transactions
+											WHERE id = "%s";`, id))
+	if err != nil {
+		return id, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		return id, errors.New("transaction not found")
+	}
+
+	return id, nil
 }

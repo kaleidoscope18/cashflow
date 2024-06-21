@@ -10,6 +10,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -17,6 +18,11 @@ import (
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
 	newBalance, err := (*r.BalanceService).WriteBalance(input.Amount, input.Date)
 	return &newBalance, err
+}
+
+// DeleteBalance is the resolver for the deleteBalance field.
+func (r *mutationResolver) DeleteBalance(ctx context.Context, date string) (string, error) {
+	return date, (*r.BalanceService).DeleteBalance(ctx, date)
 }
 
 // CreateTransaction is the resolver for the createTransaction field.
@@ -30,6 +36,7 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 // CreateTransactions is the resolver for the createTransactions field.
 func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]*models.Transaction, error) {
 	results := make([]*models.Transaction, 0)
+
 	for _, transaction := range input {
 		if transaction.Description == nil {
 			t, err := (*r.TransactionService).WriteTransaction(transaction.Date, transaction.Amount, "")
@@ -49,12 +56,33 @@ func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*gene
 
 // DeleteTransaction is the resolver for the deleteTransaction field.
 func (r *mutationResolver) DeleteTransaction(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteTransaction - deleteTransaction"))
+	return (*r.TransactionService).DeleteTransaction(ctx, id)
 }
 
-// DeleteBalance is the resolver for the deleteBalance field.
-func (r *mutationResolver) DeleteBalance(ctx context.Context, input generated.NewBalance) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteBalance - deleteBalance"))
+// DeleteTransactions is the resolver for the deleteTransactions field.
+func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string) ([]string, error) {
+	results := make([]string, 0)
+	errors := make([]string, 0)
+
+	var err error
+	for _, id := range ids {
+		deletedId, err := (*r.TransactionService).DeleteTransaction(ctx, id)
+		if err == nil {
+			results = append(results, deletedId)
+		}
+		if err != nil {
+			errors = append(errors, id)
+		}
+	}
+
+	if len(errors) != 0 {
+		err = fmt.Errorf("transactions that were deleted: %s - transactions not found: %s",
+			strings.Join(results, ","),
+			strings.Join(errors, ","),
+		)
+	}
+
+	return results, err
 }
 
 // ListTransactions is the resolver for the listTransactions field.
@@ -64,7 +92,7 @@ func (r *queryResolver) ListTransactions(ctx context.Context, from *time.Time, t
 		return nil, err
 	}
 
-	result, err := (*r.TransactionService).ListTransactions(*from, *to)
+	result, err := (*r.TransactionService).ListTransactions(ctx, *from, *to)
 	if err != nil {
 		return nil, err
 	}

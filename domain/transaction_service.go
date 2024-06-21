@@ -3,6 +3,7 @@ package domain
 import (
 	"cashflow/models"
 	"cashflow/utils"
+	"context"
 	"time"
 
 	"github.com/dchest/uniuri"
@@ -20,15 +21,15 @@ func NewTransactionService(transactionRepository *models.TransactionRepository, 
 	return s
 }
 
-func (s *transactionService) ListTransactions(from time.Time, to time.Time) ([]models.ComputedTransaction, error) {
-	transactions, err := (*s.repository).ListTransactions(from, to)
+func (s *transactionService) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.ComputedTransaction, error) {
+	transactions, err := (*s.repository).ListTransactions(ctx, from, to)
 	if err != nil {
-		return make([]models.ComputedTransaction, 0), err
+		return nil, err
 	}
 
 	balances, err := (*s.balanceService).ListBalances(from, to)
 	if err != nil {
-		return make([]models.ComputedTransaction, 0), err
+		return nil, err
 	}
 
 	return listTransactions(utils.SortByDate(transactions), balances)
@@ -47,4 +48,8 @@ func (s *transactionService) WriteTransaction(date string, amount float64, descr
 	}
 
 	return &t, nil
+}
+
+func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {
+	return (*s.repository).DeleteTransaction(ctx, id)
 }
