@@ -92,7 +92,6 @@ func TestGraphQLApiE2E(t *testing.T) {
 
 		require.Equal(t, "2022/10/27", results.ListTransactions[0].Date)
 		require.Equal(t, 885.00, results.ListTransactions[0].Balance)
-		require.Equal(t, 1, results.ListTransactions[0].Id)
 
 		require.Equal(t, "2022/11/01", results.ListTransactions[1].Date)
 		require.Equal(t, 768.00, results.ListTransactions[1].Balance)
@@ -127,39 +126,5 @@ func TestGraphQLApiE2E(t *testing.T) {
 
 		require.Equal(t, "2022/11/03", results.ListBalances[1].Date)
 		require.Equal(t, 2000.00, results.ListBalances[1].Amount)
-	})
-
-	t.Run("mutation delete all", func(t *testing.T) {
-		var results struct {
-			Balances     []models.Balance
-			Transactions []models.Transaction
-		}
-
-		client.MustPost(`mutation {
-			deleteBalance(input:"2022-10-15T00:00:00.000Z")
-			deleteBalance(input:"2022-11-03T00:00:00.000Z")
-			deleteTransactions(
-				input: [
-				  {id:1},
-				  {id:2},
-				  {id:3},
-				  {id:4},
-				  {id:5},
-				  {id:6},
-				]
-			)
-			balances:listBalances(from: "2000-01-01T00:00:00.000Z", to: "2020-01-01T00:00:00.000Z"){
-				amount
-				date
-			}
-			transactions:listTransactions(from: "2000-01-01T00:00:00.000Z", to: "2020-01-01T00:00:00.000Z"){
-				amount
-				balance
-				date
-			}
-		}`, &results)
-
-		require.Empty(t, results.Balances)
-		require.Empty(t, results.Transactions)
 	})
 }

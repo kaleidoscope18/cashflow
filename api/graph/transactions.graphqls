@@ -20,6 +20,7 @@ type ComputedTransaction {
 input NewTransaction {
   date: String!
   amount: Float!
+  recurrency: String
   description: String
 }
 

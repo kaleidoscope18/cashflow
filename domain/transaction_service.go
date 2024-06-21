@@ -35,12 +35,13 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return listTransactions(utils.SortByDate(transactions), balances)
 }
 
-func (s *transactionService) WriteTransaction(date string, amount float64, description string) (*models.Transaction, error) {
+func (s *transactionService) WriteTransaction(date string, amount float64, description string, recurrency string) (*models.Transaction, error) {
 	t, err := (*s.repository).InsertTransaction(models.Transaction{
 		Id:          uniuri.NewLen(5),
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(&date),
 		Description: description,
+		Recurrency:  recurrency,
 	})
 
 	if err != nil {

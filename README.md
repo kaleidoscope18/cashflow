@@ -90,6 +90,7 @@ mysql> CREATE TABLE transactions
   description     VARCHAR(200) NOT NULL,                # Transaction description
   amount          decimal(10,2) NOT NULL,               # Transaction amount
   date            DATE NOT NULL,                        # Date of the transaction
+  recurrency      VARCHAR(500) NOT NULL,                # Recurrency expression
   PRIMARY KEY     (id)                                  # Make the id the primary key
 );
 mysql> SHOW TABLES;

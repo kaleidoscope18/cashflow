@@ -2,14 +2,9 @@ package bdd
 
 import (
 	"context"
-	"os"
-	"testing"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/colors"
 )
-
-var NumberOfGodogs = 0
 
 func thereIsAChequingAccount() error {
 	return nil
@@ -39,26 +34,8 @@ func iListTheTransactions() error {
 	return nil
 }
 
-func TestMain(m *testing.M) {
-	var options = godog.Options{
-		Output: colors.Colored(os.Stdout),
-		Format: "pretty",
-		Paths:  []string{"transactions.feature"},
-	}
-
-	godog.BindCommandLineFlags("godog.", &options)
-
-	status := godog.TestSuite{
-		ScenarioInitializer: InitializeScenario,
-		Options:             &options,
-	}.Run()
-
-	os.Exit(status)
-}
-
-func InitializeScenario(ctx *godog.ScenarioContext) {
+func InitializeTransactionsScenario(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		NumberOfGodogs = 0 // clean the state before every scenario
 		return ctx, nil
 	})
 

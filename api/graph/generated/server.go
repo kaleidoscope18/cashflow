@@ -431,6 +431,7 @@ type ComputedTransaction {
 input NewTransaction {
   date: String!
   amount: Float!
+  recurrency: String
   description: String
 }
 
@@ -3506,7 +3507,7 @@ func (ec *executionContext) unmarshalInputNewTransaction(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "amount", "description"}
+	fieldsInOrder := [...]string{"date", "amount", "recurrency", "description"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3527,6 +3528,13 @@ func (ec *executionContext) unmarshalInputNewTransaction(ctx context.Context, ob
 				return it, err
 			}
 			it.Amount = data
+		case "recurrency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recurrency"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recurrency = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

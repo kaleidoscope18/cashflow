@@ -16,31 +16,45 @@ import (
 
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (*models.Transaction, error) {
+	var description, recurrency string
 	if input.Description == nil {
-		return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, "")
+		description = ""
 	}
-	return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, *input.Description)
+	if input.Recurrency == nil {
+		recurrency = ""
+	}
+
+	return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, description, recurrency)
 }
 
 // CreateTransactions is the resolver for the createTransactions field.
 func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]*models.Transaction, error) {
 	results := make([]*models.Transaction, 0)
+	errors := make([]string, 0)
 
-	for _, transaction := range input {
-		if transaction.Description == nil {
-			t, err := (*r.TransactionService).WriteTransaction(transaction.Date, transaction.Amount, "")
-			if err == nil {
-				results = append(results, t)
-			}
+	for i, transaction := range input {
+		t, err := r.CreateTransaction(ctx, *transaction)
+		if err == nil {
+			results = append(results, t)
 		} else {
-			t, err := (*r.TransactionService).WriteTransaction(transaction.Date, transaction.Amount, *transaction.Description)
-			if err == nil {
-				results = append(results, t)
-			}
+			errors = append(errors, fmt.Sprintf("#%d on date %s with amount %.2f", i, transaction.Date, transaction.Amount))
 		}
 	}
 
-	return results, nil
+	var err error
+	if len(errors) != 0 {
+		ids := make([]string, len(results))
+		for i, result := range results {
+			ids[i] = result.Id
+		}
+
+		err = fmt.Errorf("transactions that were created: %s - transactions not created: %s",
+			strings.Join(ids, ","),
+			strings.Join(errors, ","),
+		)
+	}
+
+	return results, err
 }
 
 // DeleteTransaction is the resolver for the deleteTransaction field.
@@ -53,17 +67,16 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 	results := make([]string, 0)
 	errors := make([]string, 0)
 
-	var err error
 	for _, id := range ids {
-		deletedId, err := (*r.TransactionService).DeleteTransaction(ctx, id)
+		deletedId, err := r.DeleteTransaction(ctx, id)
 		if err == nil {
 			results = append(results, deletedId)
-		}
-		if err != nil {
+		} else {
 			errors = append(errors, id)
 		}
 	}
 
+	var err error
 	if len(errors) != 0 {
 		err = fmt.Errorf("transactions that were deleted: %s - transactions not found: %s",
 			strings.Join(results, ","),
