@@ -1,17 +1,22 @@
 package models
 
-import "time"
-
-type TransactionService interface {
-	ListTransactions(from time.Time, to time.Time) ([]ComputedTransaction, error)
-	WriteTransaction(date string, amount float64, description string) (*Transaction, error)
-}
+import (
+	"context"
+	"time"
+)
 
 type TransactionRepository interface {
 	Init() error
 	Close() error
-	ListTransactions(from time.Time, to time.Time) ([]Transaction, error)
+	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
 	InsertTransaction(transaction Transaction) (Transaction, error)
+	DeleteTransaction(ctx context.Context, id string) (string, error)
+}
+
+type TransactionService interface {
+	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
+	WriteTransaction(date string, amount float64, description string) (*Transaction, error)
+	DeleteTransaction(ctx context.Context, id string) (string, error)
 }
 
 type Transaction struct {

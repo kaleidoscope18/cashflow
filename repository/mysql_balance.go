@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cashflow/models"
+	"context"
 	"fmt"
 	"time"
 
@@ -49,4 +50,10 @@ func (repo *localDatabase) ListBalances(from time.Time, to time.Time) ([]models.
 	}
 
 	return balances, nil
+}
+
+func (repo *localDatabase) DeleteBalance(ctx context.Context, date string) error {
+	_, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM balances 
+										WHERE date = "%s";`, date))
+	return err
 }

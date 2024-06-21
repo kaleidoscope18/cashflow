@@ -17,7 +17,11 @@ import (
 const defaultPort = "8080"
 
 func Run(app *models.App) {
-	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}}))
+	schema := generated.NewExecutableSchema(generated.Config{
+		Resolvers: &graph.Resolver{App: app},
+	})
+
+	server := handler.NewDefaultServer(schema)
 
 	browserTabTitle := "Cashflow GraphQL Playground"
 	http.Handle("/playground", playground.Handler(browserTabTitle, "/graphql"))

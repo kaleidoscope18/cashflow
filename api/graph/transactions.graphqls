@@ -42,8 +42,11 @@ type Query {
 
 type Mutation {
   createBalance(input: NewBalance!): Balance!
+  deleteBalance(date: String!): String!
+
   createTransaction(input: NewTransaction!): Transaction!
   createTransactions(input: [NewTransaction!]!): [Transaction!]!
-  deleteTransaction(id: ID!): String!
-  deleteBalance(input: NewBalance!): String!
+
+  deleteTransaction(id: ID!): ID!
+  deleteTransactions(ids: [ID!]!): [ID!]!
 }

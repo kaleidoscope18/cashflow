@@ -7,10 +7,10 @@ Ledger application that allows you to know if your account will be overdraft som
 
 ## TODO
 
-- add correct filtering for from and to dates
-- sorting from repository or service?
-- e2e should not be flaky
-- bdd tests
+- e2e should maybe become bdd tests
+- e2e should only apply when there's also a front-end (playwright)
+- add request context with tracing through the whole layers
+- setup robust logging
 
 ## Structure
 
@@ -100,6 +100,12 @@ mysql> CREATE TABLE balances
   date            DATE NOT NULL,                        # Balance date
   PRIMARY KEY     (date)                                # Make the id the primary key
 );
+```
+
+#### Connect locally
+
+```sh
+mysql -u root -pnew_password cashflow
 ```
 
 ## Infra

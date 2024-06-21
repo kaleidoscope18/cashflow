@@ -3,6 +3,7 @@ package domain
 import (
 	"cashflow/models"
 	"cashflow/utils"
+	"context"
 	"time"
 )
 
@@ -39,4 +40,9 @@ func (s *balanceService) ListBalances(from time.Time, to time.Time) ([]models.Ba
 	}
 
 	return utils.SortByDate(result), nil
+}
+
+func (s *balanceService) DeleteBalance(ctx context.Context, date string) error {
+	err := (*s.repository).DeleteBalance(ctx, date)
+	return err
 }
