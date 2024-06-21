@@ -39,7 +39,7 @@ func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time,
 	var transactions []models.Transaction
 	for rows.Next() {
 		var transaction models.Transaction
-		err = rows.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date)
+		err = rows.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date, &transaction.Recurrency)
 		if err != nil {
 			return make([]models.Transaction, 0), err
 		}
@@ -54,9 +54,9 @@ func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time,
 }
 
 func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (models.Transaction, error) {
-	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description) 
-										VALUES (%.2f, "%s", "%s")`,
-		transaction.Amount, transaction.Date, transaction.Description))
+	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description, recurrency) 
+										VALUES (%.2f, "%s", "%s", "%s")`,
+		transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency))
 	if err != nil {
 		return models.Transaction{}, nil
 	}

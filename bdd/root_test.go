@@ -40,4 +40,5 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	})
 
 	InitializeGodogsScenario(ctx)
+	InitializeTransactionsScenario(ctx)
 }

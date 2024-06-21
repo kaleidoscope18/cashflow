@@ -13,6 +13,7 @@ type NewBalance struct {
 type NewTransaction struct {
 	Date        string  `json:"date"`
 	Amount      float64 `json:"amount"`
+	Recurrency  *string `json:"recurrency,omitempty"`
 	Description *string `json:"description,omitempty"`
 }
 
