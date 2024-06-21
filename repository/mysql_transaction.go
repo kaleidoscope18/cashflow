@@ -66,7 +66,7 @@ func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (mo
 
 func (repo *localDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {
 	result, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM transactions
-											WHERE id = "%s";`, id))
+											 WHERE id = "%s";`, id))
 	if err != nil {
 		return id, err
 	}

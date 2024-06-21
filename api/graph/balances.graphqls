@@ -1,0 +1,18 @@
+type Balance {
+  date: String!
+  amount: Float!
+}
+
+input NewBalance {
+  date: String
+  amount: Float!
+}
+
+extend type Query {
+  listBalances(from: Date, to: Date): [Balance!]!
+}
+
+extend type Mutation {
+  createBalance(input: NewBalance!): Balance!
+  deleteBalance(date: String!): String!
+}

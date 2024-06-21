@@ -3,6 +3,7 @@ package repository
 import (
 	"cashflow/models"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,7 +54,16 @@ func (repo *localDatabase) ListBalances(from time.Time, to time.Time) ([]models.
 }
 
 func (repo *localDatabase) DeleteBalance(ctx context.Context, date string) error {
-	_, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM balances 
+	result, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM balances 
 										WHERE date = "%s";`, date))
-	return err
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		return errors.New("balance not found")
+	}
+
+	return nil
 }
