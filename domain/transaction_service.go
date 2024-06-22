@@ -5,8 +5,6 @@ import (
 	"cashflow/utils"
 	"context"
 	"time"
-
-	"github.com/dchest/uniuri"
 )
 
 type transactionService struct {
@@ -35,9 +33,8 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return listTransactions(utils.SortByDate(transactions), balances)
 }
 
-func (s *transactionService) WriteTransaction(date string, amount float64, description string, recurrency string) (*models.Transaction, error) {
-	t, err := (*s.repository).InsertTransaction(models.Transaction{
-		Id:          uniuri.NewLen(5),
+func (s *transactionService) WriteTransaction(date string, amount float64, description string, recurrency string) (string, error) {
+	id, err := (*s.repository).InsertTransaction(models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(&date),
 		Description: description,
@@ -45,10 +42,10 @@ func (s *transactionService) WriteTransaction(date string, amount float64, descr
 	})
 
 	if err != nil {
-		return &models.Transaction{}, err
+		return "", err
 	}
 
-	return &t, nil
+	return id, nil
 }
 
 func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {

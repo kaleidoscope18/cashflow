@@ -29,8 +29,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): Transaction!
-  createTransactions(input: [NewTransaction!]!): [Transaction!]!
+  createTransaction(input: NewTransaction!): ID!
+  createTransactions(input: [NewTransaction!]!): [ID!]!
 
   deleteTransaction(id: ID!): ID!
   deleteTransactions(ids: [ID!]!): [ID!]!

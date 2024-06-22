@@ -3,6 +3,7 @@ package repository
 import (
 	"cashflow/models"
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -28,9 +29,10 @@ func (repo *inMemoryTransactionDatabase) ListTransactions(ctx context.Context, f
 	return values, nil
 }
 
-func (repo *inMemoryTransactionDatabase) InsertTransaction(transaction models.Transaction) (models.Transaction, error) {
-	transactionById[transaction.Id] = transaction
-	return transaction, nil
+func (repo *inMemoryTransactionDatabase) InsertTransaction(transaction models.Transaction) (string, error) {
+	id := fmt.Sprint(len(transactionById) + 1)
+	transactionById[id] = transaction
+	return id, nil
 }
 
 func (repo *inMemoryTransactionDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {

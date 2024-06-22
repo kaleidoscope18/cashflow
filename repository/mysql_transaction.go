@@ -53,15 +53,16 @@ func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time,
 	return transactions, nil
 }
 
-func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (models.Transaction, error) {
-	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description, recurrency) 
+func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (string, error) {
+	result, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description, recurrency) 
 										VALUES (%.2f, "%s", "%s", "%s")`,
 		transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency))
 	if err != nil {
-		return models.Transaction{}, nil
+		return "", err
 	}
 
-	return transaction, nil
+	id, err := result.LastInsertId()
+	return fmt.Sprint(id), err
 }
 
 func (repo *localDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {
