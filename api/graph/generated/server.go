@@ -84,8 +84,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateBalance(ctx context.Context, input NewBalance) (*models.Balance, error)
 	DeleteBalance(ctx context.Context, date string) (string, error)
-	CreateTransaction(ctx context.Context, input NewTransaction) (*models.Transaction, error)
-	CreateTransactions(ctx context.Context, input []*NewTransaction) ([]*models.Transaction, error)
+	CreateTransaction(ctx context.Context, input NewTransaction) (string, error)
+	CreateTransactions(ctx context.Context, input []*NewTransaction) ([]string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 	DeleteTransactions(ctx context.Context, ids []string) ([]string, error)
 }
@@ -440,8 +440,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): Transaction!
-  createTransactions(input: [NewTransaction!]!): [Transaction!]!
+  createTransaction(input: NewTransaction!): ID!
+  createTransactions(input: [NewTransaction!]!): [ID!]!
 
   deleteTransaction(id: ID!): ID!
   deleteTransactions(ids: [ID!]!): [ID!]!
@@ -1051,9 +1051,9 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Transaction)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNTransaction2ᚖcashflowᚋmodelsᚐTransaction(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1063,17 +1063,7 @@ func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Transaction_id(ctx, field)
-			case "amount":
-				return ec.fieldContext_Transaction_amount(ctx, field)
-			case "date":
-				return ec.fieldContext_Transaction_date(ctx, field)
-			case "description":
-				return ec.fieldContext_Transaction_description(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	defer func() {
@@ -1116,9 +1106,9 @@ func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Transaction)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNTransaction2ᚕᚖcashflowᚋmodelsᚐTransactionᚄ(ctx, field.Selections, res)
+	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1128,17 +1118,7 @@ func (ec *executionContext) fieldContext_Mutation_createTransactions(ctx context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Transaction_id(ctx, field)
-			case "amount":
-				return ec.fieldContext_Transaction_amount(ctx, field)
-			case "date":
-				return ec.fieldContext_Transaction_date(ctx, field)
-			case "description":
-				return ec.fieldContext_Transaction_description(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	defer func() {
@@ -4443,64 +4423,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNTransaction2cashflowᚋmodelsᚐTransaction(ctx context.Context, sel ast.SelectionSet, v models.Transaction) graphql.Marshaler {
-	return ec._Transaction(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNTransaction2ᚕᚖcashflowᚋmodelsᚐTransactionᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Transaction) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTransaction2ᚖcashflowᚋmodelsᚐTransaction(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNTransaction2ᚖcashflowᚋmodelsᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *models.Transaction) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Transaction(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

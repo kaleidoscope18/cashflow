@@ -9,13 +9,13 @@ type TransactionRepository interface {
 	Init() error
 	Close() error
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
-	InsertTransaction(transaction Transaction) (Transaction, error)
+	InsertTransaction(transaction Transaction) (string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 }
 
 type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
-	WriteTransaction(date string, amount float64, description string, recurrency string) (*Transaction, error)
+	WriteTransaction(date string, amount float64, description string, recurrency string) (string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 }
 

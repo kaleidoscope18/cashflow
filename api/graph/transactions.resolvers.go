@@ -15,12 +15,22 @@ import (
 )
 
 // CreateTransaction is the resolver for the createTransaction field.
-func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (*models.Transaction, error) {
-	var description, recurrency string
+func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (string, error) {
+	var description string
 	if input.Description == nil {
 		description = ""
+	} else {
+		description = *input.Description
 	}
-	if input.Recurrency == nil {
+
+	var recurrency string
+	if input.Recurrency != nil {
+		err := utils.ValidateRecurrency(*input.Recurrency)
+		if err != nil {
+			return "", err
+		}
+		recurrency = *input.Recurrency
+	} else {
 		recurrency = ""
 	}
 
@@ -28,8 +38,8 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 }
 
 // CreateTransactions is the resolver for the createTransactions field.
-func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]*models.Transaction, error) {
-	results := make([]*models.Transaction, 0)
+func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]string, error) {
+	results := make([]string, 0)
 	errors := make([]string, 0)
 
 	for i, transaction := range input {
@@ -37,19 +47,14 @@ func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*gene
 		if err == nil {
 			results = append(results, t)
 		} else {
-			errors = append(errors, fmt.Sprintf("#%d on date %s with amount %.2f", i, transaction.Date, transaction.Amount))
+			errors = append(errors, fmt.Sprintf("#%d on date %s with amount %.2f, error: %s", i, transaction.Date, transaction.Amount, err.Error()))
 		}
 	}
 
 	var err error
 	if len(errors) != 0 {
-		ids := make([]string, len(results))
-		for i, result := range results {
-			ids[i] = result.Id
-		}
-
 		err = fmt.Errorf("transactions that were created: %s - transactions not created: %s",
-			strings.Join(ids, ","),
+			strings.Join(results, ","),
 			strings.Join(errors, ","),
 		)
 	}
