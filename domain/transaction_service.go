@@ -30,13 +30,14 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 		return nil, err
 	}
 
-	return listTransactions(utils.SortByDate(transactions), balances)
+	results, err := listTransactions(transactions, balances, from, to)
+	return utils.SortByDate(results), err
 }
 
 func (s *transactionService) WriteTransaction(date string, amount float64, description string, recurrency string) (string, error) {
 	id, err := (*s.repository).InsertTransaction(models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
-		Date:        utils.ParseDate(&date),
+		Date:        utils.ParseDate(date),
 		Description: description,
 		Recurrency:  recurrency,
 	})

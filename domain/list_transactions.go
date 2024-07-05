@@ -1,21 +1,29 @@
 package domain
 
 import (
+	"cashflow/domain/recurrency"
 	"cashflow/models"
 	"cashflow/utils"
 	"errors"
 	"strconv"
+	"time"
 )
 
-func listTransactions(transactions []models.Transaction, balances []models.Balance) ([]models.ComputedTransaction, error) {
-	enrichedTransactions := make([]models.ComputedTransaction, len(transactions))
+func listTransactions(transactions []models.Transaction, balances []models.Balance, from time.Time, to time.Time) ([]models.ComputedTransaction, error) {
+	withRecurrency, withoutRecurrency := recurrency.SplitTransactionsWithRecurrency(transactions)
+	recurrencyOffsprings, _ := recurrency.GenerateTransactionsFromRecurrency(withRecurrency, from, to)
+	transactionsToEnrich := append(withoutRecurrency, recurrencyOffsprings...)
 
-	for i, t := range transactions {
+	enrichedTransactions := make([]models.ComputedTransaction, len(transactionsToEnrich))
+	for i, t := range transactionsToEnrich {
 		balanceOnSameDay := getBalanceOnSameDay(t.Date, balances)
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
-		enrichedTransactions[i] = models.ComputedTransaction{Transaction: &(transactions)[i], Status: utils.GetStatusFromDate(utils.GetTodayDate(), transactions[i].Date)}
+		enrichedTransactions[i] = models.ComputedTransaction{
+			Transaction: &t,
+			Status:      utils.GetStatusFromDate(utils.GetTodayDate(), t.Date),
+		}
 
 		switch {
 		case balanceOnSameDay != nil:

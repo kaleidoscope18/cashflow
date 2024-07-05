@@ -2,7 +2,8 @@
 FROM golang:latest
 
 # Set the working directory inside the container
-WORKDIR /app
+ARG WORKDIR
+WORKDIR $WORKDIR
 
 # Copy the Go module files
 COPY go.mod go.sum ./

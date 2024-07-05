@@ -7,39 +7,52 @@ Ledger application that allows you to know if your account will be overdraft som
 
 ## TODO
 
-- e2e should maybe become bdd tests
-- e2e should only apply when there's also a front-end (playwright)
+- e2e should maybe become bdd tests, e2e should only apply when there's also a front-end (playwright)
 - add request context with tracing through the whole layers
 - setup robust logging
 
 ## Structure
 
-Initial bootstrap is done in `main.go`, which is the entry file.
-Depending on the storage strategy, it will instantiate the correct repository instances from `repository` package, and then inject them into the newly created services from `domain` package.
-The services are used by api handlers (REST) or resolvers (GraphQL) in `api` package.
-All the domain logic is in `domain` package alongside services that use them.
-All domain models are in `models` package.
+The app will follow the DDD project architecture.  
+Initial bootstrap is done in `main.go`, which is the entry file.  
+It will instantiate the **repository** instances from `repository` package.  
+Repositories are injected into the **services** of `domain` package.  
+The services are used by ~~api handlers (REST) or~~ **resolvers** (GraphQL) in `api` package.  
+All the domain logic is in `domain` package alongside services that use them.  
+All domain models are in `models` package.  
 
 Packages:
-| Name        | Description                       |
-| ---         | ---                               |
-| domain      | all business logic                |
-| models      | all domain models                 |
-| api         | graphql api                       |
-| e2e         | e2e tests                         |
-| repository  | infrastructure                    |
-| utils       | functions independent from domain |
-| bdd         | bdd tests - gherkin language      |
+| Name        | Description                                 |
+| ---         | ---                                         |
+| api         | graphql api                                 |
+| bdd         | bdd tests in gherkin                        |
+| dev         | dev tools                                   |
+| domain      | business logic                              |
+| models      | contracts                                   |
+| pulumi      | infra code                                  |
+| repository  | database layer                              |
+| utils       | reusable functions independent from domain  |
 
 ## Getting started
 
-1. `go get`
-2. `go mod tidy`
-3. `go test ./...`
-3. `go build`
-4. `./cashflow`
+Prerequisite: have Docker installed.
 
-Endpoints URLs will be provided by the running process logs.
+Open two terminal windows and run these commands, one each
+```sh
+docker compose --env-file=../.env watch
+docker compose --env-file=../.env logs -f
+```
+
+Endpoints URLs will be provided in the logs.
+
+### Developing locally
+
+1. Setup Mysql = go to [Run MySQL locally](#run-mysql-locally)
+2. `go get`
+3. `go mod tidy`
+4. `go test ./...`
+5. `go build`
+6. `./cashflow`
 
 ## Debugging
 
@@ -47,7 +60,14 @@ Follow this : https://github.com/golang/vscode-go/wiki/debugging
 
 ## Features
 
-This project's whole functionnality set is documented in Gherkin natural language. You can find them in the `*.feature` files under `bdd/`.
+This project's whole functionality set is documented in Gherkin natural language. You can find them in the `*.feature` files under `bdd/`.
+
+### BDD
+
+BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
+[Godog](https://github.com/cucumber/godog/) library is used to run these tests.
+
+These tests are included in test run with `go test ./...` command from root.
 
 ## Graphql (graphqlgen)
 
@@ -60,58 +80,31 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 - All files under `api/graph/generated` will be regenerated
 - If the regeneration throws an error, check your schemas first and backup the resolver files and erase their contents for a clean slate and try again.
 
-## BDD
-
-BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
-[Godog](https://github.com/cucumber/godog/) library is used to run these tests.
-
-These tests are included in test run with `go test ./...` command from root.
-
 ## Database
 
 ### In memory
 
-For testing purposes, there's an in-memory strategy and for production, this app is set to use a mysql db.
+For testing purposes, there's an in-memory strategy.
 
 ### MySQL
 
+#### Run MySQL locally
+
 1. `brew install mysql`
 2. `brew services start mysql`
-3. `mysql -u root` (to quit, type `QUIT`)
-4. edit database connection string `username:password@tcp(host:port)/database_name`
+3. edit your .env file and make sure you got the correct database connection string `username:password@tcp(host:port)/database_name`
 
-```sh
-mysql> SHOW DATABASES;
-mysql> CREATE DATABASE cashflow;                        # to remove: DROP DATABASE cashflow;
-mysql> USE cashflow;
-mysql> CREATE TABLE transactions
-(
-  id              INT unsigned NOT NULL AUTO_INCREMENT, # Unique ID for the record
-  description     VARCHAR(200) NOT NULL,                # Transaction description
-  amount          decimal(10,2) NOT NULL,               # Transaction amount
-  date            DATE NOT NULL,                        # Date of the transaction
-  recurrency      VARCHAR(500) NOT NULL,                # Recurrency expression
-  PRIMARY KEY     (id)                                  # Make the id the primary key
-);
-mysql> SHOW TABLES;
-mysql> DESCRIBE transactions;
-mysql> CREATE TABLE balances
-(
-  amount          decimal(10,2) NOT NULL,               # Balance amount
-  date            DATE NOT NULL,                        # Balance date
-  PRIMARY KEY     (date)                                # Make the id the primary key
-);
-```
+You can perform all sorts of operations on the database with `mysql -u root` (to quit, type `QUIT`) 
 
 #### Connect locally
 
 ```sh
-mysql -u root -pnew_password cashflow
+mysql -u root -p<root-password> cashflow
 ```
 
 ## Infra
 
-The infra is on AWS written in pulumi.
+The infra is on AWS written with Pulumi in Go.
 
 ### Deployment
 
@@ -152,12 +145,3 @@ mysql -h cashflow-db9b3ad36.c9gia6eo0ryf.us-east-1.rds.amazonaws.com -u admin -p
 ```
 
 type `exit` to exit all instances.
-
-### Docker
-
-```sh
-docker build -t kaleidoscope18/cashflow:1 ./ # docker build -t <USER>/<CONTAINER>:<VERSION> ./
-docker run -p 8080:8080 kaleidoscope18/cashflow:1
-```
-
-Note: to cleanup old docker images and containers do `docker rm $(docker ps -a -q) && docker rmi $(docker images -a -q)`

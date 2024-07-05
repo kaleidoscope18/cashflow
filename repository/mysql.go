@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -12,17 +13,16 @@ type localDatabase struct {
 }
 
 func (repo *localDatabase) Init() error {
-	db, err := sql.Open("mysql", "root:new_password@tcp(127.0.0.1:3306)/cashflow")
+	user := os.Getenv("MYSQL_USER")
+	password := os.Getenv("MYSQL_USER_PASSWORD")
+	databaseName := os.Getenv("MYSQL_DATABASE_NAME")
+	host := os.Getenv("DB_HOST")
+
+	db, err := sql.Open("mysql", fmt.Sprintf(`%s:%s@tcp(%s)/%s`, user, password, host, databaseName))
 	if err != nil {
 		panic(err.Error())
 	}
 	repo.db = db
-
-	// Ping the database to verify connection
-	err = repo.db.Ping()
-	if err != nil {
-		return err
-	}
 
 	fmt.Println("Connected to MySQL database!")
 

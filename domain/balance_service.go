@@ -19,7 +19,7 @@ func NewBalanceService(repo *models.BalanceRepository) models.BalanceService {
 
 func (s *balanceService) WriteBalance(balance float64, date *string) (models.Balance, error) {
 	if date != nil {
-		newBalance, err := (*s.repository).InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(date))
+		newBalance, err := (*s.repository).InsertBalance(utils.RoundToTwoDigits(balance), utils.ParseDate(*date))
 		if err != nil {
 			return models.Balance{}, err
 		}
