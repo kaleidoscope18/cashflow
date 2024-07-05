@@ -2,9 +2,13 @@ package domain
 
 import (
 	"cashflow/models"
+	"cashflow/utils"
 	"fmt"
 	"testing"
 )
+
+var startDate = utils.ParseDateToTime("1999/12/30")
+var endDate = utils.ParseDateToTime("2000/01/11")
 
 var balances = []models.Balance{
 	{Date: "2000/01/01", Amount: 20},
@@ -143,7 +147,7 @@ func TestGetBalanceForTransaction(t *testing.T) {
 }
 
 func TestListTransactions(t *testing.T) {
-	result, _ := listTransactions(transactions, balances)
+	result, _ := listTransactions(transactions, balances, startDate, endDate)
 
 	output := fmt.Sprintln("Expected | Actual")
 	var fails = false

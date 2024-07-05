@@ -16,3 +16,9 @@ Feature: Managing transactions
         Given there is a chequing account
         When I list the transactions
         Then I should be able to see the transactions
+
+    Scenario: Adding a recurring transaction
+        Given there is a chequing account
+        When I add a recurring transaction to it
+        And I list the transactions between two dates
+        Then I should be able to see all recurring transactions

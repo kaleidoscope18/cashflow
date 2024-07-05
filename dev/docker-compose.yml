@@ -1,0 +1,53 @@
+version: '3.8'
+# test
+services:
+  db_service:
+    image: mysql:8.0
+    container_name: cashflow_mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE_NAME
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_USER_PASSWORD
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./seed.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 5
+      start_period: 10s
+
+  app_service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        WORKDIR: $WORKDIR
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: $WORKDIR
+        - action: rebuild
+          path: .
+          target: $WORKDIR
+          watch:
+            - "**/*.go"
+            - Dockerfile
+            - go.mod
+            - go.sum
+    container_name: cashflow_app
+    depends_on:
+      db_service:
+        condition: service_healthy
+    environment:
+      DB_HOST: db_service
+      DB_USER: $MYSQL_USER
+      DB_PASSWORD: $MYSQL_USER_PASSWORD
+      DB_NAME: $MYSQL_DATABASE_NAME
+    ports:
+      - "8080:8080"

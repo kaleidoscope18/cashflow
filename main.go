@@ -5,9 +5,17 @@ import (
 	"cashflow/domain"
 	"cashflow/models"
 	"cashflow/repository"
+	"log"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	tr, br, err := repository.Init(models.Local)
 	if err != nil {
 		panic("Could not initiate the app : " + err.Error())

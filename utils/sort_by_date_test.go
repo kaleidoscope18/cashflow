@@ -53,5 +53,4 @@ func TestSortByDateTransactions(t *testing.T) {
 			t.Errorf(`Wrong order, the balance's amount at %d should be %f but was %f`, i, orderedData[i].Amount, r.Amount)
 		}
 	}
-	fmt.Println(fmt.Sprint(result))
 }

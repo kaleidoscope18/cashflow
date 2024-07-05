@@ -117,7 +117,7 @@ var examples = [][]string{
 func TestParseDate(t *testing.T) {
 	for _, v := range examples {
 		want := regexp.MustCompile(v[1])
-		trueResult := ParseDate(&v[0])
+		trueResult := ParseDate(v[0])
 		if !want.MatchString(trueResult) {
 			t.Fatalf(`ParseDate("%s") should have given %s but resulted in %s instead`, v, want, trueResult)
 		}

@@ -50,10 +50,8 @@ func TestGraphQLApiE2E(t *testing.T) {
 		require.Equal(t, 2000.00, results.Balance2.Amount)
 
 		require.Equal(t, 6, len(results.Transactions))
-	})
 
-	t.Run("query listTransactions", func(t *testing.T) {
-		var results struct {
+		var listTransactionsResult struct {
 			ListTransactions []struct {
 				Id      string
 				Amount  float64
@@ -69,29 +67,27 @@ func TestGraphQLApiE2E(t *testing.T) {
 				balance
 				date
 			}
-		}`, &results)
+		}`, &listTransactionsResult)
 
-		require.Equal(t, "2022/10/27", results.ListTransactions[0].Date)
-		require.Equal(t, 885.00, results.ListTransactions[0].Balance)
+		require.Equal(t, "2022/10/27", listTransactionsResult.ListTransactions[0].Date)
+		require.Equal(t, 885.00, listTransactionsResult.ListTransactions[0].Balance)
 
-		require.Equal(t, "2022/11/01", results.ListTransactions[1].Date)
-		require.Equal(t, 768.00, results.ListTransactions[1].Balance)
+		require.Equal(t, "2022/11/01", listTransactionsResult.ListTransactions[1].Date)
+		require.Equal(t, 768.00, listTransactionsResult.ListTransactions[1].Balance)
 
-		require.Equal(t, "2022/11/01", results.ListTransactions[2].Date)
-		require.Equal(t, -565.00, results.ListTransactions[2].Balance)
+		require.Equal(t, "2022/11/01", listTransactionsResult.ListTransactions[2].Date)
+		require.Equal(t, -565.00, listTransactionsResult.ListTransactions[2].Balance)
 
-		require.Equal(t, "2022/11/04", results.ListTransactions[3].Date)
-		require.Equal(t, 1909.00, results.ListTransactions[3].Balance)
+		require.Equal(t, "2022/11/04", listTransactionsResult.ListTransactions[3].Date)
+		require.Equal(t, 1909.00, listTransactionsResult.ListTransactions[3].Balance)
 
-		require.Equal(t, "2022/11/15", results.ListTransactions[4].Date)
-		require.Equal(t, 4709.69, results.ListTransactions[4].Balance)
+		require.Equal(t, "2022/11/15", listTransactionsResult.ListTransactions[4].Date)
+		require.Equal(t, 4709.69, listTransactionsResult.ListTransactions[4].Balance)
 
-		require.Equal(t, "2022/11/16", results.ListTransactions[5].Date)
-		require.Equal(t, 3335.69, results.ListTransactions[5].Balance)
-	})
+		require.Equal(t, "2022/11/16", listTransactionsResult.ListTransactions[5].Date)
+		require.Equal(t, 3335.69, listTransactionsResult.ListTransactions[5].Balance)
 
-	t.Run("query listBalances", func(t *testing.T) {
-		var results struct {
+		var listBalancesResult struct {
 			ListBalances []models.Balance
 		}
 
@@ -100,13 +96,13 @@ func TestGraphQLApiE2E(t *testing.T) {
 				amount
 				date
 			}
-		}`, &results)
+		}`, &listBalancesResult)
 
-		require.Equal(t, "2022/10/15", results.ListBalances[0].Date)
-		require.Equal(t, 1000.00, results.ListBalances[0].Amount)
+		require.Equal(t, "2022/10/15", listBalancesResult.ListBalances[0].Date)
+		require.Equal(t, 1000.00, listBalancesResult.ListBalances[0].Amount)
 
-		require.Equal(t, "2022/11/03", results.ListBalances[1].Date)
-		require.Equal(t, 2000.00, results.ListBalances[1].Amount)
+		require.Equal(t, "2022/11/03", listBalancesResult.ListBalances[1].Date)
+		require.Equal(t, 2000.00, listBalancesResult.ListBalances[1].Amount)
 	})
 
 	t.Run("delete all", func(t *testing.T) {
