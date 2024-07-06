@@ -1,0 +1,10 @@
+# Exclude files from being watched
+
+dev/mysql-data/
+.vscode
+.dockerignore
+.gitignore
+.env.template
+cashflow
+README.md
+bdd/

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.Transaction, error) {
+func (repo *mysqlDatabase) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.Transaction, error) {
 	queryTemplate := template.Must(template.New("listTransactionsQueryTemplate").Parse(`
 		SELECT * FROM transactions 
 		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
@@ -53,7 +53,7 @@ func (repo *localDatabase) ListTransactions(ctx context.Context, from time.Time,
 	return transactions, nil
 }
 
-func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (string, error) {
+func (repo *mysqlDatabase) InsertTransaction(transaction models.Transaction) (string, error) {
 	result, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO transactions (amount, date, description, recurrency) 
 										VALUES (%.2f, "%s", "%s", "%s")`,
 		transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency))
@@ -65,7 +65,7 @@ func (repo *localDatabase) InsertTransaction(transaction models.Transaction) (st
 	return fmt.Sprint(id), err
 }
 
-func (repo *localDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {
+func (repo *mysqlDatabase) DeleteTransaction(ctx context.Context, id string) (string, error) {
 	result, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM transactions
 											 WHERE id = "%s";`, id))
 	if err != nil {

@@ -1,49 +1,43 @@
 package bdd
 
 import (
-	"context"
-
 	"github.com/cucumber/godog"
 )
 
-func thereIsAChequingAccount() error {
-	return nil
+func iAddABalanceToIt() error {
+	return godog.ErrPending
 }
 
-func iAddATransactionToIt() error {
-	return nil
+func iAddARecurringTransactionToIt() error {
+	return godog.ErrPending
 }
 
-func iShouldBeAbleToSeeTheTransactions() error {
-	return nil
+func iListTheTransactionsBetweenTwoDates() error {
+	return godog.ErrPending
 }
 
-func thereIsAnExistingTransactionInChequingAccount() error {
-	return nil
+func iShouldBeAbleToListTheBalances() error {
+	return godog.ErrPending
 }
 
-func iRemoveIt() error {
-	return nil
+func iShouldBeAbleToSeeAllRecurringTransactions() error {
+	return godog.ErrPending
 }
 
-func itShouldBeRemoved() error {
-	return nil
+func iShouldBeAbleToSeeTheTransactionsWithTheRightBalances() error {
+	return godog.ErrPending
 }
 
-func iListTheTransactions() error {
-	return nil
+func thereIsAnAccount() error {
+	return godog.ErrPending
 }
 
-func InitializeTransactionsScenario(ctx *godog.ScenarioContext) {
-	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		return ctx, nil
-	})
-
-	ctx.Step(`^there is a chequing account$`, thereIsAChequingAccount)
-	ctx.Step(`^I add a transaction to it$`, iAddATransactionToIt)
-	ctx.Step(`^I should be able to see the transactions$`, iShouldBeAbleToSeeTheTransactions)
-	ctx.Step(`^there is an existing transaction in chequing account$`, thereIsAnExistingTransactionInChequingAccount)
-	ctx.Step(`^I remove it$`, iRemoveIt)
-	ctx.Step(`^it should be removed$`, itShouldBeRemoved)
-	ctx.Step(`^I list the transactions$`, iListTheTransactions)
+func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
+	ctx.Step(`^I add a balance to it$`, iAddABalanceToIt)
+	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
+	ctx.Step(`^I list the transactions between two dates$`, iListTheTransactionsBetweenTwoDates)
+	ctx.Step(`^I should be able to list the balances$`, iShouldBeAbleToListTheBalances)
+	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
+	ctx.Step(`^I should be able to see the transactions with the right balances$`, iShouldBeAbleToSeeTheTransactionsWithTheRightBalances)
+	ctx.Step(`^there is an account$`, thereIsAnAccount)
 }

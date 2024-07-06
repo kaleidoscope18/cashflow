@@ -35,15 +35,27 @@ Packages:
 
 ## Getting started
 
-Prerequisite: have Docker installed.
+Prerequisite: Docker
 
 Open two terminal windows and run these commands, one each
 ```sh
-docker compose --env-file=../.env watch
-docker compose --env-file=../.env logs -f
+docker compose -f ./dev/docker-compose.yml --env-file=.env watch
+docker compose -f ./dev/docker-compose.yml logs -f
 ```
 
 Endpoints URLs will be provided in the logs.
+
+To shut down containers:
+
+```sh
+docker compose -f ./dev/docker-compose.yml --env-file=.env down
+```
+
+You might have to rebuild if you change docker compose's configs
+
+```sh
+docker compose -f ./dev/docker-compose.yml --env-file=.env build
+```
 
 ### Developing locally
 
@@ -64,10 +76,23 @@ This project's whole functionality set is documented in Gherkin natural language
 
 ### BDD
 
-BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.
+BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.  
 [Godog](https://github.com/cucumber/godog/) library is used to run these tests.
 
 These tests are included in test run with `go test ./...` command from root.
+
+You can run bdd only:
+```sh
+cd bdd/
+go test -test.v -test.run ^TestFeatures$
+```
+
+You can run one scenario at a time  
+(tip: previous command will list all scenarios)
+
+```sh
+go test -test.v -test.run ^TestFeatures/Adding_a_recurring_transaction$
+```
 
 ## Graphql (graphqlgen)
 

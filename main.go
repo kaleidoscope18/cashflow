@@ -16,12 +16,13 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	tr, br, err := repository.Init(models.Local)
+	err = repository.Init(models.Local)
 	if err != nil {
 		panic("Could not initiate the app : " + err.Error())
 	}
 	defer repository.Close()
 
+	tr, br := repository.GetRepos()
 	bs := domain.NewBalanceService(br)
 	ts := domain.NewTransactionService(tr, &bs)
 
