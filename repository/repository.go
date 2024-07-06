@@ -11,18 +11,20 @@ type singletons struct {
 	balancesRepository     models.BalanceRepository
 }
 
-var singleInstance *singletons
-var lock = &sync.Mutex{}
+var (
+	initReposOnce  sync.Once
+	singleInstance *singletons
+)
 
 func Init(storageType models.StorageStrategy) error {
-	lock.Lock()
-	defer lock.Unlock()
+	var err error
+	initReposOnce.Do(func() {
+		err = createRepos(storageType)
+	})
+	return err
+}
 
-	if singleInstance != nil {
-		fmt.Println("Repositories already created, do not call repository.Init() again")
-		return nil
-	}
-
+func createRepos(storageType models.StorageStrategy) error {
 	switch storageType {
 	case models.InMemory:
 		singleInstance = &singletons{
