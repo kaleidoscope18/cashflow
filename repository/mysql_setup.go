@@ -15,9 +15,17 @@ type mysqlDatabase struct {
 }
 
 var (
-	once  sync.Once
-	mutex sync.Mutex
+	initDatabaseOnce sync.Once
+	mutex            sync.Mutex
 )
+
+func (repo *mysqlDatabase) Init() error {
+	var err error
+	initDatabaseOnce.Do(func() {
+		err = open(repo)
+	})
+	return err
+}
 
 func open(repo *mysqlDatabase) error {
 	user := os.Getenv("MYSQL_USER")
@@ -46,17 +54,10 @@ func open(repo *mysqlDatabase) error {
 	return nil
 }
 
-func (repo *mysqlDatabase) Init() error {
-	var err error
-	once.Do(func() {
-		err = open(repo)
-	})
-	return err
-}
-
 func (repo *mysqlDatabase) Close() error {
 	mutex.Lock()
 	defer mutex.Unlock()
+
 	fmt.Println("Closing the mysql DB connection")
 	return repo.db.Close()
 }
