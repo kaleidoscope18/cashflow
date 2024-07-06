@@ -1,4 +1,4 @@
-Feature: Managing transactions
+Feature: Transactions
     As a customer
     I need to be able to manage my transactions
 

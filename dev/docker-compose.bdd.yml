@@ -11,4 +11,4 @@ services:
       - APP_HOST=app_service
       - APP_PORT=8080
     command: >
-              go test ./...
+              go test cashflow/bdd
