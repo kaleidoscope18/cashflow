@@ -7,11 +7,12 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/cucumber/godog v0.14.1
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/teambition/rrule-go v1.8.2
 	github.com/vektah/gqlparser/v2 v2.5.11
 )
+
+require github.com/spf13/pflag v1.0.5 // indirect
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

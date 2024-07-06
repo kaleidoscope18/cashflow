@@ -6,7 +6,19 @@ package graph
 
 import (
 	"cashflow/api/graph/generated"
+	"cashflow/repository"
+	"context"
 )
+
+// Health is the resolver for the health field.
+func (r *queryResolver) Health(ctx context.Context) (string, error) {
+	err := repository.Health()
+	if err != nil {
+		return "unhealthy", err
+	}
+
+	return "healthy", nil
+}
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }

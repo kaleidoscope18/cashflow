@@ -1,19 +1,11 @@
 package bdd
 
 import (
-	"cashflow/api/graph"
-	"cashflow/api/graph/generated"
-	"cashflow/domain"
-	"cashflow/models"
-	"cashflow/repository"
 	"context"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 )
@@ -47,38 +39,38 @@ func TestFeatures(t *testing.T) {
 
 func InitializeScenarios(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		InitializeClient()
+		// InitializeClient()
 		return ctx, nil
 	})
 
 	InitializeTransactionsScenarioStepDefs(ctx)
 }
 
-func InitializeClient() *client.Client {
-	err := repository.Init(models.InMemory)
-	if err != nil {
-		panic(err.Error())
-	}
+// func InitializeClient() *client.Client {
+// 	err := repository.Init(models.InMemory)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
 
-	tr, br := repository.GetRepos()
-	bs := domain.NewBalanceService(br)
-	ts := domain.NewTransactionService(tr, &bs)
+// 	r := repository.Get()
+// 	bs := domain.NewBalanceService(r)
+// 	ts := domain.NewTransactionService(r, &bs)
 
-	app := &models.App{
-		TransactionService: &ts,
-		BalanceService:     &bs,
-	}
+// 	app := &models.App{
+// 		TransactionService: &ts,
+// 		BalanceService:     &bs,
+// 	}
 
-	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}}))
-	client := client.New(server)
+// 	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{App: app}}))
+// 	client := client.New(server)
 
-	// verify if graphql introspection is good
-	var resp interface{}
-	client.MustPost(introspection.Query, &resp)
+// 	// verify if graphql introspection is good
+// 	var resp interface{}
+// 	client.MustPost(introspection.Query, &resp)
 
-	return client
-}
+// 	return client
+// }
 
-func CleanupClient() {
-	repository.Close()
-}
+// func CleanupClient() {
+// 	repository.Close()
+// }

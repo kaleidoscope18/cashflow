@@ -1,0 +1,14 @@
+services:
+  bdd_tests:
+    image: cashflow_image
+    pull_policy: never
+    volumes:
+      - ../bdd:$WORKDIR/bdd
+    depends_on:
+      app_service:
+        condition: service_healthy
+    environment:
+      - APP_HOST=app_service
+      - APP_PORT=8080
+    command: >
+              go test ./...

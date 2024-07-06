@@ -1,4 +1,7 @@
 scalar Date
 
-type Query
+type Query {
+    health: String!
+}
+
 type Mutation

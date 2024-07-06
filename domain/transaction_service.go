@@ -8,13 +8,13 @@ import (
 )
 
 type transactionService struct {
-	repository     *models.TransactionRepository
+	repository     *models.Repository
 	balanceService *models.BalanceService
 }
 
-func NewTransactionService(transactionRepository *models.TransactionRepository, balanceService *models.BalanceService) models.TransactionService {
+func NewTransactionService(repo *models.Repository, balanceService *models.BalanceService) models.TransactionService {
 	s := new(transactionService)
-	s.repository = transactionRepository
+	s.repository = repo
 	s.balanceService = balanceService
 	return s
 }

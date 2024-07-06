@@ -8,10 +8,10 @@ import (
 )
 
 type balanceService struct {
-	repository *models.BalanceRepository
+	repository *models.Repository
 }
 
-func NewBalanceService(repo *models.BalanceRepository) models.BalanceService {
+func NewBalanceService(repo *models.Repository) models.BalanceService {
 	s := new(balanceService)
 	s.repository = repo
 	return s
