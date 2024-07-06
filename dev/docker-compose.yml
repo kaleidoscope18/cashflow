@@ -1,5 +1,3 @@
-version: '3.8'
-# test
 services:
   db_service:
     image: mysql:8.0
@@ -30,16 +28,11 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
+          path: ..
           target: $WORKDIR
         - action: rebuild
-          path: .
+          path: ..
           target: $WORKDIR
-          watch:
-            - "**/*.go"
-            - Dockerfile
-            - go.mod
-            - go.sum
     container_name: cashflow_app
     depends_on:
       db_service:

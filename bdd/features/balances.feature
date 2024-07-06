@@ -7,7 +7,7 @@ Feature: Balances
         When I add a balance to it
         Then I should be able to list the balances
 
-    Scenario: Listing transactions
+    Scenario: Listing transactions with balances
         Given there is an account
         When I add a balance to it
         And I list the transactions

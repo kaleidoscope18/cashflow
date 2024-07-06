@@ -6,34 +6,33 @@ import (
 	"sync"
 )
 
-type singleton struct {
+type singletons struct {
 	transactionsRepository models.TransactionRepository
 	balancesRepository     models.BalanceRepository
 }
 
-var singleInstance *singleton
+var singleInstance *singletons
 var lock = &sync.Mutex{}
 
-func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *models.BalanceRepository, error) {
+func Init(storageType models.StorageStrategy) error {
 	lock.Lock()
 	defer lock.Unlock()
 
 	if singleInstance != nil {
 		fmt.Println("Repositories already created, do not call repository.Init() again")
-		tr, br := getRepos()
-		return tr, br, nil
+		return nil
 	}
 
 	switch storageType {
 	case models.InMemory:
-		singleInstance = &singleton{
+		singleInstance = &singletons{
 			transactionsRepository: &inMemoryTransactionDatabase{},
 			balancesRepository:     &inMemoryBalanceDatabase{},
 		}
 	case models.Local:
-		singleInstance = &singleton{
-			transactionsRepository: &localDatabase{},
-			balancesRepository:     &localDatabase{},
+		singleInstance = &singletons{
+			transactionsRepository: &mysqlDatabase{},
+			balancesRepository:     &mysqlDatabase{},
 		}
 	default:
 		panic(fmt.Sprintln("Did not create repositories, can not run the app"))
@@ -41,15 +40,14 @@ func Init(storageType models.StorageStrategy) (*models.TransactionRepository, *m
 
 	err := singleInstance.transactionsRepository.Init()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 	err = singleInstance.balancesRepository.Init()
 	if err != nil {
-		return nil, nil, Close()
+		return Close()
 	}
 
-	tr, br := getRepos()
-	return tr, br, nil
+	return nil
 }
 
 func Close() error {
@@ -64,7 +62,7 @@ func Close() error {
 	return nil
 }
 
-func getRepos() (*models.TransactionRepository, *models.BalanceRepository) {
+func GetRepos() (*models.TransactionRepository, *models.BalanceRepository) {
 	return &singleInstance.transactionsRepository,
 		&singleInstance.balancesRepository
 }

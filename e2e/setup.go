@@ -12,9 +12,13 @@ import (
 )
 
 func Initialize() *client.Client {
-	tr, br, _ := repository.Init(models.InMemory)
+	err := repository.Init(models.InMemory)
+	if err != nil {
+		panic(err.Error())
+	}
 	defer repository.Close()
 
+	tr, br := repository.GetRepos()
 	bs := domain.NewBalanceService(br)
 	ts := domain.NewTransactionService(tr, &bs)
 

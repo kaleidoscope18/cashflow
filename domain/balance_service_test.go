@@ -10,9 +10,10 @@ import (
 )
 
 func TestWriteBalanceWithoutDate(t *testing.T) {
-	_, br, _ := repository.Init(models.InMemory)
+	repository.Init(models.InMemory)
 	defer repository.Close()
 
+	_, br := repository.GetRepos()
 	service := NewBalanceService(br)
 
 	result, _ := service.WriteBalance(23.22, nil)
@@ -22,9 +23,10 @@ func TestWriteBalanceWithoutDate(t *testing.T) {
 }
 
 func TestWriteBalanceRoundedToTwoDecimalsWithDate(t *testing.T) {
-	_, br, _ := repository.Init(models.InMemory)
+	repository.Init(models.InMemory)
 	defer repository.Close()
 
+	_, br := repository.GetRepos()
 	service := NewBalanceService(br)
 
 	dateInput := "2000/01/02"
@@ -41,9 +43,10 @@ func TestWriteBalanceRoundedToTwoDecimalsWithDate(t *testing.T) {
 }
 
 func TestListBalances(t *testing.T) {
-	_, br, _ := repository.Init(models.InMemory)
+	repository.Init(models.InMemory)
 	defer repository.Close()
 
+	_, br := repository.GetRepos()
 	service := NewBalanceService(br)
 
 	expected := []models.Balance{
