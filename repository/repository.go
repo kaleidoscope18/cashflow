@@ -6,65 +6,48 @@ import (
 	"sync"
 )
 
-type singletons struct {
-	transactionsRepository models.TransactionRepository
-	balancesRepository     models.BalanceRepository
-}
-
 var (
-	initReposOnce  sync.Once
-	singleInstance *singletons
+	initReposOnce sync.Once
+	repository    models.Repository
 )
 
 func Init(storageType models.StorageStrategy) error {
 	var err error
 	initReposOnce.Do(func() {
-		err = createRepos(storageType)
+		err = createRepository(storageType)
 	})
 	return err
 }
 
-func createRepos(storageType models.StorageStrategy) error {
+func createRepository(storageType models.StorageStrategy) error {
 	switch storageType {
 	case models.InMemory:
-		singleInstance = &singletons{
-			transactionsRepository: &inMemoryTransactionDatabase{},
-			balancesRepository:     &inMemoryBalanceDatabase{},
-		}
+		repository = &inMemoryRepository{}
 	case models.Local:
-		singleInstance = &singletons{
-			transactionsRepository: &mysqlDatabase{},
-			balancesRepository:     &mysqlDatabase{},
-		}
+		repository = &mysqlRepository{}
 	default:
-		panic(fmt.Sprintln("Did not create repositories, can not run the app"))
+		panic(fmt.Sprintln("Did not create repository instance, can not run the app"))
 	}
 
-	err := singleInstance.transactionsRepository.Init()
+	err := repository.Init()
 	if err != nil {
 		return err
-	}
-	err = singleInstance.balancesRepository.Init()
-	if err != nil {
-		return Close()
 	}
 
 	return nil
 }
 
 func Close() error {
-	err := singleInstance.transactionsRepository.Close()
-	if err != nil {
-		return err
+	if repository == nil {
+		return nil
 	}
-	err = singleInstance.balancesRepository.Close()
-	if err != nil {
-		return err
-	}
-	return nil
+	return repository.Close()
 }
 
-func GetRepos() (*models.TransactionRepository, *models.BalanceRepository) {
-	return &singleInstance.transactionsRepository,
-		&singleInstance.balancesRepository
+func Get() *models.Repository {
+	return &repository
+}
+
+func Health() error {
+	return repository.Health()
 }

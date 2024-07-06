@@ -6,8 +6,6 @@ import (
 )
 
 type BalanceRepository interface {
-	Init() error
-	Close() error
 	ListBalances(from time.Time, to time.Time) ([]Balance, error)
 	InsertBalance(amount float64, date string) (Balance, error)
 	DeleteBalance(ctx context.Context, date string) error

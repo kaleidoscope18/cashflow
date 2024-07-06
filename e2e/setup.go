@@ -18,9 +18,9 @@ func Initialize() *client.Client {
 	}
 	defer repository.Close()
 
-	tr, br := repository.GetRepos()
-	bs := domain.NewBalanceService(br)
-	ts := domain.NewTransactionService(tr, &bs)
+	r := repository.Get()
+	bs := domain.NewBalanceService(r)
+	ts := domain.NewTransactionService(r, &bs)
 
 	app := &models.App{
 		TransactionService: &ts,

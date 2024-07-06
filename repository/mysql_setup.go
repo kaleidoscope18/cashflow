@@ -10,16 +10,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type mysqlDatabase struct {
-	db *sql.DB
+type mysqlRepository struct {
+	db    *sql.DB
+	mutex sync.RWMutex
 }
 
-var (
-	initDatabaseOnce sync.Once
-	mutex            sync.Mutex
-)
+var initDatabaseOnce sync.Once
 
-func (repo *mysqlDatabase) Init() error {
+func (repo *mysqlRepository) Init() error {
 	var err error
 	initDatabaseOnce.Do(func() {
 		err = open(repo)
@@ -27,7 +25,10 @@ func (repo *mysqlDatabase) Init() error {
 	return err
 }
 
-func open(repo *mysqlDatabase) error {
+func open(repo *mysqlRepository) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
 	user := os.Getenv("MYSQL_USER")
 	password := os.Getenv("MYSQL_USER_PASSWORD")
 	databaseName := os.Getenv("MYSQL_DATABASE_NAME")
@@ -50,14 +51,37 @@ func open(repo *mysqlDatabase) error {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	fmt.Println("Connected to MySQL database!")
+	fmt.Println("Connected to MySQL database")
 	return nil
 }
 
-func (repo *mysqlDatabase) Close() error {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (repo *mysqlRepository) Close() error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
 
-	fmt.Println("Closing the mysql DB connection")
+	fmt.Println("Closing the MySQL DB connection")
 	return repo.db.Close()
+}
+
+func (repo *mysqlRepository) Health() error {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	maxRetries := 3
+	retryDelay := time.Second * 2
+
+	var lastErr error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		err := repo.db.Ping()
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		if attempt < maxRetries {
+			time.Sleep(retryDelay)
+		}
+	}
+
+	return fmt.Errorf("failed to ping database after %d attempts: %w", maxRetries, lastErr)
 }

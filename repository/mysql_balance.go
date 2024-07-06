@@ -10,7 +10,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func (repo *mysqlDatabase) InsertBalance(amount float64, date string) (models.Balance, error) {
+func (repo *mysqlRepository) InsertBalance(amount float64, date string) (models.Balance, error) {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
 	_, err := repo.db.Exec(fmt.Sprintf(`INSERT INTO balances (amount, date) 
 										VALUES (%.2f, "%s") 
 										ON DUPLICATE KEY UPDATE
@@ -28,7 +31,10 @@ func (repo *mysqlDatabase) InsertBalance(amount float64, date string) (models.Ba
 	return balance, nil
 }
 
-func (repo *mysqlDatabase) ListBalances(from time.Time, to time.Time) ([]models.Balance, error) {
+func (repo *mysqlRepository) ListBalances(from time.Time, to time.Time) ([]models.Balance, error) {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
 	rows, err := repo.db.Query("SELECT * FROM balances;") // TODO filter with from and to + get the latest balance before from
 	if err != nil {
 		return make([]models.Balance, 0), err
@@ -53,7 +59,10 @@ func (repo *mysqlDatabase) ListBalances(from time.Time, to time.Time) ([]models.
 	return balances, nil
 }
 
-func (repo *mysqlDatabase) DeleteBalance(ctx context.Context, date string) error {
+func (repo *mysqlRepository) DeleteBalance(ctx context.Context, date string) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
 	result, err := repo.db.Exec(fmt.Sprintf(`DELETE FROM balances 
 										WHERE date = "%s";`, date))
 	if err != nil {

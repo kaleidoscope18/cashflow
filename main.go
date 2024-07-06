@@ -22,9 +22,9 @@ func main() {
 	}
 	defer repository.Close()
 
-	tr, br := repository.GetRepos()
-	bs := domain.NewBalanceService(br)
-	ts := domain.NewTransactionService(tr, &bs)
+	repo := repository.Get()
+	bs := domain.NewBalanceService(repo)
+	ts := domain.NewTransactionService(repo, &bs)
 
 	app := &models.App{
 		TransactionService: &ts,

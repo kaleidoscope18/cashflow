@@ -9,7 +9,8 @@ services:
       MYSQL_USER: $MYSQL_USER
       MYSQL_PASSWORD: $MYSQL_USER_PASSWORD
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      # uncomment next line for data persistence
+      # - ./mysql-data:/var/lib/mysql
       - ./seed.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
@@ -20,11 +21,13 @@ services:
       start_period: 10s
 
   app_service:
+    image: cashflow_image
+    pull_policy: never
     build:
       context: ..
       dockerfile: Dockerfile
       args:
-        WORKDIR: $WORKDIR
+        - WORKDIR=${WORKDIR}
     develop:
       watch:
         - action: sync
@@ -44,3 +47,9 @@ services:
       DB_NAME: $MYSQL_DATABASE_NAME
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8080/graphql", "-H", "Content-Type: application/json", "--data-raw", '{"query":"{ health }"}']
+      interval: 10s
+      timeout: 20s
+      retries: 5
+      start_period: 20s

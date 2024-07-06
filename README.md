@@ -37,7 +37,14 @@ Packages:
 
 Prerequisite: Docker
 
-Open two terminal windows and run these commands, one each
+Open a terminal window and run
+```sh
+docker compose -f ./dev/docker-compose.yml --env-file=.env up
+```
+
+and then you can enable/disable watch mode by using the "w" key while you develop.
+
+Alternative: open two terminal windows and run these commands, one each
 ```sh
 docker compose -f ./dev/docker-compose.yml --env-file=.env watch
 docker compose -f ./dev/docker-compose.yml logs -f

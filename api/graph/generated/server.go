@@ -69,6 +69,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Health           func(childComplexity int) int
 		ListBalances     func(childComplexity int, from *time.Time, to *time.Time) int
 		ListTransactions func(childComplexity int, from *time.Time, to *time.Time) int
 	}
@@ -90,6 +91,7 @@ type MutationResolver interface {
 	DeleteTransactions(ctx context.Context, ids []string) ([]string, error)
 }
 type QueryResolver interface {
+	Health(ctx context.Context) (string, error)
 	ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error)
 	ListTransactions(ctx context.Context, from *time.Time, to *time.Time) ([]*models.ComputedTransaction, error)
 }
@@ -226,6 +228,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteTransactions(childComplexity, args["ids"].([]string)), true
+
+	case "Query.health":
+		if e.complexity.Query.Health == nil {
+			break
+		}
+
+		return e.complexity.Query.Health(childComplexity), true
 
 	case "Query.listBalances":
 		if e.complexity.Query.ListBalances == nil {
@@ -407,7 +416,10 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../common.graphqls", Input: `scalar Date
 
-type Query
+type Query {
+    health: String!
+}
+
 type Mutation`, BuiltIn: false},
 	{Name: "../transactions.graphqls", Input: `enum Status {
   DONE
@@ -1241,6 +1253,50 @@ func (ec *executionContext) fieldContext_Mutation_deleteTransactions(ctx context
 	if fc.Args, err = ec.field_Mutation_deleteTransactions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_health(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Health(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_health(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -3737,6 +3793,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "health":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_health(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "listBalances":
 			field := field
 
