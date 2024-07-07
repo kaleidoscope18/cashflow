@@ -53,10 +53,12 @@ type ComplexityRoot struct {
 	}
 
 	ComputedTransaction struct {
-		Amount  func(childComplexity int) int
-		Balance func(childComplexity int) int
-		Date    func(childComplexity int) int
-		Id      func(childComplexity int) int
+		Amount      func(childComplexity int) int
+		Balance     func(childComplexity int) int
+		Date        func(childComplexity int) int
+		Description func(childComplexity int) int
+		Id          func(childComplexity int) int
+		Status      func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -150,12 +152,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ComputedTransaction.Date(childComplexity), true
 
+	case "ComputedTransaction.description":
+		if e.complexity.ComputedTransaction.Description == nil {
+			break
+		}
+
+		return e.complexity.ComputedTransaction.Description(childComplexity), true
+
 	case "ComputedTransaction.id":
 		if e.complexity.ComputedTransaction.Id == nil {
 			break
 		}
 
 		return e.complexity.ComputedTransaction.Id(childComplexity), true
+
+	case "ComputedTransaction.status":
+		if e.complexity.ComputedTransaction.Status == nil {
+			break
+		}
+
+		return e.complexity.ComputedTransaction.Status(childComplexity), true
 
 	case "Mutation.createBalance":
 		if e.complexity.Mutation.CreateBalance == nil {
@@ -437,7 +453,9 @@ type ComputedTransaction {
   id: ID!
   amount: Float!
   date: String!
+  description: String
   balance: Float!
+  status: Status!
 }
 
 input NewTransaction {
@@ -877,6 +895,47 @@ func (ec *executionContext) fieldContext_ComputedTransaction_date(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _ComputedTransaction_description(ctx context.Context, field graphql.CollectedField, obj *models.ComputedTransaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComputedTransaction_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComputedTransaction_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComputedTransaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ComputedTransaction_balance(ctx context.Context, field graphql.CollectedField, obj *models.ComputedTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ComputedTransaction_balance(ctx, field)
 	if err != nil {
@@ -916,6 +975,50 @@ func (ec *executionContext) fieldContext_ComputedTransaction_balance(_ context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComputedTransaction_status(ctx context.Context, field graphql.CollectedField, obj *models.ComputedTransaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComputedTransaction_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.Status)
+	fc.Result = res
+	return ec.marshalNStatus2cashflowᚋmodelsᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComputedTransaction_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComputedTransaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Status does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1407,8 +1510,12 @@ func (ec *executionContext) fieldContext_Query_listTransactions(ctx context.Cont
 				return ec.fieldContext_ComputedTransaction_amount(ctx, field)
 			case "date":
 				return ec.fieldContext_ComputedTransaction_date(ctx, field)
+			case "description":
+				return ec.fieldContext_ComputedTransaction_description(ctx, field)
 			case "balance":
 				return ec.fieldContext_ComputedTransaction_balance(ctx, field)
+			case "status":
+				return ec.fieldContext_ComputedTransaction_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComputedTransaction", field.Name)
 		},
@@ -3662,8 +3769,15 @@ func (ec *executionContext) _ComputedTransaction(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "description":
+			out.Values[i] = ec._ComputedTransaction_description(ctx, field, obj)
 		case "balance":
 			out.Values[i] = ec._ComputedTransaction_balance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._ComputedTransaction_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4486,6 +4600,22 @@ func (ec *executionContext) unmarshalNNewTransaction2ᚕᚖcashflowᚋapiᚋgrap
 func (ec *executionContext) unmarshalNNewTransaction2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransaction(ctx context.Context, v interface{}) (*NewTransaction, error) {
 	res, err := ec.unmarshalInputNewTransaction(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNStatus2cashflowᚋmodelsᚐStatus(ctx context.Context, v interface{}) (models.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := models.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStatus2cashflowᚋmodelsᚐStatus(ctx context.Context, sel ast.SelectionSet, v models.Status) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

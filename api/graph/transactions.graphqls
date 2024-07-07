@@ -14,7 +14,9 @@ type ComputedTransaction {
   id: ID!
   amount: Float!
   date: String!
+  description: String
   balance: Float!
+  status: Status!
 }
 
 input NewTransaction {

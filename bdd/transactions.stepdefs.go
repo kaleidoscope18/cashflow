@@ -222,8 +222,8 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	return ctx, nil
 }
 
-func iAddATransactionToIt(ctx context.Context) (context.Context, error) {
-	query := `{"query": "mutation {createTransaction(input: {amount: 1000, date: \"october 20, 2022\"})}"}`
+func iAddATransactionToIt(ctx context.Context, date string) (context.Context, error) {
+	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\"})}"}`, date)
 	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
 }
 
@@ -253,11 +253,43 @@ func iShouldSeeTheNewTransaction(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
+func iAddATransactionTodayAndAnotherLater(ctx context.Context) (context.Context, error) {
+	today := utils.GetTodayDate()
+	tomorrow := utils.ParseDate(utils.ParseDateToTime(today).AddDate(0, 0, 1).String())
+
+	query := fmt.Sprintf(`{"query": "mutation {createTransactions(input: [{amount:10, date: \"%s\"}, {amount: 20, date: \"%s\"}])}"}`, today, tomorrow)
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransactions", nil)
+}
+
+func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context) (context.Context, error) {
+	today := utils.ParseDateToTime(utils.GetTodayDate())
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+
+	for _, t := range transactions {
+		if utils.ParseDateToTime(t.Date).Before(today) && t.Status != models.StatusDone {
+			return ctx, fmt.Errorf("should have been status DONE but got status \"%s\"", string(t.Status))
+		}
+
+		if utils.ParseDateToTime(t.Date).Equal(today) && t.Status != models.StatusDone {
+			return ctx, fmt.Errorf("transaction on %s should have been status DONE but got status %s", t.Date, string(t.Status))
+		}
+
+		if utils.ParseDateToTime(t.Date).After(today) && t.Status != models.StatusTodo {
+			return ctx, fmt.Errorf("transaction on %s should have been status TODO but got status %s", t.Date, string(t.Status))
+		}
+	}
+
+	return ctx, nil
+}
+
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
-	ctx.Step(`^I add a transaction to it$`, iAddATransactionToIt)
+	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionToIt)
 	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
 	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
 	ctx.Step(`^I should see remaining transactions$`, iShouldSeeRemainingTransactions)
 	ctx.Step(`^I should see the new transaction$`, iShouldSeeTheNewTransaction)
+	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
+	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
+	ctx.Step(`^I should be able to see the correct statuses for each transaction$`, iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction)
 }

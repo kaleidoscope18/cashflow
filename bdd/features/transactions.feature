@@ -4,7 +4,7 @@ Feature: Transactions
 
     Scenario: Adding a transaction
         Given there is an account
-        When I add a transaction to it
+        When I add a transaction on "2022/10/20" to it
         And I list the transactions
         Then I should see the new transaction
     
@@ -20,3 +20,9 @@ Feature: Transactions
         When I add a recurring transaction to it
         And I list the transactions
         Then I should be able to see all recurring transactions
+
+    Scenario: Getting transactions statuses
+        Given there is an account with transactions
+        And I add a transaction today and another later
+        And I list the transactions
+        Then I should be able to see the correct statuses for each transaction
