@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	balanceDate        = contextKey("balance-date")
-	newTransactionsIds = contextKey("new-transactions-ids")
-	newTransactions    = contextKey("new-transactions")
+	balances     = contextKey("balances")
+	transactions = contextKey("transactions")
 )
 
 func thereIsAnAccount(ctx context.Context) (context.Context, error) {
@@ -25,17 +24,17 @@ func thereIsAnAccount(ctx context.Context) (context.Context, error) {
 func thereIsAnAccountWithTransactions(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation { createTransactions(input: [{amount: -10, date: \"october 27, 2022\"}, {amount: 100.10, date: \"november 15, 2022\", description: \"Paie\"}]) }"}`
 
-	var ids []string
-	err := PostGraphQL(ctx.Value(url).(string), query, "createTransactions", &ids)
-	return context.WithValue(ctx, newTransactionsIds, &ids), err
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransactions", nil)
 }
 
 func iAddABalanceToIt(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation { createBalance(input: {amount: 1000, date: \"October 30, 2022\"}) { date amount } }"}`
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createBalance", nil)
+}
 
-	var result models.Balance
-	return context.WithValue(ctx, balanceDate, "2022/10/30"),
-		PostGraphQL(ctx.Value(url).(string), query, "createBalance", &result)
+func iAddABalanceWithoutADateToIt(ctx context.Context) (context.Context, error) {
+	query := `{"query": "mutation { createBalance(input: {amount: 1000}) { date amount } }"}`
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createBalance", nil)
 }
 
 func iListTheTransactions(ctx context.Context) (context.Context, error) {
@@ -44,16 +43,21 @@ func iListTheTransactions(ctx context.Context) (context.Context, error) {
 	var result []models.ComputedTransaction
 	err := PostGraphQL(ctx.Value(url).(string), query, "listTransactions", &result)
 
-	return context.WithValue(ctx, newTransactions, &result), err
+	return context.WithValue(ctx, transactions, &result), err
+}
+
+func iListTheBalances(ctx context.Context) (context.Context, error) {
+	query := `{ "query": "query { listBalances(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { date amount } }" }`
+
+	var result []models.Balance
+	err := PostGraphQL(ctx.Value(url).(string), query, "listBalances", &result)
+
+	return context.WithValue(ctx, balances, &result), err
 }
 
 func itShouldBeInBalancesList(ctx context.Context) (context.Context, error) {
-	query := `{ "query": "query { listBalances(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { date amount } }" }`
-
-	var balances []models.Balance
-	PostGraphQL(ctx.Value(url).(string), query, "listBalances", &balances)
-
-	for _, balance := range balances {
+	b := *ctx.Value(balances).(*[]models.Balance)
+	for _, balance := range b {
 		if balance.Date == "2022/10/30" {
 			return ctx, nil
 		}
@@ -62,8 +66,21 @@ func itShouldBeInBalancesList(ctx context.Context) (context.Context, error) {
 	return ctx, errors.New("balance with date \"2022/10/30\" was not found")
 }
 
+func theNewBalanceShouldHaveTodaysDate(ctx context.Context) (context.Context, error) {
+	today := utils.GetTodayDate()
+	b := *ctx.Value(balances).(*[]models.Balance)
+
+	for _, balance := range b {
+		if balance.Date == today {
+			return ctx, nil
+		}
+	}
+
+	return ctx, errors.New("balance for today was not found")
+}
+
 func iShouldBeAbleToSeeTheTransactionsWithTheRightBalances(ctx context.Context) (context.Context, error) {
-	transactions := ctx.Value(newTransactions).(*[]models.ComputedTransaction)
+	transactions := ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	if len(*transactions) != 2 {
 		return ctx, fmt.Errorf("There should only have been 2 transactions, got %d", len(*transactions))
@@ -71,25 +88,6 @@ func iShouldBeAbleToSeeTheTransactionsWithTheRightBalances(ctx context.Context) 
 
 	if (*transactions)[0].Balance != -10.00 || (*transactions)[1].Balance != 1100.10 {
 		return ctx, fmt.Errorf("The transactions should have balances of -10 and 1100.10, but were %.2f and %.2f", (*transactions)[0].Balance, (*transactions)[1].Balance)
-	}
-
-	return ctx, nil
-}
-
-func iAddABalanceWithoutADateToIt(ctx context.Context) (context.Context, error) {
-	query := `{"query": "mutation { createBalance(input: {amount: 1000}) { date amount } }"}`
-
-	var result models.Balance
-
-	err := PostGraphQL(ctx.Value(url).(string), query, "createBalance", &result)
-	return context.WithValue(ctx, balanceDate, result.Date), err
-}
-
-func theNewBalanceShouldHaveTodaysDate(ctx context.Context) (context.Context, error) {
-	balanceDate := ctx.Value(balanceDate).(string)
-
-	if balanceDate != utils.GetTodayDate() {
-		return ctx, fmt.Errorf("date was supposed to be %s but was %s", utils.GetTodayDate(), balanceDate)
 	}
 
 	return ctx, nil
@@ -104,12 +102,13 @@ func InitializeBalancesScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^there is an account with transactions$`, thereIsAnAccountWithTransactions)
 	ctx.Step(`^there is an account$`, thereIsAnAccount)
 	ctx.Step(`^I add a balance to it$`, iAddABalanceToIt)
+	ctx.Step(`^I list the balances$`, iListTheBalances)
 	ctx.Step(`^I list the transactions$`, iListTheTransactions)
 	ctx.Step(`^I should be able to see the transactions with the right balances$`, iShouldBeAbleToSeeTheTransactionsWithTheRightBalances)
 
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if ctx.Value(newTransactions) != nil {
-			transactionsToDelete := *ctx.Value(newTransactions).(*[]models.ComputedTransaction)
+		if ctx.Value(transactions) != nil {
+			transactionsToDelete := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 			ids := make([]string, len(transactionsToDelete))
 			for i, transaction := range transactionsToDelete {
 				ids[i] = transaction.Id
@@ -118,7 +117,15 @@ func InitializeBalancesScenarioStepDefs(ctx *godog.ScenarioContext) {
 
 			query := fmt.Sprintf(`{"query": "mutation { deleteTransactions(ids: %s) }"}`, strings.Replace(string(jsonBytes), `"`, `\"`, -1))
 			PostGraphQL(ctx.Value(url).(string), query, "deleteTransactions", nil)
-			ctx = context.WithValue(ctx, newTransactions, nil)
+			ctx = context.WithValue(ctx, transactions, nil)
+		}
+
+		if ctx.Value(balances) != nil {
+			balancesToDelete := *ctx.Value(balances).(*[]models.Balance)
+			for _, b := range balancesToDelete {
+				query := fmt.Sprintf(`{"query": "mutation { deleteBalance(date: \"%s\") }"}`, b.Date)
+				PostGraphQL(ctx.Value(url).(string), query, "deleteBalance", nil)
+			}
 		}
 
 		return ctx, nil

@@ -6,11 +6,13 @@ Feature: Balances
     Scenario: Adding a balance
         Given there is an account
         When I add a balance to it
+        And I list the balances
         Then it should be in balances list
 
     Scenario: Adding a balance without a date
         Given there is an account
         When I add a balance without a date to it
+        And I list the balances
         Then the new balance should have today's date
 
     Scenario: Listing transactions with balances
