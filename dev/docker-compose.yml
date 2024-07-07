@@ -21,11 +21,11 @@ services:
       start_period: 10s
 
   app_service:
-    image: cashflow_image
+    image: cashflow_image:${BUILD_VERSION:-dev}
     pull_policy: never
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.debug
       args:
         - WORKDIR=${WORKDIR}
     develop:
@@ -46,6 +46,8 @@ services:
       DB_PASSWORD: $MYSQL_USER_PASSWORD
       DB_NAME: $MYSQL_DATABASE_NAME
     ports:
+      - "3000:3000"
+      - "4000:4000"
       - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:8080/graphql", "-H", "Content-Type: application/json", "--data-raw", '{"query":"{ health }"}']

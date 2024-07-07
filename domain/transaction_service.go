@@ -31,7 +31,7 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	}
 
 	results, err := listTransactions(transactions, balances, from, to)
-	return utils.SortByDate(results), err
+	return results, err
 }
 
 func (s *transactionService) WriteTransaction(date string, amount float64, description string, recurrency string) (string, error) {

@@ -1,6 +1,6 @@
 services:
   bdd_tests:
-    image: cashflow_image
+    image: cashflow_image:${BUILD_VERSION:-dev}
     pull_policy: never
     volumes:
       - ../bdd:$WORKDIR/bdd
@@ -11,4 +11,4 @@ services:
       - APP_HOST=app_service
       - APP_PORT=8080
     command: >
-              go test cashflow/bdd
+              go test -v cashflow/bdd

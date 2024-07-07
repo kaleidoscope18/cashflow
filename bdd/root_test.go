@@ -2,25 +2,27 @@ package bdd
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"github.com/joho/godotenv"
 )
 
-var options = godog.Options{
-	Output:    colors.Colored(os.Stdout),
-	Format:    "pretty",
-	Randomize: time.Now().UTC().UnixNano(),
-}
-
-func init() {
-	godog.BindCommandLineFlags("godog.", &options)
-}
+var (
+	url = contextKey("url")
+)
 
 func TestBDD(t *testing.T) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	suite := godog.TestSuite{
 		ScenarioInitializer: InitializeScenarios,
 		Options: &godog.Options{
@@ -39,7 +41,8 @@ func TestBDD(t *testing.T) {
 
 func InitializeScenarios(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		return ctx, nil
+		graphURL := fmt.Sprintf("http://%s:%s/graphql", os.Getenv("APP_HOST"), os.Getenv("APP_PORT"))
+		return context.WithValue(ctx, url, graphURL), nil
 	})
 
 	InitializeTransactionsScenarioStepDefs(ctx)

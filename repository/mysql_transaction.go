@@ -3,6 +3,7 @@ package repository
 import (
 	"bytes"
 	"cashflow/models"
+	"cashflow/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -15,20 +16,18 @@ func (repo *mysqlRepository) ListTransactions(ctx context.Context, from time.Tim
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	queryTemplate := template.Must(template.New("listTransactionsQueryTemplate").Parse(`
-		SELECT * FROM transactions 
-		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
-		ORDER BY date ASC';
-	`))
-
 	var query bytes.Buffer
 	data := map[string]interface{}{
 		"from": from,
 		"to":   to,
 	}
-	err := queryTemplate.Execute(&query, data)
+	err := template.Must(template.New("ListTransactions").Parse(`
+		SELECT * FROM transactions 
+		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
+		ORDER BY date ASC';
+	`)).Execute(&query, data)
 	if err != nil {
-		log.Printf("Failed to execute listTransactionsQueryTemplate: %v", err)
+		log.Printf("Failed to execute ListTransactions: %v", err)
 		return nil, err
 	}
 
@@ -46,6 +45,7 @@ func (repo *mysqlRepository) ListTransactions(ctx context.Context, from time.Tim
 		if err != nil {
 			return make([]models.Transaction, 0), err
 		}
+		transaction.Date = utils.ParseDate(transaction.Date)
 		transactions = append(transactions, transaction)
 	}
 

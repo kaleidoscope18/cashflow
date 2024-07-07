@@ -49,8 +49,8 @@ func TestListBalances(t *testing.T) {
 		{Date: "2000/01/05", Amount: 100},
 	}
 
-	service.WriteBalance(expected[1].Amount, &expected[1].Date)
 	service.WriteBalance(expected[0].Amount, &expected[0].Date)
+	service.WriteBalance(expected[1].Amount, &expected[1].Date)
 
 	result, _ := service.ListBalances(time.Now(), time.Now())
 
