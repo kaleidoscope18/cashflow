@@ -9,7 +9,7 @@ import (
 )
 
 func PostGraphQL(url string, query string, queryName string, result interface{}) error {
-	fmt.Println(query)
+	// fmt.Println(query)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
 	req.Header.Set("Content-Type", "application/json")
 

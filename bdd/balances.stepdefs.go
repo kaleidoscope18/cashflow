@@ -45,14 +45,14 @@ func theNewBalanceShouldHaveTodaysDate(ctx context.Context) (context.Context, er
 }
 
 func iShouldBeAbleToSeeTheTransactionsWithTheRightBalances(ctx context.Context) (context.Context, error) {
-	transactions := ctx.Value(transactions).(*[]models.ComputedTransaction)
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
-	if len(*transactions) != 2 {
-		return ctx, fmt.Errorf("there should only have been 2 transactions, got %d", len(*transactions))
+	if len(transactions) != 2 {
+		return ctx, fmt.Errorf("there should only have been 2 transactions, got %d", len(transactions))
 	}
 
-	if (*transactions)[0].Balance != -10.00 || (*transactions)[1].Balance != 1100.10 {
-		return ctx, fmt.Errorf("transactions should have balances of -10 and 1100.10, but were %.2f and %.2f", (*transactions)[0].Balance, (*transactions)[1].Balance)
+	if (transactions)[0].Balance != -10.00 || (transactions)[1].Balance != 1100.10 {
+		return ctx, fmt.Errorf("transactions should have balances of -10 and 1100.10, but were %.2f and %.2f", (transactions)[0].Balance, (transactions)[1].Balance)
 	}
 
 	return ctx, nil
