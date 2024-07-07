@@ -145,6 +145,5 @@ type `exit` to exit all instances.
 
 ## TODO
 
-- e2e should maybe become bdd tests, e2e should only apply when there's also a front-end (playwright)
 - add request context with tracing through the whole layers
 - setup robust logging
