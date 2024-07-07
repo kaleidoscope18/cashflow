@@ -2,7 +2,6 @@ package bdd
 
 import (
 	"cashflow/models"
-	"cashflow/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -38,7 +37,6 @@ func cleanupBalances(ctx context.Context) context.Context {
 	PostGraphQL(ctx.Value(url).(string), query, "listBalances", &result)
 
 	if len(result) != 0 {
-		utils.PrintJson(result) // not always deleted shit...
 		for _, b := range result {
 			query := fmt.Sprintf(`{"query": "mutation { deleteBalance(date: \"%s\") }"}`, b.Date)
 			PostGraphQL(ctx.Value(url).(string), query, "deleteBalance", nil)
