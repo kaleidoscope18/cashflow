@@ -13,10 +13,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var (
-	url = contextKey("url")
-)
-
 func TestBDD(t *testing.T) {
 	err := godotenv.Load("../.env")
 	if err != nil {

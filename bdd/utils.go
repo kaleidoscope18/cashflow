@@ -8,12 +8,6 @@ import (
 	"net/http"
 )
 
-type contextKey string
-
-func (c contextKey) String() string {
-	return "bdd context key - " + string(c)
-}
-
 func PostGraphQL(url string, query string, queryName string, result interface{}) error {
 	fmt.Println(query)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))

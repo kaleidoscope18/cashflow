@@ -4,17 +4,10 @@ import (
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/cucumber/godog"
-)
-
-var (
-	balances     = contextKey("balances")
-	transactions = contextKey("transactions")
 )
 
 func thereIsAnAccount(ctx context.Context) (context.Context, error) {
@@ -107,27 +100,8 @@ func InitializeBalancesScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I should be able to see the transactions with the right balances$`, iShouldBeAbleToSeeTheTransactionsWithTheRightBalances)
 
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if ctx.Value(transactions) != nil {
-			transactionsToDelete := *ctx.Value(transactions).(*[]models.ComputedTransaction)
-			ids := make([]string, len(transactionsToDelete))
-			for i, transaction := range transactionsToDelete {
-				ids[i] = transaction.Id
-			}
-			jsonBytes, _ := json.Marshal(ids)
-
-			query := fmt.Sprintf(`{"query": "mutation { deleteTransactions(ids: %s) }"}`, strings.Replace(string(jsonBytes), `"`, `\"`, -1))
-			PostGraphQL(ctx.Value(url).(string), query, "deleteTransactions", nil)
-			ctx = context.WithValue(ctx, transactions, nil)
-		}
-
-		if ctx.Value(balances) != nil {
-			balancesToDelete := *ctx.Value(balances).(*[]models.Balance)
-			for _, b := range balancesToDelete {
-				query := fmt.Sprintf(`{"query": "mutation { deleteBalance(date: \"%s\") }"}`, b.Date)
-				PostGraphQL(ctx.Value(url).(string), query, "deleteBalance", nil)
-			}
-		}
-
+		ctx = cleanupTransactions(ctx)
+		ctx = cleanupBalances(ctx)
 		return ctx, nil
 	})
 }
