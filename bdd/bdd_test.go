@@ -41,6 +41,13 @@ func InitializeScenarios(ctx *godog.ScenarioContext) {
 		return context.WithValue(ctx, url, graphURL), nil
 	})
 
+	InitializeCommonStepDefs(ctx)
 	InitializeTransactionsScenarioStepDefs(ctx)
 	InitializeBalancesScenarioStepDefs(ctx)
+
+	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		ctx = cleanupTransactions(ctx)
+		ctx = cleanupBalances(ctx)
+		return ctx, nil
+	})
 }

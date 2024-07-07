@@ -12,13 +12,14 @@ Repositories are injected into the **services** of `domain` package.
 The services are used by **resolvers** (GraphQL) in `api` package.  
 All the domain logic is in `domain` package alongside services that use them.  
 All domain models are in `models` package.  
+For testing ONLY purposes, there's an in-memory strategy, but the app connects to a MySQL database.  
 
 Packages:
 | Name        | Description                                 |
 | ---         | ---                                         |
 | api         | graphql api                                 |
 | bdd         | bdd tests in gherkin                        |
-| dev         | dev tools                                   |
+| dev         | dev tools (docker compose)                  |
 | domain      | business logic                              |
 | models      | contracts                                   |
 | pulumi      | infra code                                  |
@@ -81,22 +82,6 @@ go build                                        # build the binary
 ./cashflow                                      # run the binary
 ```
 
-## Database
-
-### In memory
-
-For testing ONLY purposes, there's an in-memory strategy.
-
-### MySQL
-
-#### Run MySQL locally
-
-1. `brew install mysql`
-2. `brew services start mysql`
-3. setup your database based on `dev/.seed.sql`, easy way to connect is via `mysql -u root`
-4. edit your .env file to connect your app to your local db
-5. run the app
-
 ## Infrastructure
 
 The infra is on AWS written with Pulumi in Go.
@@ -107,41 +92,9 @@ The infra is on AWS written with Pulumi in Go.
 
 ```sh
 cd pulumi/
-pulumi stack select <environment>
+pulumi stack select <dev | prod>
 pulumi up
 ```
-
-### SSH
-
-To connect to the public ec2 instance (bastion host)
-
-```sh
-ssh -i ~/.ssh/id_rsa ec2-user@<ec2 instance public ip>
-```
-
-Install mysql client with:
-
-```sh
-sudo su -
-dnf -y localinstall https://dev.mysql.com/get/mysql80-community-release-el9-4.noarch.rpm
-dnf -y install mysql mysql-community-client
-exit
-```
-
-Optional: verify rds endpoint
-
-```sh
-sudo yum install -y nc
-nc -zv <rds endpoint> 3306
-```
-
-Then you can connect to the mysql database with the pre-established credentials, i.e.:
-
-```sh
-mysql -h cashflow-db9b3ad36.c9gia6eo0ryf.us-east-1.rds.amazonaws.com -u admin -p
-```
-
-type `exit` to exit all instances.
 
 ## TODO
 
