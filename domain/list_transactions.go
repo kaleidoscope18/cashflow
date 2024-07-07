@@ -2,6 +2,7 @@ package domain
 
 import (
 	"cashflow/domain/recurrency"
+	"cashflow/domain/status"
 	"cashflow/models"
 	"cashflow/utils"
 	"errors"
@@ -23,7 +24,7 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 		tCopy := t
 		enrichedTransactions[i] = models.ComputedTransaction{
 			Transaction: &tCopy,
-			Status:      utils.GetStatusFromDate(utils.GetTodayDate(), t.Date),
+			Status:      status.GetStatusFromDate(utils.GetTodayDate(), t.Date),
 		}
 
 		switch {
