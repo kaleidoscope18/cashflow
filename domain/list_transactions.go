@@ -15,12 +15,12 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 	transactionsToEnrich := append(withoutRecurrency, recurrencyOffsprings...)
 
 	enrichedTransactions := make([]models.ComputedTransaction, len(transactionsToEnrich))
-	for i, t := range transactionsToEnrich { // the problem is that t is mutable
+	for i, t := range transactionsToEnrich {
 		balanceOnSameDay := getBalanceOnSameDay(t.Date, balances)
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
-		item := t // Capture happens here
+		item := t
 		go func() {
 			enrichedTransactions[i] = models.ComputedTransaction{
 				Transaction: &item,
