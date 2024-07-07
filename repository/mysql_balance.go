@@ -1,10 +1,14 @@
 package repository
 
 import (
+	"bytes"
 	"cashflow/models"
+	"cashflow/utils"
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"text/template"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -35,7 +39,23 @@ func (repo *mysqlRepository) ListBalances(from time.Time, to time.Time) ([]model
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, err := repo.db.Query("SELECT * FROM balances;") // TODO filter with from and to + get the latest balance before from
+	var query bytes.Buffer
+	data := map[string]interface{}{
+		"from": from,
+		"to":   to,
+	}
+	err := template.Must(template.New("ListBalances").Parse(`
+		SELECT * FROM balances 
+		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
+		ORDER BY date ASC';
+	`)).Execute(&query, data)
+
+	if err != nil {
+		log.Printf("Failed to execute ListBalances: %v", err)
+		return nil, err
+	}
+
+	rows, err := repo.db.Query(query.String())
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}
@@ -49,6 +69,7 @@ func (repo *mysqlRepository) ListBalances(from time.Time, to time.Time) ([]model
 			return make([]models.Balance, 0), err
 		}
 
+		balance.Date = utils.ParseDate(balance.Date)
 		balances = append(balances, balance)
 	}
 

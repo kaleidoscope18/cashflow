@@ -1,12 +1,7 @@
 # Cashflow
 
 Ledger application that allows you to know if your account will be overdraft someday.  
-
-## TODO
-
-- e2e should maybe become bdd tests, e2e should only apply when there's also a front-end (playwright)
-- add request context with tracing through the whole layers
-- setup robust logging
+All features for this app are described in files under `bdd/features/`.
 
 ## Structure
 
@@ -37,23 +32,14 @@ Prerequisite: Docker
 Open a terminal window and run
 
 ```sh
-docker compose -f ./dev/docker-compose.yml --env-file=.env up
+docker compose -f ./dev/docker-compose.yml --env-file=.env build            # for initial build, or if you change environment variables, docker or docker compose configs
+docker compose -f ./dev/docker-compose.yml --env-file=.env up               # run the stack in containers, with debug
+docker compose -f ./dev/docker-compose.yml --env-file=.env down             # stop / remove containers
 ```
 
-and then you can enable/disable watch mode by using the "w" key while you develop.
+You can enable/disable watch mode by using the "w" key while you develop.
+Files that are not in .dockerignore will be watched.
 Endpoints URLs will be provided in the logs.
-
-To shut down containers:
-
-```sh
-docker compose -f ./dev/docker-compose.yml --env-file=.env down
-```
-
-You might have to rebuild if you change docker compose's configs:
-
-```sh
-docker compose -f ./dev/docker-compose.yml --env-file=.env build
-```
 
 ### GraphQL
 
@@ -66,23 +52,9 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 - All files under `api/graph/generated` will be regenerated
 - If the regeneration throws an error, check your schemas first and backup the resolver files and erase their contents for a clean slate and try again.
 
-### Local setup
-
-1. `go get`
-2. `go mod tidy`
-3. `go build`
-4. `go test -tags='!bdd,!e2e' ./...` <!-- skip bdd and e2e tests -->
-5. `./cashflow`
-
-(If you use the MySQL storage strategy, see [Run MySQL locally](#run-mysql-locally))
-
 ### Debugging
 
-Follow this : <https://github.com/golang/vscode-go/wiki/debugging>
-
-## Features
-
-This project's whole functionality set is documented in Gherkin natural language. You can find them in the `*.feature` files under `bdd/`.
+When the containers are running in docker, launch `Go Containerized Debug` VSCode configuration.
 
 ### BDD
 
@@ -95,17 +67,18 @@ docker compose -f ./dev/docker-compose.yml -f ./dev/docker-compose.bdd.yml --env
 
 #### Running BDD locally
 
-You can run bdd tests locally when the app is (already) running on 8080:
+You can run bdd tests locally when the app is (already) running on 8080.
+Click on run / debug above the function named `TestBDD` if you have VSCode with the Go plugin.  
+
+### Local commands
 
 ```sh
-go test cashflow/bdd
-```
-
-You can run one scenario at a time  
-(tip: previous command will list all scenarios)
-
-```sh
-go test -run ^TestFeatures/Adding_a_recurring_transaction$ cashflow/bdd
+go test ./... -run 'Test[^BDD]'                 # run unit tests
+go test ./... -run 'TestBDD'                    # run bdd tests
+go get                                          # install dependencies
+go mod tidy                                     # cleanup dependencies
+go build                                        # build the binary
+./cashflow                                      # run the binary
 ```
 
 ## Database
@@ -121,8 +94,8 @@ For testing ONLY purposes, there's an in-memory strategy.
 1. `brew install mysql`
 2. `brew services start mysql`
 3. setup your database based on `dev/.seed.sql`, easy way to connect is via `mysql -u root`
-4. edit your .env file to connect your app to the local db
-5. run the app, see [Local setup](#local-setup)
+4. edit your .env file to connect your app to your local db
+5. run the app
 
 ## Infrastructure
 
@@ -169,3 +142,9 @@ mysql -h cashflow-db9b3ad36.c9gia6eo0ryf.us-east-1.rds.amazonaws.com -u admin -p
 ```
 
 type `exit` to exit all instances.
+
+## TODO
+
+- e2e should maybe become bdd tests, e2e should only apply when there's also a front-end (playwright)
+- add request context with tracing through the whole layers
+- setup robust logging

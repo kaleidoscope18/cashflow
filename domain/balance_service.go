@@ -39,7 +39,7 @@ func (s *balanceService) ListBalances(from time.Time, to time.Time) ([]models.Ba
 		return make([]models.Balance, 0), err
 	}
 
-	return utils.SortByDate(result), nil
+	return result, nil
 }
 
 func (s *balanceService) DeleteBalance(ctx context.Context, date string) error {
