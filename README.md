@@ -42,6 +42,20 @@ You can enable/disable watch mode by using the "w" key while you develop.
 Files that are not in .dockerignore will be watched.
 Endpoints URLs will be provided in the logs.
 
+### Development flow
+
+I develop this app in a TDD way (red-green-refactor), here's how:  
+
+- I always keep my dev containers running (see [Developing](#developing) above).  
+- I first write the scenarios(features) I need to code in a `*.feature` file.  
+- Then I run the BDD tests via to print the step defs I need to implement (see [BDD](#bdd)).  
+- I implement them to a `*.stepdef.go` file.  
+    The test will be failing first (red).
+- I implement the code to make the tests pass (green).  
+    I also implement unit tests, but I do not always do TDD here.
+- I make sure the tests are not flaky by running them many times.
+- I then refactor to make the code pretty :D.
+
 ### GraphQL
 
 When changes are made in `.graphqls` files, you will need to regenerate code with graphqlgen by using this command:
@@ -55,7 +69,15 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 
 ### Debugging
 
-When the containers are running in docker, launch `Go Containerized Debug` VSCode configuration.
+When the containers are running in docker, launch `Go Containerized Debug` VSCode configuration.  
+
+Fyi, here my installed VSCode Extensions:  
+
+- Go by Go Team at Google  
+- markdownlint  
+- GraphQL: Syntax Highlighting  
+- Prettier - Code formatter  
+- Snippets and Syntax Highlight for Gherkin (Cucumber) by Euclidity  
 
 ### BDD
 
@@ -68,7 +90,7 @@ docker compose -f ./dev/docker-compose.yml -f ./dev/docker-compose.bdd.yml --env
 
 #### Running BDD locally
 
-You can run bdd tests locally when the app is (already) running on 8080.
+You can run bdd tests locally when the app is (already) running on 8080.  
 Click on run / debug above the function named `TestBDD` if you have VSCode with the Go plugin.  
 
 ### Local commands
