@@ -227,15 +227,18 @@ func iAddATransactionToIt(ctx context.Context) (context.Context, error) {
 	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
 }
 
-func thereIsAnExistingTransactionInChequingAccount(ctx context.Context) (context.Context, error) {
-	return ctx, nil
+func iRemoveATransaction(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	query := fmt.Sprintf(`{"query": "mutation {deleteTransaction(id: \"%s\")}"}`, transactions[0].Id)
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
 }
 
-func iRemoveIt(ctx context.Context) (context.Context, error) {
-	return ctx, nil
-}
+func iShouldSeeRemainingTransactions(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
-func iShouldNotSeeTheNewTransaction(ctx context.Context) (context.Context, error) {
+	if len(transactions) != 1 {
+		return ctx, fmt.Errorf("expected 1 transaction, got %d", len(transactions))
+	}
 	return ctx, nil
 }
 
@@ -253,9 +256,8 @@ func iShouldSeeTheNewTransaction(ctx context.Context) (context.Context, error) {
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
 	ctx.Step(`^I add a transaction to it$`, iAddATransactionToIt)
-	ctx.Step(`^I remove it$`, iRemoveIt)
+	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
 	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
-	ctx.Step(`^I should not see the new transaction$`, iShouldNotSeeTheNewTransaction)
+	ctx.Step(`^I should see remaining transactions$`, iShouldSeeRemainingTransactions)
 	ctx.Step(`^I should see the new transaction$`, iShouldSeeTheNewTransaction)
-	ctx.Step(`^there is an existing transaction in chequing account$`, thereIsAnExistingTransactionInChequingAccount)
 }

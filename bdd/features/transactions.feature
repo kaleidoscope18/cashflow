@@ -9,10 +9,11 @@ Feature: Transactions
         Then I should see the new transaction
     
     Scenario: Removing a transaction
-        Given there is an existing transaction in chequing account
-        When I remove it
+        Given there is an account with transactions
         And I list the transactions
-        Then I should not see the new transaction
+        When I remove a transaction
+        And I list the transactions
+        Then I should see remaining transactions
 
     Scenario: Adding a recurring transaction
         Given there is an account
