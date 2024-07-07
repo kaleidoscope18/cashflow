@@ -20,13 +20,11 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
-		item := t
-		go func() {
-			enrichedTransactions[i] = models.ComputedTransaction{
-				Transaction: &item,
-				Status:      utils.GetStatusFromDate(utils.GetTodayDate(), t.Date),
-			}
-		}()
+		tCopy := t
+		enrichedTransactions[i] = models.ComputedTransaction{
+			Transaction: &tCopy,
+			Status:      utils.GetStatusFromDate(utils.GetTodayDate(), t.Date),
+		}
 
 		switch {
 		case balanceOnSameDay != nil:
