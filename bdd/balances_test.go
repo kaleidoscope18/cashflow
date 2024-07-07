@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 )
@@ -68,8 +69,8 @@ func iShouldBeAbleToSeeTheTransactionsWithTheRightBalances(ctx context.Context) 
 		return ctx, fmt.Errorf("There should only have been 2 transactions, got %d", len(*transactions))
 	}
 
-	if (*transactions)[0].Balance != -10 || (*transactions)[1].Balance != 1090.10 {
-		return ctx, fmt.Errorf("The transactions should have balances of -10 and 1090.10, but were %.2f and %.2f", (*transactions)[0].Balance, (*transactions)[1].Balance)
+	if (*transactions)[0].Balance != -10.00 || (*transactions)[1].Balance != 1100.10 {
+		return ctx, fmt.Errorf("The transactions should have balances of -10 and 1100.10, but were %.2f and %.2f", (*transactions)[0].Balance, (*transactions)[1].Balance)
 	}
 
 	return ctx, nil
@@ -115,7 +116,7 @@ func InitializeBalancesScenarioStepDefs(ctx *godog.ScenarioContext) {
 			}
 			jsonBytes, _ := json.Marshal(ids)
 
-			query := fmt.Sprintf(`"query": "mutation { deleteTransactions(ids: %s) }"`, string(jsonBytes))
+			query := fmt.Sprintf(`{"query": "mutation { deleteTransactions(ids: %s) }"}`, strings.Replace(string(jsonBytes), `"`, `\"`, -1))
 			PostGraphQL(ctx.Value(url).(string), query, "deleteTransactions", nil)
 			ctx = context.WithValue(ctx, newTransactions, nil)
 		}
