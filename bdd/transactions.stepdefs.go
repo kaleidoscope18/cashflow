@@ -1,6 +1,7 @@
 package bdd
 
 import (
+	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -209,7 +210,6 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 
 	for i, t := range expected {
 		if t.Balance != transactions[i].Balance || t.Date != transactions[i].Date {
-			utils.PrintJson(transactions)
 			return ctx, fmt.Errorf("for transaction with id %s, expected balance of %.2f on %s but got %.2f on %s",
 				transactions[i].Id, t.Balance, t.Date, transactions[i].Balance, transactions[i].Date)
 		}
@@ -265,6 +265,7 @@ func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context)
 	today := utils.ParseDateToTime(utils.GetTodayDate())
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
+	dev.PrintJson(today)
 	for _, t := range transactions {
 		if utils.ParseDateToTime(t.Date).Before(today) && t.Status != models.StatusDone {
 			return ctx, fmt.Errorf("should have been status DONE but got status \"%s\"", string(t.Status))
@@ -282,6 +283,45 @@ func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context)
 	return ctx, nil
 }
 
+func iEditTheTransactionInfo(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	id := strings.Split(transactions[0].Id, "-")[0]
+
+	query := fmt.Sprintf(`{"query": "mutation {editRecurringTransaction(input: {type: ALL, id: \"%s\", amount: 1000})}"}`, id)
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "editRecurringTransaction", nil)
+}
+
+func iShouldSeeChangedTransactions(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+
+	for _, t := range transactions {
+		if t.Amount != 1000.00 {
+			return ctx, fmt.Errorf("expected amount of 1000.00 for transaction %s on %s but got %.2f", t.Id, t.Date, t.Amount)
+		}
+	}
+	return ctx, nil
+}
+
+func iEditTheTransactionInfoFrom(ctx context.Context) (context.Context, error) {
+
+	return ctx, nil
+}
+
+func iEditTheTransactionInfoOn(ctx context.Context) (context.Context, error) {
+
+	return ctx, nil
+}
+
+func iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange(ctx context.Context) (context.Context, error) {
+
+	return ctx, nil
+}
+
+func iShouldSeeUnchangedTransactionsExceptTransactionOn(ctx context.Context) (context.Context, error) {
+
+	return ctx, nil
+}
+
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
 	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionToIt)
@@ -292,4 +332,10 @@ func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
 	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
 	ctx.Step(`^I should be able to see the correct statuses for each transaction$`, iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction)
+	ctx.Step(`^I edit the transaction info$`, iEditTheTransactionInfo)
+	ctx.Step(`^I edit the transaction info from "([^"]*)"$`, iEditTheTransactionInfoFrom)
+	ctx.Step(`^I edit the transaction info on "([^"]*)"$`, iEditTheTransactionInfoOn)
+	ctx.Step(`^I should see changed transactions$`, iShouldSeeChangedTransactions)
+	ctx.Step(`^I should see unchanged transactions before and the rest should change$`, iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange)
+	ctx.Step(`^I should see unchanged transactions except transaction on "([^"]*)"$`, iShouldSeeUnchangedTransactionsExceptTransactionOn)
 }

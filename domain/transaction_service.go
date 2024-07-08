@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -51,4 +52,12 @@ func (s *transactionService) WriteTransaction(date string, amount float64, descr
 
 func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {
 	return (*s.repository).DeleteTransaction(ctx, id)
+}
+
+func (s *transactionService) EditRecurringTransaction(ctx context.Context, editType models.RecurringTransactionEditType, edited models.TransactionEdit) (string, error) {
+
+	dev.PrintJson(edited)
+	dev.PrintJson(editType)
+
+	return "", nil
 }

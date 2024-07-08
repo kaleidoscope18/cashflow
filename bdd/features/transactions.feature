@@ -26,3 +26,31 @@ Feature: Transactions
         And I add a transaction today and another later
         And I list the transactions
         Then I should be able to see the correct statuses for each transaction
+
+    Scenario: Editing a recurring transaction
+        Given there is an account
+        When I add a recurring transaction to it
+        And I list the transactions
+        And I edit the transaction info
+        And I list the transactions
+        Then I should see changed transactions
+
+    Scenario: Editing a recurring transaction from given date
+        Given there is an account
+        When I add a recurring transaction to it
+        And I edit the transaction info from "2022/12/15"
+        And I list the transactions
+        Then I should see unchanged transactions before and the rest should change
+
+    Scenario: Editing a recurring transaction only on date
+        Given there is an account
+        When I add a recurring transaction to it
+        And I edit the transaction info on "2022/12/15"
+        And I list the transactions
+        Then I should see unchanged transactions except transaction on "2022/12/15"
+
+    Scenario: Deleting a recurring transaction
+        Given there is an account
+        When I add a recurring transaction to it
+        Then I should see unchanged transactions except transaction on "2022/12/15"
+

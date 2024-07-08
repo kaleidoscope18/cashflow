@@ -1,6 +1,7 @@
 package bdd
 
 import (
+	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -33,6 +34,7 @@ func itShouldBeInBalancesList(ctx context.Context) (context.Context, error) {
 
 func theNewBalanceShouldHaveTodaysDate(ctx context.Context) (context.Context, error) {
 	today := utils.GetTodayDate()
+	dev.PrintJson(today)
 	b := *ctx.Value(balances).(*[]models.Balance)
 
 	for _, balance := range b {

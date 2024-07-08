@@ -1,8 +1,14 @@
 package utils
 
-import "time"
+import (
+	"cashflow/dev"
+	"time"
+)
 
 func GetTodayDate() string {
-	now := time.Now().String()
+	dev.PrintJson(time.Now())
+	location, _ := time.LoadLocation("UTC")
+	dev.PrintJson(time.Now().In(location))
+	now := time.Now().In(location).String()
 	return ParseDate(now)
 }

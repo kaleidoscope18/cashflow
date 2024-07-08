@@ -3,6 +3,7 @@ package utils
 import (
 	"regexp"
 	"testing"
+	"time"
 )
 
 // got these from https://github.com/araddon/dateparse/blob/master/example/main.go
@@ -23,7 +24,7 @@ var examples = [][]string{
 	{"Mon Aug 10 15:44:11 UTC+0100 2015", "2015/08/10"},
 	{"Thu, 4 Jan 2018 17:53:36 +0000", "2018/01/04"},
 	{"Fri Jul 03 2015 18:04:07 GMT+0100 (GMT Daylight Time)", "2015/07/03"},
-	{"Sun, 3 Jan 2021 00:12:23 +0800 (GMT+08:00)", "2021/01/03"},
+	{"Sun, 3 Jan 2021 00:12:23 +0800 (GMT+08:00)", "2021/01/02"}, // test w/ UTC
 	{"September 17, 2012 10:09am", "2012/09/17"},
 	{"September 17, 2012 at 10:09am PST-08", "2012/09/17"},
 	{"September 17, 2012, 10:10:09", "2012/09/17"},
@@ -71,7 +72,7 @@ var examples = [][]string{
 	{"2012:03:19 10:11:59", "2012/03/19"},
 	{"2012:03:19 10:11:59.3186369", "2012/03/19"},
 	{"2006-01-02T15:04:05+0000", "2006/01/02"},
-	{"2009-08-12T22:15:09-07:00", "2009/08/12"},
+	{"2009-08-12T22:15:09-07:00", "2009/08/13"}, // test w/ UTC
 	{"2009-08-12T22:15:09", "2009/08/12"},
 	{"2009-08-12T22:15:09.988", "2009/08/12"},
 	{"2009-08-12T22:15:09Z", "2009/08/12"},
@@ -99,7 +100,7 @@ var examples = [][]string{
 	{"2014-04", "2014/04/01"},
 	{"2014", "2014/01/01"},
 	{"2014-05-11 08:20:13,787", "2014/05/11"},
-	{"2020-07-20+08:00", "2020/07/20"},
+	{"2020-07-20+08:00", "2020/07/19"}, // test w/ UTC
 	{"3.31.2014", "2014/03/31"},
 	{"03.31.2014", "2014/03/31"},
 	{"08.21.71", "1971/08/21"},
@@ -109,9 +110,9 @@ var examples = [][]string{
 	{"20140722105203", "2014/07/22"},
 	{"171113 14:14:20", "2017/11/13"},
 	{"1332151919", "2012/03/19"},
-	{"1384216367189", "2013/11/11"},
-	{"1384216367111222", "2013/11/11"},
-	{"1384216367111222333", "2013/11/11"},
+	{"1384216367189", "2013/11/12"},       // test w/ UTC
+	{"1384216367111222", "2013/11/12"},    // test w/ UTC
+	{"1384216367111222333", "2013/11/12"}, // test w/ UTC
 }
 
 func TestParseDate(t *testing.T) {
@@ -123,4 +124,47 @@ func TestParseDate(t *testing.T) {
 		}
 	}
 
+}
+
+func TestParseDateToTime(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected time.Time
+	}{
+		{
+			name:     "ISO8601 format",
+			input:    "2023-07-08T15:04:05Z",
+			expected: time.Date(2023, 7, 8, 15, 4, 5, 0, time.UTC),
+		},
+		{
+			name:     "RFC3339 format",
+			input:    "2023-07-08T15:04:05+00:00",
+			expected: time.Date(2023, 7, 8, 15, 4, 5, 0, time.UTC),
+		},
+		{
+			name:     "Simple date format",
+			input:    "2023-07-08",
+			expected: time.Date(2023, 7, 8, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "American date format",
+			input:    "07/08/2023",
+			expected: time.Date(2023, 7, 8, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: time.Time{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParseDateToTime(tt.input)
+			if !result.Equal(tt.expected) {
+				t.Errorf("ParseDateToTime(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
 }

@@ -26,6 +26,25 @@ input NewTransaction {
   description: String
 }
 
+enum RecurringTransactionEditType {
+  ALL
+  ON_DATE_ONLY
+  FROM_DATE
+}
+
+input RecurringTransactionEditInput {
+  id: ID!
+  type: RecurringTransactionEditType!
+  date: String
+  amount: Float
+  description: String
+  recurrency: String
+}
+
+# input RecurringTransactionDeleteInput {
+#   type: RecurringTransactionType!
+# } 
+
 extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
 }
@@ -36,4 +55,7 @@ extend type Mutation {
 
   deleteTransaction(id: ID!): ID!
   deleteTransactions(ids: [ID!]!): [ID!]!
+
+  editRecurringTransaction(input: RecurringTransactionEditInput!): ID!
+  # deleteRecurringTransaction(input: RecurringTransactionDeleteInput!): String
 }

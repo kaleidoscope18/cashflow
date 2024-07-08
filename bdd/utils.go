@@ -20,7 +20,8 @@ func PostGraphQL(url string, query string, queryName string, result interface{})
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("problem status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("problem status %d - %s", resp.StatusCode, body)
 	}
 
 	body, err := io.ReadAll(resp.Body)
