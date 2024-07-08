@@ -16,22 +16,10 @@ import (
 
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (string, error) {
-	var description string
-	if input.Description == nil {
-		description = ""
-	} else {
-		description = *input.Description
-	}
-
-	var recurrency string
-	if input.Recurrency != nil {
-		err := utils.ValidateRecurrency(*input.Recurrency)
-		if err != nil {
-			return "", err
-		}
-		recurrency = *input.Recurrency
-	} else {
-		recurrency = ""
+	description := validateDescription(input.Description)
+	recurrency, err := validateRecurrency(input.Recurrency)
+	if err != nil {
+		return "", err
 	}
 
 	return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, description, recurrency)
@@ -90,6 +78,22 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 	}
 
 	return results, err
+}
+
+// EditRecurringTransaction is the resolver for the editRecurringTransaction field.
+func (r *mutationResolver) EditRecurringTransaction(ctx context.Context, input generated.RecurringTransactionEditInput) (string, error) {
+	_, err := validateRecurrency(input.Recurrency)
+	if err != nil {
+		return "", err
+	}
+
+	return (*r.TransactionService).EditRecurringTransaction(ctx, input.Type, models.TransactionEdit{
+		Id:          input.ID,
+		Date:        validateDate(input.Date),
+		Description: input.Description,
+		Recurrency:  input.Recurrency,
+		Amount:      input.Amount,
+	})
 }
 
 // ListTransactions is the resolver for the listTransactions field.

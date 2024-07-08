@@ -2,14 +2,14 @@ package recurrency
 
 import (
 	"cashflow/models"
+	"cashflow/utils"
 	"testing"
 
-	"github.com/araddon/dateparse"
 	"github.com/stretchr/testify/require"
 )
 
-var from, _ = dateparse.ParseAny("2000/01/01")
-var to, _ = dateparse.ParseAny("2000/03/01")
+var from = utils.ParseDateToTime("2000/01/01")
+var to = utils.ParseDateToTime("2000/03/01")
 
 func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 	data := []models.Transaction{

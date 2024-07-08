@@ -91,7 +91,7 @@ docker compose -f ./dev/docker-compose.yml -f ./dev/docker-compose.bdd.yml --env
 #### Running BDD locally
 
 You can run bdd tests locally when the app is (already) running on 8080.  
-Click on run / debug above the function named `TestBDD` if you have VSCode with the Go plugin.  
+Click on run / debug above the function named `TestBDD` if you have VSCode with the Go plugin (TO REVIEW, SOMETIMES FALSE GREEN???).  
 
 ### Local commands
 

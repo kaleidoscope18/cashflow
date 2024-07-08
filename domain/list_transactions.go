@@ -16,6 +16,8 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 	transactionsToEnrich := append(withoutRecurrency, recurrencyOffsprings...)
 
 	enrichedTransactions := make([]models.ComputedTransaction, len(transactionsToEnrich))
+	today := utils.GetTodayDate()
+
 	for i, t := range transactionsToEnrich {
 		balanceOnSameDay := getBalanceOnSameDay(t.Date, balances)
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
@@ -24,7 +26,7 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 		tCopy := t
 		enrichedTransactions[i] = models.ComputedTransaction{
 			Transaction: &tCopy,
-			Status:      status.GetStatusFromDate(utils.GetTodayDate(), t.Date),
+			Status:      status.GetStatusFromDate(today, t.Date),
 		}
 
 		switch {
