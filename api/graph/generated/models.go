@@ -24,11 +24,11 @@ type NewTransaction struct {
 type Query struct {
 }
 
-type RecurringTransactionEditInput struct {
-	ID          string                              `json:"id"`
-	Type        models.RecurringTransactionEditType `json:"type"`
-	Date        *string                             `json:"date,omitempty"`
-	Amount      *float64                            `json:"amount,omitempty"`
-	Description *string                             `json:"description,omitempty"`
-	Recurrency  *string                             `json:"recurrency,omitempty"`
+type TransactionEditInput struct {
+	ID          string                     `json:"id"`
+	Type        models.TransactionEditType `json:"type"`
+	Date        *string                    `json:"date,omitempty"`
+	Amount      *float64                   `json:"amount,omitempty"`
+	Description *string                    `json:"description,omitempty"`
+	Recurrency  *string                    `json:"recurrency,omitempty"`
 }

@@ -10,5 +10,5 @@ func PrintJson(anyStruct interface{}) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Print(string(b))
+	fmt.Println(string(b))
 }

@@ -8,16 +8,18 @@ import (
 type TransactionRepository interface {
 	Init() error
 	Close() error
+	GetTransactionById(ctx context.Context, id string) (Transaction, error)
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
-	InsertTransaction(transaction Transaction) (string, error)
+	InsertTransaction(ctx context.Context, transaction Transaction) (string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
+	EditTransaction(ctx context.Context, transaction Transaction) (string, error)
 }
 
 type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
-	WriteTransaction(date string, amount float64, description string, recurrency string) (string, error)
+	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) (string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
-	EditRecurringTransaction(ctx context.Context, editType RecurringTransactionEditType, edited TransactionEdit) (string, error)
+	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) (string, error)
 }
 
 type Transaction struct {
@@ -49,10 +51,10 @@ type ComputedTransaction struct {
 	Status  Status
 }
 
-type RecurringTransactionEditType string
+type TransactionEditType string
 
 const (
-	All        RecurringTransactionEditType = "ALL"
-	OnDateOnly RecurringTransactionEditType = "ON_DATE_ONLY"
-	FromDate   RecurringTransactionEditType = "FROM_DATE"
+	All        TransactionEditType = "ALL"
+	OnDateOnly TransactionEditType = "ON_DATE_ONLY"
+	FromDate   TransactionEditType = "FROM_DATE"
 )

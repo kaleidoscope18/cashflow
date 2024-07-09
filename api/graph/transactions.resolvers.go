@@ -22,7 +22,7 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 		return "", err
 	}
 
-	return (*r.TransactionService).WriteTransaction(input.Date, input.Amount, description, recurrency)
+	return (*r.TransactionService).WriteTransaction(ctx, input.Date, input.Amount, description, recurrency)
 }
 
 // CreateTransactions is the resolver for the createTransactions field.
@@ -80,16 +80,16 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 	return results, err
 }
 
-// EditRecurringTransaction is the resolver for the editRecurringTransaction field.
-func (r *mutationResolver) EditRecurringTransaction(ctx context.Context, input generated.RecurringTransactionEditInput) (string, error) {
+// EditTransaction is the resolver for the editTransaction field.
+func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.TransactionEditInput) (string, error) {
 	_, err := validateRecurrency(input.Recurrency)
 	if err != nil {
 		return "", err
 	}
 
-	return (*r.TransactionService).EditRecurringTransaction(ctx, input.Type, models.TransactionEdit{
+	return (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
 		Id:          input.ID,
-		Date:        validateDate(input.Date),
+		Date:        validateDate(input.Date), // what happens when date is wrong?
 		Description: input.Description,
 		Recurrency:  input.Recurrency,
 		Amount:      input.Amount,

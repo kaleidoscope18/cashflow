@@ -26,6 +26,14 @@ Feature: Transactions
         And I add a transaction today and another later
         And I list the transactions
         Then I should be able to see the correct statuses for each transaction
+    
+    Scenario: Editing a transaction
+        Given there is an account
+        When I add a transaction on "2022/10/15" to it
+        And I list the transactions
+        And I edit the transaction info
+        And I list the transactions
+        Then I should see changed transactions
 
     Scenario: Editing a recurring transaction
         Given there is an account

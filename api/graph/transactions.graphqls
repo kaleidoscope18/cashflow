@@ -26,23 +26,23 @@ input NewTransaction {
   description: String
 }
 
-enum RecurringTransactionEditType {
+enum TransactionEditType {
   ALL
   ON_DATE_ONLY
   FROM_DATE
 }
 
-input RecurringTransactionEditInput {
+input TransactionEditInput {
   id: ID!
-  type: RecurringTransactionEditType!
+  type: TransactionEditType!
   date: String
   amount: Float
   description: String
   recurrency: String
 }
 
-# input RecurringTransactionDeleteInput {
-#   type: RecurringTransactionType!
+# input TransactionDeleteInput {
+#   type: TransactionEditType!
 # } 
 
 extend type Query {
@@ -53,9 +53,8 @@ extend type Mutation {
   createTransaction(input: NewTransaction!): ID!
   createTransactions(input: [NewTransaction!]!): [ID!]!
 
-  deleteTransaction(id: ID!): ID!
+  deleteTransaction(id: ID!): ID! # change id for delete input
   deleteTransactions(ids: [ID!]!): [ID!]!
 
-  editRecurringTransaction(input: RecurringTransactionEditInput!): ID!
-  # deleteRecurringTransaction(input: RecurringTransactionDeleteInput!): String
+  editTransaction(input: TransactionEditInput!): ID!
 }
