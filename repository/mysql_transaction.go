@@ -5,7 +5,6 @@ import (
 	"cashflow/utils"
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -70,15 +69,18 @@ func (repo *mysqlRepository) InsertTransaction(ctx context.Context, transaction 
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	const insertQuery = `INSERT INTO transactions (amount, date, description, recurrency) VALUES (?, ?, ?, ?)`
-	result, err := repo.db.ExecContext(ctx, insertQuery, transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency)
+	stmt, err := repo.db.PrepareContext(ctx, `INSERT INTO transactions (amount, date, description, recurrency) VALUES (?, ?, ?, ?)`)
 	if err != nil {
 		return "", err
+	}
+	result, err := stmt.ExecContext(ctx, transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency)
+	if err != nil {
+		return "", fmt.Errorf("error inserting transaction: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting last insert ID: %w", err)
 	}
 	return strconv.FormatInt(id, 10), nil
 }
@@ -87,19 +89,32 @@ func (repo *mysqlRepository) DeleteTransaction(ctx context.Context, id string) (
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	query := `DELETE FROM transactions WHERE id = ?`
-	result, err := repo.db.ExecContext(ctx, query, id)
-
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
 		return id, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	query := `DELETE FROM transactions WHERE id = ?`
+	result, err := tx.ExecContext(ctx, query, id)
 	if err != nil {
-		return id, fmt.Errorf("error deleting transaction: %w", err)
+		tx.Rollback()
+		return id, err
 	}
+
+	rowsAffected, err := result.RowsAffected()
 	if rowsAffected == 0 {
-		return id, errors.New("transaction not found")
+		tx.Rollback()
+		return id, fmt.Errorf("no rows affected, transaction with id %s not found", id)
+	}
+	if err != nil {
+		tx.Rollback()
+		return id, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return id, err
 	}
 
 	return id, nil

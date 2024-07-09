@@ -5,6 +5,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -150,6 +151,82 @@ func TestListTransactions_InvalidDateFormat(t *testing.T) {
 	}
 }
 
+func TestInsertTransaction_Success(t *testing.T) {
+	ctx := context.Background()
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &mysqlRepository{
+		db:    mockDB,
+		mutex: sync.RWMutex{},
+	}
+
+	transaction := models.Transaction{
+		Amount:      100.0,
+		Date:        "2023-10-01",
+		Description: "Test Transaction",
+		Recurrency:  "monthly",
+	}
+
+	mock.ExpectPrepare("INSERT INTO transactions").
+		ExpectExec().
+		WithArgs(transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	id, err := repo.InsertTransaction(ctx, transaction)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if id != "1" {
+		t.Errorf("expected id to be '1', got %s", id)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestInsertTransaction_SQLPreparationError(t *testing.T) {
+	ctx := context.Background()
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &mysqlRepository{
+		db:    mockDB,
+		mutex: sync.RWMutex{},
+	}
+
+	transaction := models.Transaction{
+		Amount:      100.0,
+		Date:        "2023-10-01",
+		Description: "Test Transaction",
+		Recurrency:  "monthly",
+	}
+
+	mock.ExpectPrepare("INSERT INTO transactions").
+		WillReturnError(fmt.Errorf("preparation error"))
+
+	_, err = repo.InsertTransaction(ctx, transaction)
+	if err == nil {
+		t.Error("expected an error but got none")
+	}
+
+	if err.Error() != "preparation error" {
+		t.Errorf("expected 'preparation error', got %s", err.Error())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func TestEditTransaction_Success(t *testing.T) {
 	ctx := context.Background()
 	mockDB, mock, err := sqlmock.New()
@@ -184,6 +261,72 @@ func TestEditTransaction_Success(t *testing.T) {
 
 	if id != transaction.Id {
 		t.Errorf("expected id %s, got %s", transaction.Id, id)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteTransaction_Success(t *testing.T) {
+	ctx := context.Background()
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &mysqlRepository{
+		db:    mockDB,
+		mutex: sync.RWMutex{},
+	}
+
+	id := "1"
+	mock.ExpectBegin()
+	mock.ExpectExec("DELETE FROM transactions WHERE id = ?").
+		WithArgs(id).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	result, err := repo.DeleteTransaction(ctx, id)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if result != id {
+		t.Errorf("expected %s, got %s", id, result)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteTransaction_NotFound(t *testing.T) {
+	ctx := context.Background()
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &mysqlRepository{
+		db:    mockDB,
+		mutex: sync.RWMutex{},
+	}
+
+	id := "1"
+	mock.ExpectBegin()
+	mock.ExpectExec("DELETE FROM transactions WHERE id = ?").
+		WithArgs(id).
+		WillReturnResult(sqlmock.NewResult(1, 0))
+	mock.ExpectRollback()
+
+	result, err := repo.DeleteTransaction(ctx, id)
+	if err == nil {
+		t.Errorf("expected error, got none")
+	}
+	if result != id {
+		t.Errorf("expected %s, got %s", id, result)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -24,9 +24,9 @@ Prerequisite: Docker
 Open a terminal window and run
 
 ```sh
-docker compose -f ./dev/docker-compose.yml --env-file=.env build            # for initial build, or if you change environment variables, docker or docker compose configs
-docker compose -f ./dev/docker-compose.yml --env-file=.env up               # run the stack in containers, with debug
-docker compose -f ./dev/docker-compose.yml --env-file=.env down             # stop / remove containers
+docker compose -f ./dev/docker-compose.yml --env-file=.env build    # for initial build, or if you change env variables or configs
+docker compose -f ./dev/docker-compose.yml --env-file=.env up       # run the stack in containers, with debug
+docker compose -f ./dev/docker-compose.yml --env-file=.env down     # stop / remove containers
 ```
 
 You can enable/disable watch mode by using the "w" key while you develop.
@@ -35,7 +35,7 @@ Endpoints URLs will be provided in the logs.
 
 ### Development flow
 
-I develop this app in a TDD way (red-green-refactor), here's how:  
+I develop this app in a TDD way (red-green-refactor) + AI, here's how:  
 
 - I always keep my dev containers running (see [Developing](#developing) above).  
 - I first write the scenarios(features) I need to code in a `*.feature` file.  
@@ -43,9 +43,9 @@ I develop this app in a TDD way (red-green-refactor), here's how:
 - I implement them to a `*.stepdef.go` file.  
     The test will be failing first (red).
 - I implement the code to make the tests pass (green).  
-    I also implement unit tests, but I do not always do TDD here.
-- I make sure the tests are not flaky by running them many times.
-- I then refactor to make the code pretty :D.
+- I improve and refactor the code using Codium AI.
+- I add unit tests automatically using Codium AI and Perplexity AI.
+- I make sure the tests are not flaky by running the whole test suite many times.
 
 ### GraphQL
 
