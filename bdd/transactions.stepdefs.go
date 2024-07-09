@@ -20,6 +20,7 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	if len(transactions) != 26 {
+		dev.PrintJson(transactions)
 		return ctx, fmt.Errorf("should have been 26 transactions (2 per month, for 13 months), but got %d", len(transactions))
 	}
 
@@ -265,7 +266,6 @@ func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context)
 	today := utils.ParseDateToTime(utils.GetTodayDate())
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
-	dev.PrintJson(today)
 	for _, t := range transactions {
 		if utils.ParseDateToTime(t.Date).Before(today) && t.Status != models.StatusDone {
 			return ctx, fmt.Errorf("should have been status DONE but got status \"%s\"", string(t.Status))
@@ -287,16 +287,16 @@ func iEditTheTransactionInfo(ctx context.Context) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 	id := strings.Split(transactions[0].Id, "-")[0]
 
-	query := fmt.Sprintf(`{"query": "mutation {editRecurringTransaction(input: {type: ALL, id: \"%s\", amount: 1000})}"}`, id)
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "editRecurringTransaction", nil)
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: ALL, id: \"%s\", amount: 999})}"}`, id)
+	return ctx, PostGraphQL(ctx.Value(url).(string), query, "editTransaction", nil)
 }
 
 func iShouldSeeChangedTransactions(ctx context.Context) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	for _, t := range transactions {
-		if t.Amount != 1000.00 {
-			return ctx, fmt.Errorf("expected amount of 1000.00 for transaction %s on %s but got %.2f", t.Id, t.Date, t.Amount)
+		if t.Amount != 999.00 {
+			return ctx, fmt.Errorf("expected amount of 999.00 for transaction %s on %s but got %.2f", t.Id, t.Date, t.Amount)
 		}
 	}
 	return ctx, nil

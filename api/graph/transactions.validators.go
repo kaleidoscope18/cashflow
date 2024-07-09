@@ -12,6 +12,7 @@ func validateRecurrency(recurrency *string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		return *recurrency, err
 	}
 	return "", nil
 }

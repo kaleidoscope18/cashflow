@@ -5,15 +5,6 @@ All features for this app are described in files under `bdd/features/`.
 
 ## Structure
 
-The app will follow the DDD project architecture.  
-Initial bootstrap is done in `main.go`, which is the entry file.  
-It will instantiate the **repository** instances from `repository` package.  
-Repositories are injected into the **services** of `domain` package.  
-The services are used by **resolvers** (GraphQL) in `api` package.  
-All the domain logic is in `domain` package alongside services that use them.  
-All domain models are in `models` package.  
-For testing ONLY purposes, there's an in-memory strategy, but the app connects to a MySQL database.  
-
 Packages:
 | Name        | Description                                 |
 | ---         | ---                                         |
@@ -118,7 +109,13 @@ pulumi stack select <dev | prod>
 pulumi up
 ```
 
-## TODO
+## Architecture
 
-- add request context with tracing through the whole layers
-- setup robust logging
+The app will follow the DDD project architecture.  
+Initial bootstrap is done in `main.go`, which is the entry file.  
+It will instantiate the **repository** instances from `repository` package.  
+Repositories are injected into the **services** of `domain` package.  
+The services are used by **resolvers** (GraphQL) in `api` package.  
+All the domain logic is in `domain` package alongside services that use them.  
+All domain models are in `models` package.  
+For testing ONLY purposes, there's an in-memory strategy, but the app connects to a MySQL database.  
