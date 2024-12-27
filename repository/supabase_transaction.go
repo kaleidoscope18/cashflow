@@ -13,7 +13,10 @@ func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id strin
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	query := "SELECT id, description, amount, date, recurrency FROM transactions WHERE id = ?"
+	query := `SELECT id, description, amount, date, recurrency 
+				FROM transactions 
+				WHERE id = ? 
+				AND author = (SELECT auth.uid())`
 
 	var transaction models.Transaction
 	err := repo.db.QueryRow(context.Background(), query, id).Scan(
@@ -39,7 +42,11 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	query := `SELECT id, description, amount, date, recurrency FROM transactions WHERE date BETWEEN ? AND ? ORDER BY date ASC AND author = (SELECT auth.uid())`
+	query := `SELECT id, description, amount, date, recurrency 
+				FROM transactions 
+				WHERE date BETWEEN ? AND ? 
+				AND author = (SELECT auth.uid()) 
+				ORDER BY date ASC;`
 	rows, err := repo.db.Query(context.Background(), query, from, to)
 	if err != nil {
 		return nil, err
@@ -90,7 +97,7 @@ func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string
 		return id, err
 	}
 
-	query := `DELETE FROM transactions WHERE id = ?`
+	query := `DELETE FROM transactions WHERE id = ? AND author = (SELECT auth.uid())`
 	result, err := tx.Exec(context.Background(), query, id)
 	if err != nil {
 		tx.Rollback(context.Background())
@@ -126,7 +133,7 @@ func (repo *supabaseRepository) EditTransaction(ctx context.Context, transaction
 	}
 	_, err = tx.Exec(context.Background(), `UPDATE transactions
 					SET description=?, amount=?, recurrency=?, date=?
-					WHERE id = ?;`,
+					WHERE id = ? AND author = (SELECT auth.uid());`,
 		transaction.Description, transaction.Amount, transaction.Recurrency, transaction.Date, transaction.Id)
 
 	if err != nil {

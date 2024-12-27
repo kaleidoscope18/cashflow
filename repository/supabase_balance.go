@@ -1,14 +1,11 @@
 package repository
 
 import (
-	"bytes"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"text/template"
 	"time"
 )
 
@@ -36,23 +33,12 @@ func (repo *supabaseRepository) ListBalances(from time.Time, to time.Time) ([]mo
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	var query bytes.Buffer
-	data := map[string]interface{}{
-		"from": from,
-		"to":   to,
-	}
-	err := template.Must(template.New("ListBalances").Parse(`
-		SELECT * FROM balances 
-		WHERE date BETWEEN '{{.from}}' AND '{{.to}}
-		ORDER BY date ASC';
-	`)).Execute(&query, data)
+	query := `SELECT amount, date FROM balances 
+				WHERE date BETWEEN ? AND ?
+				AND author = (SELECT auth.uid())
+				ORDER BY date ASC`
 
-	if err != nil {
-		log.Printf("Failed to execute ListBalances: %v", err)
-		return nil, err
-	}
-
-	rows, err := repo.db.Query(context.Background(), query.String())
+	rows, err := repo.db.Query(context.Background(), query, from, to)
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}
@@ -80,9 +66,9 @@ func (repo *supabaseRepository) ListBalances(from time.Time, to time.Time) ([]mo
 func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
-
-	result, err := repo.db.Exec(context.Background(), fmt.Sprintf(`DELETE FROM balances 
-										WHERE date = "%s";`, date))
+	result, err := repo.db.Exec(context.Background(), `DELETE FROM balances 
+										WHERE date = $1 
+										AND author = (SELECT auth.uid())`, date)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package models
 type App struct {
 	TransactionService *TransactionService
 	BalanceService     *BalanceService
+	AuthService        *AuthService
 }
 
 type StorageStrategy string
@@ -12,6 +13,7 @@ const (
 )
 
 type Repository interface {
+	AuthRepository
 	BalanceRepository
 	TransactionRepository
 	Init() error
