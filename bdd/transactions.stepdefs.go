@@ -223,7 +223,7 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	return ctx, nil
 }
 
-func iAddATransactionToIt(ctx context.Context, date string) (context.Context, error) {
+func iAddATransactionOnDateToIt(ctx context.Context, date string) (context.Context, error) {
 	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\"})}"}`, date)
 	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
 }
@@ -324,7 +324,7 @@ func iShouldSeeUnchangedTransactionsExceptTransactionOn(ctx context.Context) (co
 
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
-	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionToIt)
+	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionOnDateToIt)
 	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
 	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
 	ctx.Step(`^I should see remaining transactions$`, iShouldSeeRemainingTransactions)

@@ -8,8 +8,7 @@ type App struct {
 type StorageStrategy string
 
 const (
-	InMemory StorageStrategy = "InMemory" // Memory will be lost on server shutdown
-	Local    StorageStrategy = "Local"    // Local mySQL database instance, persisted
+	Supabase StorageStrategy = "Supabase" // Supabase database instance, persisted
 )
 
 type Repository interface {

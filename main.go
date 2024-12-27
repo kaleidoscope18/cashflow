@@ -13,10 +13,10 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Did not load an .env file")
 	}
 
-	err = repository.Init(models.Local)
+	err = repository.Init(models.Supabase)
 	if err != nil {
 		panic("Could not initiate the app : " + err.Error())
 	}

@@ -21,10 +21,8 @@ func Init(storageType models.StorageStrategy) error {
 
 func createRepository(storageType models.StorageStrategy) error {
 	switch storageType {
-	case models.InMemory:
-		repository = &inMemoryRepository{}
-	case models.Local:
-		repository = &mysqlRepository{}
+	case models.Supabase:
+		repository = &supabaseRepository{}
 	default:
 		panic(fmt.Sprintln("Did not create repository instance, can not run the app"))
 	}

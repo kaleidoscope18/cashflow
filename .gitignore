@@ -1,4 +1,4 @@
 cashflow
 .DS_Store
-/dev/mysql-data/
 .env
+.vscode
