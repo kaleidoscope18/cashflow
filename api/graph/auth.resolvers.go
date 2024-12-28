@@ -10,10 +10,5 @@ import (
 
 // LoginEmail is the resolver for the loginEmail field.
 func (r *queryResolver) LoginEmail(ctx context.Context, email string, password string) (string, error) {
-	return (*r.AuthService).Login(email, password)
-}
-
-// LogoutEmail is the resolver for the logoutEmail field.
-func (r *queryResolver) LogoutEmail(ctx context.Context, email string) (string, error) {
-	return (*r.AuthService).Logout(email)
+	return (*r.AuthService).LoginEmail(email, password)
 }

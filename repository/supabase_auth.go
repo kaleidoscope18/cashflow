@@ -1,27 +1,15 @@
 package repository
 
-import (
-	"log"
-	"os"
+import "log"
 
-	"github.com/supabase-community/auth-go"
-	"github.com/supabase-community/auth-go/types"
-)
-
-func (repo *supabaseRepository) Login(email string, password string) (string, error) {
-	client := auth.New(
-		os.Getenv("SUPABASE_PROJECT_REF"),
-		os.Getenv("SUPABASE_API_KEY"),
-	)
-
-	session, err := client.Token(types.TokenRequest{
-		GrantType: "password",
-		Email:     email,
-		Password:  password,
-	})
+func (repo *supabaseRepository) LoginEmail(email string, password string) (string, error) {
+	session, err := repo.db.SignInWithEmailPassword(email, password)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println("error logging in with email: ", email, err)
+		return "", err
 	}
+
+	log.Println("session initialized", session)
 
 	return session.AccessToken, nil
 }

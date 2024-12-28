@@ -27,7 +27,7 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 		return nil, err
 	}
 
-	balances, err := (*s.balanceService).ListBalances(from, to)
+	balances, err := (*s.balanceService).ListBalances(ctx, from, to)
 	if err != nil {
 		return nil, err
 	}

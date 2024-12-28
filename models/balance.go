@@ -6,14 +6,14 @@ import (
 )
 
 type BalanceRepository interface {
-	ListBalances(from time.Time, to time.Time) ([]Balance, error)
-	InsertBalance(amount float64, date string) (Balance, error)
+	ListBalances(ctx context.Context, from time.Time, to time.Time) ([]Balance, error)
+	InsertBalance(ctx context.Context, amount float64, date string) (Balance, error)
 	DeleteBalance(ctx context.Context, date string) error
 }
 
 type BalanceService interface {
-	WriteBalance(balance float64, date *string) (Balance, error)
-	ListBalances(from time.Time, to time.Time) ([]Balance, error)
+	WriteBalance(ctx context.Context, balance float64, date *string) (Balance, error)
+	ListBalances(ctx context.Context, from time.Time, to time.Time) ([]Balance, error)
 	DeleteBalance(ctx context.Context, date string) error
 }
 

@@ -4,34 +4,37 @@ import (
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
-	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/supabase-community/postgrest-go"
 )
 
 func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id string) (models.Transaction, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	query := `SELECT id, description, amount, date, recurrency 
-				FROM transactions 
-				WHERE id = ? 
-				AND author = (SELECT auth.uid())`
-
-	var transaction models.Transaction
-	err := repo.db.QueryRow(context.Background(), query, id).Scan(
-		&transaction.Id,
-		&transaction.Description,
-		&transaction.Amount,
-		&transaction.Date,
-		&transaction.Recurrency,
-	)
+	res, count, err := repo.db.From("transactions").
+		Select("id, description, amount, date, recurrency", "", false).
+		Eq("id", id).
+		Eq("author", "Insert author id here").
+		Single().
+		Execute()
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return models.Transaction{}, fmt.Errorf("transaction not found")
-		}
+
 		return models.Transaction{}, fmt.Errorf("error querying transaction: %w", err)
+	}
+
+	if count == 0 {
+		return models.Transaction{}, fmt.Errorf("transaction not found")
+	}
+
+	var transaction models.Transaction
+	err = json.Unmarshal(res, &transaction)
+	if err != nil {
+		return models.Transaction{}, fmt.Errorf("error scanning transaction: %w", err)
 	}
 
 	transaction.Date = utils.ParseDate(transaction.Date)
@@ -42,29 +45,24 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	query := `SELECT id, description, amount, date, recurrency 
-				FROM transactions 
-				WHERE date BETWEEN ? AND ? 
-				AND author = (SELECT auth.uid()) 
-				ORDER BY date ASC;`
-	rows, err := repo.db.Query(context.Background(), query, from, to)
+	rows, _, err := repo.db.From("transactions").
+		Select("id, description, amount, date, recurrency", "", false).
+		Filter("date", ">=", from.Format("2006-01-01")).
+		Filter("date", "<=", to.Format("2006-01-01")).
+		Filter("author", "=", "PUT AUTHOR ID HERE").
+		Order("date", &postgrest.OrderOpts{
+			Ascending: true,
+		}).
+		Execute()
+
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	var transactions []models.Transaction
-	for rows.Next() {
-		var transaction models.Transaction
-		err = rows.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date, &transaction.Recurrency)
-		if err != nil {
-			return nil, err
-		}
-		transaction.Date = utils.ParseDate(transaction.Date)
-		transactions = append(transactions, transaction)
-	}
+	err = json.Unmarshal(rows, &transactions)
 
-	if err = rows.Err(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -76,11 +74,16 @@ func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transacti
 	defer repo.mutex.Unlock()
 
 	var id string
-	err := repo.db.QueryRow(context.Background(),
-		`INSERT INTO transactions (amount, date, description, recurrency, author) 
-		VALUES ($1, $2, $3, $4, (SELECT auth.uid()))
-		RETURNING id`,
-		transaction.Amount, transaction.Date, transaction.Description, transaction.Recurrency).Scan(&id)
+	_, _, err := repo.db.From("transactions").
+		Insert(map[string]interface{}{
+			"amount":      transaction.Amount,
+			"date":        transaction.Date,
+			"description": transaction.Description,
+			"recurrency":  transaction.Recurrency,
+			"author":      "PUT AUTHOR ID HERE",
+		}, true, "", "", "").
+		Execute()
+
 	if err != nil {
 		return "", fmt.Errorf("error inserting transaction: %w", err)
 	}
@@ -92,31 +95,13 @@ func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	tx, err := repo.db.Begin(context.Background())
-	if err != nil {
-		return id, err
-	}
+	_, _, err := repo.db.From("transactions").
+		Delete("", "").
+		Eq("id", id).
+		Eq("author", "PUT AUTHOR ID HERE").
+		Execute()
 
-	query := `DELETE FROM transactions WHERE id = ? AND author = (SELECT auth.uid())`
-	result, err := tx.Exec(context.Background(), query, id)
 	if err != nil {
-		tx.Rollback(context.Background())
-		return id, err
-	}
-
-	rowsAffected := result.RowsAffected()
-	if rowsAffected == 0 {
-		tx.Rollback(context.Background())
-		return id, fmt.Errorf("no rows affected, transaction with id %s not found", id)
-	}
-	if err != nil {
-		tx.Rollback(context.Background())
-		return id, err
-	}
-
-	err = tx.Commit(context.Background())
-	if err != nil {
-		tx.Rollback(context.Background())
 		return id, err
 	}
 
@@ -127,23 +112,18 @@ func (repo *supabaseRepository) EditTransaction(ctx context.Context, transaction
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	tx, err := repo.db.Begin(context.Background())
-	if err != nil {
-		return transaction.Id, err
-	}
-	_, err = tx.Exec(context.Background(), `UPDATE transactions
-					SET description=?, amount=?, recurrency=?, date=?
-					WHERE id = ? AND author = (SELECT auth.uid());`,
-		transaction.Description, transaction.Amount, transaction.Recurrency, transaction.Date, transaction.Id)
+	_, _, err := repo.db.From("transactions").
+		Update(map[string]interface{}{
+			"description": transaction.Description,
+			"amount":      transaction.Amount,
+			"recurrency":  transaction.Recurrency,
+			"date":        transaction.Date,
+		}, "", "").
+		Eq("id", transaction.Id).
+		Eq("author", "PUT AUTHOR ID HERE").
+		Execute()
 
 	if err != nil {
-		tx.Rollback(context.Background())
-		return transaction.Id, err
-	}
-
-	err = tx.Commit(context.Background())
-	if err != nil {
-		tx.Rollback(context.Background())
 		return transaction.Id, err
 	}
 

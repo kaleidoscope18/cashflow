@@ -15,7 +15,7 @@ import (
 
 // CreateBalance is the resolver for the createBalance field.
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	newBalance, err := (*r.BalanceService).WriteBalance(input.Amount, input.Date)
+	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, input.Date)
 	return &newBalance, err
 }
 
@@ -31,6 +31,6 @@ func (r *queryResolver) ListBalances(ctx context.Context, from *time.Time, to *t
 		return nil, err
 	}
 
-	balances, err := (*r.BalanceService).ListBalances(*from, *to)
+	balances, err := (*r.BalanceService).ListBalances(ctx, *from, *to)
 	return utils.ConvertStructToPointersArray(balances), err
 }

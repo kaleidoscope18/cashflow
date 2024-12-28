@@ -1,4 +1,3 @@
 extend type Query {
   loginEmail(email: String!, password: String!): String!
-  logoutEmail(email: String!): String!
 }
