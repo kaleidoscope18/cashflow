@@ -27,6 +27,11 @@ func Run(app *models.App) {
 	http.Handle("/playground", playground.Handler(browserTabTitle, "/graphql"))
 	http.Handle("/graphql", server)
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
