@@ -10,5 +10,5 @@ import (
 
 // LoginEmail is the resolver for the loginEmail field.
 func (r *queryResolver) LoginEmail(ctx context.Context, email string, password string) (string, error) {
-	return (*r.AuthService).LoginEmail(email, password)
+	return (*r.AuthService).LoginEmail(ctx, email, password)
 }

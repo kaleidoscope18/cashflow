@@ -45,7 +45,3 @@ func Close() error {
 func Get() *models.Repository {
 	return &repository
 }
-
-func Health() error {
-	return repository.Health()
-}

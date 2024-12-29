@@ -1,5 +1,11 @@
 package models
 
+type ContextKey string
+
+const (
+	JwtKey ContextKey = "jwt"
+)
+
 type App struct {
 	TransactionService *TransactionService
 	BalanceService     *BalanceService
@@ -9,7 +15,7 @@ type App struct {
 type StorageStrategy string
 
 const (
-	Supabase StorageStrategy = "Supabase" // Supabase database instance, persisted
+	Supabase StorageStrategy = "Supabase"
 )
 
 type Repository interface {
@@ -18,5 +24,4 @@ type Repository interface {
 	TransactionRepository
 	Init() error
 	Close() error
-	Health() error
 }

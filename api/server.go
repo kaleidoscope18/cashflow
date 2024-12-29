@@ -3,6 +3,7 @@ package api
 import (
 	"cashflow/api/graph"
 	"cashflow/api/graph/generated"
+	"cashflow/api/middlewares"
 	"cashflow/models"
 	"fmt"
 	"log"
@@ -17,15 +18,17 @@ import (
 const defaultPort = "8080"
 
 func Run(app *models.App) {
-	schema := generated.NewExecutableSchema(generated.Config{
-		Resolvers: &graph.Resolver{App: app},
-	})
+
+	config := generated.Config{
+		Resolvers:  &graph.Resolver{App: app},
+		Directives: graph.GetDirectives(app),
+	}
+	schema := generated.NewExecutableSchema(config)
 
 	server := handler.NewDefaultServer(schema)
 
-	browserTabTitle := "Cashflow GraphQL Playground"
-	http.Handle("/playground", playground.Handler(browserTabTitle, "/graphql"))
-	http.Handle("/graphql", server)
+	http.Handle("/playground", playground.Handler("Cashflow GraphQL Playground", "/graphql"))
+	http.Handle("/graphql", middlewares.AuthMiddleware(server))
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -41,5 +44,6 @@ func Run(app *models.App) {
 	fmt.Fprintf(w, "GraphQL playground:\thttp://localhost:%s/playground\t\n", port)
 	fmt.Fprintf(w, "GraphQL endpoint:\thttp://localhost:%s/graphql\t\n", port)
 	w.Flush()
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

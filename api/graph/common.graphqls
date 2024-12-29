@@ -1,7 +1,13 @@
 scalar Date
 
+directive @auth(requires: Role) on FIELD_DEFINITION
+
+enum Role {
+  USER
+}
+
 type Query {
-    health: String!
+  health: String!
 }
 
 type Mutation

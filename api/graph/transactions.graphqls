@@ -43,18 +43,19 @@ input TransactionEditInput {
 
 # input TransactionDeleteInput {
 #   type: TransactionEditType!
-# } 
+# }
 
 extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+    @auth(requires: USER)
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID!
-  createTransactions(input: [NewTransaction!]!): [ID!]!
+  createTransaction(input: NewTransaction!): ID! @auth(requires: USER)
+  createTransactions(input: [NewTransaction!]!): [ID!]! @auth(requires: USER)
 
-  deleteTransaction(id: ID!): ID! # change id for delete input
-  deleteTransactions(ids: [ID!]!): [ID!]!
+  deleteTransaction(id: ID!): ID! @auth(requires: USER) # todo use TransactionDeleteInput
+  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: USER)
 
-  editTransaction(input: TransactionEditInput!): ID!
+  editTransaction(input: TransactionEditInput!): ID! @auth(requires: USER)
 }

@@ -24,9 +24,26 @@ Packages:
 | repository  | database layer                              |
 | utils       | reusable functions independent from domain  |
 
+## Commands
+
+```sh
+go get                                          # install dependencies
+go mod tidy                                     # cleanup dependencies
+go fmt                                          # format code
+go build                                        # build the binary
+./cashflow                                      # run the binary
+```
+
 ## Developing
 
 Developing with a prod database since this is a hobby project.
+
+### Testing
+
+```sh
+go test ./... -run 'Test[^BDD]'                 # run unit tests
+go test ./... -run 'TestBDD'                    # run bdd tests
+```
 
 ### Development flow
 
@@ -57,7 +74,7 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 
 When the containers are running in docker, launch `Go Containerized Debug` VSCode configuration.  
 
-Fyi, here my installed VSCode Extensions:  
+### Suggested vscode extensions
 
 - Go by Go Team at Google  
 - markdownlint  
@@ -69,20 +86,6 @@ Fyi, here my installed VSCode Extensions:
 
 BDD testing is in `bdd` package and gherkin natural language is used with `features/*.feature` files.  
 [Godog](https://github.com/cucumber/godog/) library is used to run these tests.
-
-### Local commands
-
-You need an instance of MySQL running locally.
-
-```sh
-go test ./... -run 'Test[^BDD]'                 # run unit tests
-go test ./... -run 'TestBDD'                    # run bdd tests
-go get                                          # install dependencies
-go mod tidy                                     # cleanup dependencies
-go fmt                                          # format code
-go build                                        # build the binary
-./cashflow                                      # run the binary
-```
 
 ## Architecture
 

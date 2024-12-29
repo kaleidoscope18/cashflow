@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Did not load an .env file")

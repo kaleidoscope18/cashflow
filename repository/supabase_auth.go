@@ -1,8 +1,11 @@
 package repository
 
-import "log"
+import (
+	"context"
+	"log"
+)
 
-func (repo *supabaseRepository) LoginEmail(email string, password string) (string, error) {
+func (repo *supabaseRepository) LoginEmail(ctx context.Context, email string, password string) (string, error) {
 	session, err := repo.db.SignInWithEmailPassword(email, password)
 	if err != nil {
 		log.Println("error logging in with email: ", email, err)
@@ -14,6 +17,11 @@ func (repo *supabaseRepository) LoginEmail(email string, password string) (strin
 	return session.AccessToken, nil
 }
 
-func (repo *supabaseRepository) Logout(email string) (string, error) {
-	return "", nil
+func (repo *supabaseRepository) ValidateSession(ctx context.Context, token string) (bool, error) {
+	authedClient := repo.db.Auth.WithToken(token)
+	_, err := authedClient.GetUser()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

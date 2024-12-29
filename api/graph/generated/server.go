@@ -44,6 +44,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver, requires *Role) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -465,11 +466,18 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../common.graphqls", Input: `scalar Date
 
-type Query {
-    health: String!
+directive @auth(requires: Role) on FIELD_DEFINITION
+
+enum Role {
+  USER
 }
 
-type Mutation`, BuiltIn: false},
+type Query {
+  health: String!
+}
+
+type Mutation
+`, BuiltIn: false},
 	{Name: "../transactions.graphqls", Input: `enum Status {
   DONE
   TODO
@@ -515,20 +523,21 @@ input TransactionEditInput {
 
 # input TransactionDeleteInput {
 #   type: TransactionEditType!
-# } 
+# }
 
 extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+    @auth(requires: USER)
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID!
-  createTransactions(input: [NewTransaction!]!): [ID!]!
+  createTransaction(input: NewTransaction!): ID! @auth(requires: USER)
+  createTransactions(input: [NewTransaction!]!): [ID!]! @auth(requires: USER)
 
-  deleteTransaction(id: ID!): ID! # change id for delete input
-  deleteTransactions(ids: [ID!]!): [ID!]!
+  deleteTransaction(id: ID!): ID! @auth(requires: USER) # todo use TransactionDeleteInput
+  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: USER)
 
-  editTransaction(input: TransactionEditInput!): ID!
+  editTransaction(input: TransactionEditInput!): ID! @auth(requires: USER)
 }
 `, BuiltIn: false},
 }
@@ -537,6 +546,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *Role
+	if tmp, ok := rawArgs["requires"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requires"))
+		arg0, err = ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["requires"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1246,8 +1270,32 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTransaction(rctx, fc.Args["input"].(NewTransaction))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateTransaction(rctx, fc.Args["input"].(NewTransaction))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1301,8 +1349,32 @@ func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, fi
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransaction))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransaction))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1356,8 +1428,32 @@ func (ec *executionContext) _Mutation_deleteTransaction(ctx context.Context, fie
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTransaction(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteTransaction(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1411,8 +1507,32 @@ func (ec *executionContext) _Mutation_deleteTransactions(ctx context.Context, fi
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["ids"].([]string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["ids"].([]string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1466,8 +1586,32 @@ func (ec *executionContext) _Mutation_editTransaction(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().EditTransaction(rctx, fc.Args["input"].(TransactionEditInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().EditTransaction(rctx, fc.Args["input"].(TransactionEditInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1681,8 +1825,32 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*models.ComputedTransaction); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*cashflow/models.ComputedTransaction`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5257,6 +5425,22 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	}
 	res := graphql.MarshalFloatContext(*v)
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx context.Context, v interface{}) (*Role, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(Role)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx context.Context, sel ast.SelectionSet, v *Role) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
