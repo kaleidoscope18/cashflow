@@ -3,11 +3,9 @@ package repository
 import (
 	"cashflow/models"
 	"context"
-	"encoding/json"
-	"errors"
 	"time"
 
-	"github.com/supabase-community/postgrest-go"
+	"github.com/jackc/pgx/v5"
 )
 
 func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float64, date string) (models.Balance, error) {
@@ -19,13 +17,7 @@ func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float6
 		Date:   date,
 	}
 
-	_, _, err := repo.db.From("balances").
-		Insert(map[string]interface{}{
-			"amount": balance.Amount,
-			"date":   balance.Date,
-			"author": "PUT AUTHOR ID HERE",
-		}, true, "", "", "").
-		Execute()
+	_, err := repo.db.Exec(ctx, "INSERT INTO balances (amount, date, author) VALUES ($1, $2, $3)", balance.Amount, balance.Date, ctx.Value(models.UserId).(string))
 
 	if err != nil {
 		return models.Balance{}, err
@@ -38,24 +30,16 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, _, err := repo.db.From("balances").
-		Select("amount, date", "", false).
-		Filter("date", ">=", from.Format("2006-01-01")).
-		Filter("date", "<=", to.Format("2006-01-01")).
-		Filter("author", "=", "PUT AUTHOR ID HERE").
-		Order("date", &postgrest.OrderOpts{
-			Ascending: true,
-		}).
-		Execute()
+	rows, err := repo.db.Query(ctx, "SELECT amount, date FROM balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), ctx.Value(models.UserId).(string))
 
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}
 
 	var balances []models.Balance
-	err = json.Unmarshal(rows, &balances)
+	balances, err = pgx.CollectRows(rows, pgx.RowToStructByName[models.Balance])
 	if err != nil {
-		panic(err)
+		return make([]models.Balance, 0), err
 	}
 
 	return balances, nil
@@ -65,18 +49,10 @@ func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string) 
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, count, err := repo.db.From("balances").
-		Delete("", "").
-		Eq("date", date).
-		Eq("author", "PUT AUTHOR ID HERE").
-		Execute()
+	_, err := repo.db.Exec(ctx, "DELETE FROM balances WHERE date = $1 AND author = $2", date, ctx.Value(models.UserId).(string))
 
 	if err != nil {
 		return err
-	}
-
-	if count == 0 {
-		return errors.New("balance not found")
 	}
 
 	return nil

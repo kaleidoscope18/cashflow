@@ -1,16 +1,17 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
 
-	"github.com/supabase-community/supabase-go"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type supabaseRepository struct {
 	mutex sync.RWMutex
-	db    *supabase.Client
+	db    *pgxpool.Pool
 }
 
 var initSupabaseDatabaseOnce sync.Once
@@ -27,12 +28,13 @@ func openSupabase(repo *supabaseRepository) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	client, err := supabase.NewClient(os.Getenv("SUPABASE_URL"), os.Getenv("SUPABASE_API_KEY"), &supabase.ClientOptions{})
+	pool, err := pgxpool.New(context.Background(), os.Getenv("SUPABASE_POSTGRES_CONNECTION_STRING"))
 	if err != nil {
-		panic("cannot initalize client: " + err.Error())
+		return err
 	}
+	defer pool.Close()
 
-	repo.db = client
+	repo.db = pool
 
 	fmt.Println("Connected to Supabase")
 	return nil
