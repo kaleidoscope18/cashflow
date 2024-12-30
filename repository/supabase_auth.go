@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"cashflow/models"
 	"context"
+	"errors"
 	"log"
 )
 
@@ -17,11 +19,20 @@ func (repo *supabaseRepository) LoginEmail(ctx context.Context, email string, pa
 	return session.AccessToken, nil
 }
 
-func (repo *supabaseRepository) ValidateSession(ctx context.Context, token string) (bool, error) {
+func (repo *supabaseRepository) ValidateSession(ctx context.Context, token string) (models.User, error) {
 	authedClient := repo.db.Auth.WithToken(token)
-	_, err := authedClient.GetUser()
-	if err != nil {
-		return false, err
+	if authedClient == nil {
+		return models.User{}, errors.New("invalid token")
 	}
-	return true, nil
+	user, err := authedClient.GetUser()
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return models.User{
+		ID:    user.ID.String(),
+		Role:  user.Role,
+		Email: user.Email,
+	}, nil
 }

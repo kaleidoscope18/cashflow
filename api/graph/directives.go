@@ -5,7 +5,6 @@ import (
 	"cashflow/models"
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/99designs/gqlgen/graphql"
 )
@@ -27,10 +26,21 @@ func (d *Directives) AuthDirective(ctx context.Context, obj interface{}, next gr
 		return next(ctx)
 	}
 
-	valid, err := (*d.AuthService).ValidateSession(ctx, requires.String())
-	if err != nil || !valid {
-		log.Println("access denied for role", requires.String())
+	token := ctx.Value(models.JwtKey).(string)
+	if token == "" {
 		return nil, fmt.Errorf("access denied")
 	}
+
+	user, err := (*d.AuthService).ValidateSession(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	if user.Role != requires.String() {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	ctx = context.WithValue(ctx, models.UserId, user.ID)
+	ctx = context.WithValue(ctx, models.UserRole, user.Role)
 	return next(ctx)
 }

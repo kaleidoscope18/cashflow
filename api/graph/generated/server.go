@@ -469,7 +469,7 @@ extend type Mutation {
 directive @auth(requires: Role) on FIELD_DEFINITION
 
 enum Role {
-  USER
+  authenticated
 }
 
 type Query {
@@ -527,17 +527,19 @@ input TransactionEditInput {
 
 extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
-    @auth(requires: USER)
+    @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID! @auth(requires: USER)
-  createTransactions(input: [NewTransaction!]!): [ID!]! @auth(requires: USER)
+  createTransaction(input: NewTransaction!): ID! @auth(requires: authenticated)
+  createTransactions(input: [NewTransaction!]!): [ID!]!
+    @auth(requires: authenticated)
 
-  deleteTransaction(id: ID!): ID! @auth(requires: USER) # todo use TransactionDeleteInput
-  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: USER)
+  deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput
+  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: authenticated)
 
-  editTransaction(input: TransactionEditInput!): ID! @auth(requires: USER)
+  editTransaction(input: TransactionEditInput!): ID!
+    @auth(requires: authenticated)
 }
 `, BuiltIn: false},
 }
@@ -1275,7 +1277,7 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 			return ec.resolvers.Mutation().CreateTransaction(rctx, fc.Args["input"].(NewTransaction))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}
@@ -1354,7 +1356,7 @@ func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, fi
 			return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransaction))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}
@@ -1433,7 +1435,7 @@ func (ec *executionContext) _Mutation_deleteTransaction(ctx context.Context, fie
 			return ec.resolvers.Mutation().DeleteTransaction(rctx, fc.Args["id"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}
@@ -1512,7 +1514,7 @@ func (ec *executionContext) _Mutation_deleteTransactions(ctx context.Context, fi
 			return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["ids"].([]string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}
@@ -1591,7 +1593,7 @@ func (ec *executionContext) _Mutation_editTransaction(ctx context.Context, field
 			return ec.resolvers.Mutation().EditTransaction(rctx, fc.Args["input"].(TransactionEditInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}
@@ -1830,7 +1832,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "USER")
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
 			if err != nil {
 				return nil, err
 			}

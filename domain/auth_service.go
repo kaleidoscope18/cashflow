@@ -19,6 +19,6 @@ func (s *authService) LoginEmail(ctx context.Context, email string, password str
 	return (*s.repository).LoginEmail(ctx, email, password)
 }
 
-func (s *authService) ValidateSession(ctx context.Context, token string) (bool, error) {
+func (s *authService) ValidateSession(ctx context.Context, token string) (models.User, error) {
 	return (*s.repository).ValidateSession(ctx, token)
 }

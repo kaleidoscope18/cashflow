@@ -3,7 +3,9 @@ package models
 type ContextKey string
 
 const (
-	JwtKey ContextKey = "jwt"
+	JwtKey   ContextKey = "jwt"
+	UserId   ContextKey = "user_id"
+	UserRole ContextKey = "user_role"
 )
 
 type App struct {

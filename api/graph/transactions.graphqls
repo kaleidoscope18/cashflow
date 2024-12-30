@@ -47,15 +47,17 @@ input TransactionEditInput {
 
 extend type Query {
   listTransactions(from: Date, to: Date): [ComputedTransaction!]!
-    @auth(requires: USER)
+    @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID! @auth(requires: USER)
-  createTransactions(input: [NewTransaction!]!): [ID!]! @auth(requires: USER)
+  createTransaction(input: NewTransaction!): ID! @auth(requires: authenticated)
+  createTransactions(input: [NewTransaction!]!): [ID!]!
+    @auth(requires: authenticated)
 
-  deleteTransaction(id: ID!): ID! @auth(requires: USER) # todo use TransactionDeleteInput
-  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: USER)
+  deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput
+  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: authenticated)
 
-  editTransaction(input: TransactionEditInput!): ID! @auth(requires: USER)
+  editTransaction(input: TransactionEditInput!): ID!
+    @auth(requires: authenticated)
 }

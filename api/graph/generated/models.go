@@ -39,16 +39,16 @@ type TransactionEditInput struct {
 type Role string
 
 const (
-	RoleUser Role = "USER"
+	RoleAuthenticated Role = "authenticated"
 )
 
 var AllRole = []Role{
-	RoleUser,
+	RoleAuthenticated,
 }
 
 func (e Role) IsValid() bool {
 	switch e {
-	case RoleUser:
+	case RoleAuthenticated:
 		return true
 	}
 	return false

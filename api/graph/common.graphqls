@@ -3,7 +3,7 @@ scalar Date
 directive @auth(requires: Role) on FIELD_DEFINITION
 
 enum Role {
-  USER
+  authenticated
 }
 
 type Query {
