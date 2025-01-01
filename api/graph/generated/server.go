@@ -531,8 +531,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID! @auth(requires: authenticated)
-  createTransactions(input: [NewTransaction!]!): [ID!]!
+  createTransaction(input: NewTransaction!): String!
+    @auth(requires: authenticated)
+  createTransactions(input: [NewTransaction!]!): [String!]!
     @auth(requires: authenticated)
 
   deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput
@@ -1311,7 +1312,7 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1321,7 +1322,7 @@ func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	defer func() {
@@ -1390,7 +1391,7 @@ func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, fi
 	}
 	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1400,7 +1401,7 @@ func (ec *executionContext) fieldContext_Mutation_createTransactions(ctx context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	defer func() {
@@ -5095,6 +5096,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTransactionEditInput2cashflowᚋapiᚋgraphᚋgeneratedᚐTransactionEditInput(ctx context.Context, v interface{}) (TransactionEditInput, error) {

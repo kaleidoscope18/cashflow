@@ -10,14 +10,14 @@ type TransactionRepository interface {
 	Close() error
 	GetTransactionById(ctx context.Context, id string) (Transaction, error)
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
-	InsertTransaction(ctx context.Context, transaction Transaction) (string, error)
+	InsertTransaction(ctx context.Context, transaction Transaction) error
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 	EditTransaction(ctx context.Context, transaction Transaction) (string, error)
 }
 
 type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
-	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) (string, error)
+	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) (string, error)
 }

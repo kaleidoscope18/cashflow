@@ -36,8 +36,8 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return results, err
 }
 
-func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) (string, error) {
-	id, err := (*s.repository).InsertTransaction(ctx, models.Transaction{
+func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error {
+	err := (*s.repository).InsertTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(date),
 		Description: description,
@@ -45,10 +45,10 @@ func (s *transactionService) WriteTransaction(ctx context.Context, date string, 
 	})
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return id, nil
+	return nil
 }
 
 func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {

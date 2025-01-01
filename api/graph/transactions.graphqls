@@ -51,8 +51,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): ID! @auth(requires: authenticated)
-  createTransactions(input: [NewTransaction!]!): [ID!]!
+  createTransaction(input: NewTransaction!): String!
+    @auth(requires: authenticated)
+  createTransactions(input: [NewTransaction!]!): [String!]!
     @auth(requires: authenticated)
 
   deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput

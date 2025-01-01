@@ -1,12 +1,10 @@
 package repository
 
 import (
-	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -40,7 +38,7 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date, recurrency FROM transactions WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), ctx.Value(models.UserId).(string))
+	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency FROM transactions WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), ctx.Value(models.UserId).(string))
 
 	if err != nil {
 		return nil, err
@@ -55,25 +53,16 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	return transactions, nil
 }
 
-func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transaction models.Transaction) (string, error) {
+func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transaction models.Transaction) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	log.Printf("Inserting transaction for user %v", transaction)
-	dev.PrintJson(map[string]interface{}{
-		"description": transaction.Description,
-		"amount":      transaction.Amount,
-		"date":        transaction.Date,
-		"recurrency":  transaction.Recurrency,
-		"author":      ctx.Value(models.UserId).(string),
-	})
-
 	_, err := repo.db.Exec(ctx, "INSERT INTO transactions (description, amount, date, recurrency, author) VALUES ($1, $2, $3, $4, $5)", transaction.Description, transaction.Amount, transaction.Date, transaction.Recurrency, ctx.Value(models.UserId).(string))
 	if err != nil {
-		return "", fmt.Errorf("error inserting transaction: %w", err)
+		return fmt.Errorf("error inserting transaction: %w", err)
 	}
 
-	return transaction.Id, nil
+	return nil
 }
 
 func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string) (string, error) {

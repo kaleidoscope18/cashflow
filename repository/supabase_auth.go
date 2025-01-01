@@ -2,7 +2,6 @@ package repository
 
 import (
 	"bytes"
-	"cashflow/dev"
 	"cashflow/models"
 	"context"
 	"encoding/json"
@@ -64,7 +63,6 @@ func (repo *supabaseRepository) ValidateSession(ctx context.Context, token strin
 	if err != nil {
 		return models.User{}, err
 	}
-	dev.PrintJson(resp.StatusCode)
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {

@@ -32,7 +32,6 @@ func openSupabase(repo *supabaseRepository) error {
 	if err != nil {
 		return err
 	}
-	defer pool.Close()
 
 	repo.db = pool
 
@@ -41,11 +40,15 @@ func openSupabase(repo *supabaseRepository) error {
 }
 
 func (repo *supabaseRepository) Close() error {
-	fmt.Println("Close for supabase not implemented")
+	repo.db.Close()
+	fmt.Println("Closed connection to Supabase")
 	return nil
 }
 
 func (repo *supabaseRepository) Health() error {
-	fmt.Println("nothing")
+	err := repo.db.Ping(context.Background())
+	if err != nil {
+		return err
+	}
 	return nil
 }
