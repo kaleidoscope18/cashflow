@@ -10,4 +10,5 @@ var (
 	url          = contextKey("url")
 	balances     = contextKey("balances")
 	transactions = contextKey("transactions")
+	token        = contextKey("token")
 )

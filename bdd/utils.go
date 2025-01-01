@@ -2,16 +2,20 @@ package bdd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 )
 
-func PostGraphQL(url string, query string, queryName string, result interface{}) error {
+func PostGraphQL(ctx context.Context, query string, queryName string, result interface{}) error {
 	// fmt.Println(query)
+	url := ctx.Value(url).(string)
+	token := ctx.Value(token).(string)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -34,7 +38,8 @@ func PostGraphQL(url string, query string, queryName string, result interface{})
 	}
 	err = unmarshalWrappedBody(body, queryName, result)
 	if err != nil {
-		return fmt.Errorf("failed to parse JSON response: %v", err)
+		fmt.Println(string(body))
+		return fmt.Errorf("failed to parse JSON response: %s - %v", string(body), err)
 	}
 
 	return nil

@@ -3,6 +3,7 @@ Feature: Transactions
     I need to be able to manage my transactions
 
   Scenario: Adding a transaction
+    Given authenticated as "user@example.com"
     Given there is an account
     When I add a transaction on "2022/10/20" to it
     And I list the transactions

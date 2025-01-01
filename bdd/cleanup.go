@@ -11,7 +11,7 @@ import (
 func cleanupTransactions(ctx context.Context) context.Context {
 	query := `{ "query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance } }" }`
 	var result []models.ComputedTransaction
-	PostGraphQL(ctx.Value(url).(string), query, "listTransactions", &result)
+	PostGraphQL(ctx, query, "listTransactions", &result)
 
 	if len(result) != 0 {
 		ids := make([]string, len(result))
@@ -25,7 +25,7 @@ func cleanupTransactions(ctx context.Context) context.Context {
 		jsonBytes, _ := json.Marshal(ids)
 
 		query := fmt.Sprintf(`{"query": "mutation { deleteTransactions(ids: %s) }"}`, strings.Replace(string(jsonBytes), `"`, `\"`, -1))
-		PostGraphQL(ctx.Value(url).(string), query, "deleteTransactions", nil)
+		PostGraphQL(ctx, query, "deleteTransactions", nil)
 	}
 
 	return context.WithValue(ctx, transactions, nil)
@@ -34,12 +34,12 @@ func cleanupTransactions(ctx context.Context) context.Context {
 func cleanupBalances(ctx context.Context) context.Context {
 	query := `{ "query": "query { listBalances(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { date amount } }" }`
 	var result []models.Balance
-	PostGraphQL(ctx.Value(url).(string), query, "listBalances", &result)
+	PostGraphQL(ctx, query, "listBalances", &result)
 
 	if len(result) != 0 {
 		for _, b := range result {
 			query := fmt.Sprintf(`{"query": "mutation { deleteBalance(date: \"%s\") }"}`, b.Date)
-			PostGraphQL(ctx.Value(url).(string), query, "deleteBalance", nil)
+			PostGraphQL(ctx, query, "deleteBalance", nil)
 		}
 	}
 

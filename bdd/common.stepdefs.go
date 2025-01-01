@@ -1,8 +1,11 @@
 package bdd
 
 import (
+	"cashflow/dev"
 	"cashflow/models"
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/cucumber/godog"
 )
@@ -14,28 +17,41 @@ func thereIsAnAccount(ctx context.Context) (context.Context, error) {
 func thereIsAnAccountWithTransactions(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation { createTransactions(input: [{amount: -10, date: \"october 27, 2022\"}, {amount: 100.10, date: \"november 15, 2022\", description: \"Paie\"}]) }"}`
 
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransactions", nil)
+	return ctx, PostGraphQL(ctx, query, "createTransactions", nil)
 }
 
 func iListTheTransactions(ctx context.Context) (context.Context, error) {
 	query := `{ "query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance status } }" }`
 
 	var result []models.ComputedTransaction
-	err := PostGraphQL(ctx.Value(url).(string), query, "listTransactions", &result)
+	err := PostGraphQL(ctx, query, "listTransactions", &result)
 
 	return context.WithValue(ctx, transactions, &result), err
 }
 
 func iListTheBalances(ctx context.Context) (context.Context, error) {
+	dev.PrintJson(ctx)
 	query := `{ "query": "query { listBalances(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { date amount } }" }`
 
 	var result []models.Balance
-	err := PostGraphQL(ctx.Value(url).(string), query, "listBalances", &result)
+	err := PostGraphQL(ctx, query, "listBalances", &result)
 
 	return context.WithValue(ctx, balances, &result), err
 }
 
+func authenticatedAs(ctx context.Context, username string) (context.Context, error) {
+	password := os.Getenv("BDD_USER_PASSWORD")
+	email := os.Getenv("BDD_USER_EMAIL")
+	query := fmt.Sprintf(`{ "query": "query { loginEmail(email: \"%s\", password: \"%s\") }" }`, email, password)
+
+	var t string
+	err := PostGraphQL(ctx, query, "loginEmail", &t)
+
+	return context.WithValue(ctx, token, t), err
+}
+
 func InitializeCommonStepDefs(ctx *godog.ScenarioContext) {
+	ctx.Step(`^authenticated as "([^"]*)"$`, authenticatedAs)
 	ctx.Step(`^there is an account$`, thereIsAnAccount)
 	ctx.Step(`^there is an account with transactions$`, thereIsAnAccountWithTransactions)
 

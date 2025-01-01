@@ -2,6 +2,7 @@
 
 Ledger application that allows you to know if your account will be overdraft someday.  
 All features for this app are described in files under `bdd/features/`.
+Developing with a prod database since this is a hobby project.
 
 ## Technologies
 
@@ -32,24 +33,21 @@ go mod tidy                                     # cleanup dependencies
 go fmt                                          # format code
 go build                                        # build the binary
 ./cashflow                                      # run the binary
-```
 
-## Developing
-
-Developing with a prod database since this is a hobby project.
-
-### Testing
-
-```sh
+# run tests
 go test ./... -run 'Test[^BDD]'                 # run unit tests
 go test ./... -run 'TestBDD'                    # run bdd tests
 ```
 
-### Development flow
+## Debug
+
+- use `Debug Go` VSCode configuration to debug the app.
+- click on `Debug test` above `TestBDD` in `bdd_test.go` file to debug the bdd tests.
+
+## Development flow
 
 I develop this app in a TDD way (red-green-refactor), here's how:  
 
-- I always keep my dev containers running (see [Developing](#developing) above).  
 - I first write the scenarios(features) I need to code in a `*.feature` file.  
 - Then I run the BDD tests via to print the step defs I need to implement (see [BDD](#bdd)).  
 - I implement them to a `*.stepdef.go` file.  

@@ -13,7 +13,7 @@ import (
 
 func iAddARecurringTransactionToIt(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation {createTransaction(input: {amount: 1000, date: \"september 20, 2022\", recurrency: \"FREQ=MONTHLY;BYMONTHDAY=15,1;UNTIL=20231031T000000Z\", description: \"pay\"})}"}`
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
+	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
 
 func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Context, error) {
@@ -225,13 +225,13 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 
 func iAddATransactionOnDateToIt(ctx context.Context, date string) (context.Context, error) {
 	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\"})}"}`, date)
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
+	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
 
 func iRemoveATransaction(ctx context.Context) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 	query := fmt.Sprintf(`{"query": "mutation {deleteTransaction(id: \"%s\")}"}`, transactions[0].Id)
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransaction", nil)
+	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
 
 func iShouldSeeRemainingTransactions(ctx context.Context) (context.Context, error) {
@@ -259,7 +259,7 @@ func iAddATransactionTodayAndAnotherLater(ctx context.Context) (context.Context,
 	tomorrow := utils.ParseDate(utils.ParseDateToTime(today).AddDate(0, 0, 1).String())
 
 	query := fmt.Sprintf(`{"query": "mutation {createTransactions(input: [{amount:10, date: \"%s\"}, {amount: 20, date: \"%s\"}])}"}`, today, tomorrow)
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createTransactions", nil)
+	return ctx, PostGraphQL(ctx, query, "createTransactions", nil)
 }
 
 func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context) (context.Context, error) {
@@ -288,7 +288,7 @@ func iEditTheTransactionInfo(ctx context.Context) (context.Context, error) {
 	id := strings.Split(transactions[0].Id, "-")[0]
 
 	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: ALL, id: \"%s\", amount: 999})}"}`, id)
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "editTransaction", nil)
+	return ctx, PostGraphQL(ctx, query, "editTransaction", nil)
 }
 
 func iShouldSeeChangedTransactions(ctx context.Context) (context.Context, error) {

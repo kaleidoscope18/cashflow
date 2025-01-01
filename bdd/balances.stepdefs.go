@@ -12,12 +12,12 @@ import (
 
 func iAddABalanceToIt(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation { createBalance(input: {amount: 1000, date: \"October 30, 2022\"}) { date amount } }"}`
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createBalance", nil)
+	return ctx, PostGraphQL(ctx, query, "createBalance", nil)
 }
 
 func iAddABalanceWithoutADateToIt(ctx context.Context) (context.Context, error) {
 	query := `{"query": "mutation { createBalance(input: {amount: 1000}) { date amount } }"}`
-	return ctx, PostGraphQL(ctx.Value(url).(string), query, "createBalance", nil)
+	return ctx, PostGraphQL(ctx, query, "createBalance", nil)
 }
 
 func itShouldBeInBalancesList(ctx context.Context) (context.Context, error) {

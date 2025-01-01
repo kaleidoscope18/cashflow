@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 )
@@ -78,10 +77,9 @@ func (repo *supabaseRepository) ValidateSession(ctx context.Context, token strin
 		}
 
 		return userInfo, nil
-	} else if resp.StatusCode == http.StatusUnauthorized {
+	} else if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return models.User{}, fmt.Errorf("unauthorized")
 	}
 
-	log.Println("unexpected status code: ", resp.StatusCode)
-	return models.User{}, fmt.Errorf("error with status code: %d", resp.StatusCode)
+	return models.User{}, fmt.Errorf("unexpected response with status code: %d", resp.StatusCode)
 }
