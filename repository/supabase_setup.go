@@ -35,7 +35,11 @@ func openSupabase(repo *supabaseRepository) error {
 
 	repo.db = pool
 
-	fmt.Println("Connected to Supabase")
+	err = pool.Ping(context.Background())
+	if err != nil {
+		return fmt.Errorf("could not connect to Supabase: %v", err)
+	}
+
 	return nil
 }
 
