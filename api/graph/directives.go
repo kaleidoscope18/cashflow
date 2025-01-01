@@ -26,8 +26,8 @@ func (d *Directives) AuthDirective(ctx context.Context, obj interface{}, next gr
 		return next(ctx)
 	}
 
-	token := ctx.Value(models.JwtKey).(string)
-	if token == "" {
+	token, ok := ctx.Value(models.JwtKey).(string)
+	if !ok || token == "" {
 		return nil, fmt.Errorf("access denied")
 	}
 
