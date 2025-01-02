@@ -2,7 +2,9 @@ package repository
 
 import (
 	"cashflow/models"
+	"cashflow/utils"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -12,26 +14,22 @@ func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float6
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	balance := models.Balance{
+	_, err := repo.db.Exec(ctx, "INSERT INTO balances (amount, date, author) VALUES ($1, $2, $3) ON CONFLICT (date, author) DO UPDATE SET amount = $1", amount, date, utils.GetContextValue(ctx, models.UserId))
+	if err != nil {
+		return models.Balance{}, fmt.Errorf("error inserting balance: %w", err)
+	}
+
+	return models.Balance{
 		Amount: amount,
 		Date:   date,
-	}
-
-	_, err := repo.db.Exec(ctx, "INSERT INTO balances (amount, date, author) VALUES ($1, $2, $3)", balance.Amount, balance.Date, ctx.Value(models.UserId).(string))
-
-	if err != nil {
-		return models.Balance{}, err
-	}
-
-	return balance, nil
+	}, nil
 }
 
 func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time, to time.Time) ([]models.Balance, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	// TODO here fix the query
-	rows, err := repo.db.Query(ctx, "SELECT amount, date FROM balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), ctx.Value(models.UserId).(string))
+	rows, err := repo.db.Query(ctx, "SELECT amount, to_char(date, 'YYYY/MM/DD') as date FROM balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-02"), to.Format("2006-01-02"), utils.GetContextValue(ctx, models.UserId))
 
 	if err != nil {
 		return make([]models.Balance, 0), err
@@ -50,7 +48,7 @@ func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string) 
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, err := repo.db.Exec(ctx, "DELETE FROM balances WHERE date = $1 AND author = $2", date, ctx.Value(models.UserId).(string))
+	_, err := repo.db.Exec(ctx, "DELETE FROM balances WHERE date = $1 AND author = $2", date, utils.GetContextValue(ctx, models.UserId))
 
 	if err != nil {
 		return err

@@ -456,12 +456,12 @@ input NewBalance {
 }
 
 extend type Query {
-  listBalances(from: Date, to: Date): [Balance!]!
+  listBalances(from: Date, to: Date): [Balance!]! @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createBalance(input: NewBalance!): Balance!
-  deleteBalance(date: String!): String!
+  createBalance(input: NewBalance!): Balance! @auth(requires: authenticated)
+  deleteBalance(date: String!): String! @auth(requires: authenticated)
 }
 `, BuiltIn: false},
 	{Name: "../common.graphqls", Input: `scalar Date
@@ -1157,8 +1157,32 @@ func (ec *executionContext) _Mutation_createBalance(ctx context.Context, field g
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateBalance(rctx, fc.Args["input"].(NewBalance))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateBalance(rctx, fc.Args["input"].(NewBalance))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*models.Balance); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *cashflow/models.Balance`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1218,8 +1242,32 @@ func (ec *executionContext) _Mutation_deleteBalance(ctx context.Context, field g
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteBalance(rctx, fc.Args["date"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteBalance(rctx, fc.Args["date"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1767,8 +1815,32 @@ func (ec *executionContext) _Query_listBalances(ctx context.Context, field graph
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*models.Balance); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*cashflow/models.Balance`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

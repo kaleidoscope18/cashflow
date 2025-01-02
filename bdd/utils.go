@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 func PostGraphQL(ctx context.Context, query string, queryName string, result interface{}) error {
-	// fmt.Println(query)
+	fmt.Println(query)
 	url := ctx.Value(url).(string)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
 	req.Header.Set("Content-Type", "application/json")
 
 	token := ctx.Value(token)
-	if token != nil {
-		token := token.(*string)
-		req.Header.Set("Authorization", "Bearer "+*token)
+	if token != nil && token.(string) != "" {
+		req.Header.Set("Authorization", "Bearer "+token.(string))
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -33,6 +33,7 @@ func PostGraphQL(ctx context.Context, query string, queryName string, result int
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	fmt.Println(string(body))
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
 	}
@@ -42,7 +43,6 @@ func PostGraphQL(ctx context.Context, query string, queryName string, result int
 	}
 	err = unmarshalWrappedBody(body, queryName, result)
 	if err != nil {
-		fmt.Println(string(body))
 		return fmt.Errorf("failed to parse JSON response: %s - %v", string(body), err)
 	}
 
@@ -66,4 +66,22 @@ func unmarshalWrappedBody(body []byte, queryName string, target interface{}) err
 	}
 
 	return nil
+}
+
+func LoginBDDUser(graphqlURL string) string {
+	password := os.Getenv("BDD_USER_PASSWORD")
+	email := os.Getenv("BDD_USER_EMAIL")
+	query := fmt.Sprintf(`{ "query": "query { loginEmail(email: \"%s\", password: \"%s\") }" }`, email, password)
+
+	ctx := context.WithValue(context.Background(), url, graphqlURL)
+	var t *string
+	err := PostGraphQL(ctx, query, "loginEmail", &t)
+	if t == nil {
+		panic("login failed: received nil token")
+	}
+	if err != nil {
+		panic(fmt.Sprintf("login failed: %v", err))
+	}
+
+	return *t
 }

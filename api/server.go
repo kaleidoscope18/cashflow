@@ -37,7 +37,10 @@ func Run(app *models.App) {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = defaultPort
+		port = os.Getenv("APP_PORT")
+		if port == "" {
+			port = defaultPort
+		}
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)

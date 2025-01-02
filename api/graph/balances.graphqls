@@ -9,10 +9,10 @@ input NewBalance {
 }
 
 extend type Query {
-  listBalances(from: Date, to: Date): [Balance!]!
+  listBalances(from: Date, to: Date): [Balance!]! @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createBalance(input: NewBalance!): Balance!
-  deleteBalance(date: String!): String!
+  createBalance(input: NewBalance!): Balance! @auth(requires: authenticated)
+  deleteBalance(date: String!): String! @auth(requires: authenticated)
 }

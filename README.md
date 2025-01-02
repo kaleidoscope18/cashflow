@@ -36,7 +36,8 @@ go build                                        # build the binary
 
 # run tests
 go test ./... -run 'Test[^BDD]'                 # run unit tests
-go test ./... -run 'TestBDD'                    # run bdd tests
+go test ./... -run 'TestBDD'                    # run all bdd tests
+go test ./... -run 'TestBDD' -- --tags=only,wip # run bdd tests with only and wip tags (i.e. @only above the scenario)
 ```
 
 ## Debug

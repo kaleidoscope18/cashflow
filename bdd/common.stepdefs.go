@@ -1,11 +1,9 @@
 package bdd
 
 import (
-	"cashflow/dev"
 	"cashflow/models"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/cucumber/godog"
 )
@@ -21,7 +19,7 @@ func thereIsAnAccountWithTransactions(ctx context.Context) (context.Context, err
 }
 
 func iListTheTransactions(ctx context.Context) (context.Context, error) {
-	query := `{ "query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance status } }" }`
+	query := `{"query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance status } }"}`
 
 	var result []models.ComputedTransaction
 	err := PostGraphQL(ctx, query, "listTransactions", &result)
@@ -30,7 +28,6 @@ func iListTheTransactions(ctx context.Context) (context.Context, error) {
 }
 
 func iListTheBalances(ctx context.Context) (context.Context, error) {
-	dev.PrintJson(ctx)
 	query := `{ "query": "query { listBalances(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { date amount } }" }`
 
 	var result []models.Balance
@@ -39,21 +36,17 @@ func iListTheBalances(ctx context.Context) (context.Context, error) {
 	return context.WithValue(ctx, balances, &result), err
 }
 
-func loginAs(ctx context.Context, username string) (context.Context, error) {
-	password := os.Getenv("BDD_USER_PASSWORD")
-	email := os.Getenv("BDD_USER_EMAIL")
-	query := fmt.Sprintf(`{ "query": "query { loginEmail(email: \"%s\", password: \"%s\") }" }`, email, password)
-
-	var t *string
-	err := PostGraphQL(ctx, query, "loginEmail", &t)
-	if t == nil {
-		return ctx, fmt.Errorf("login failed: received nil token")
-	}
-	if err != nil {
-		return ctx, err
+func loginAs(ctx context.Context, role string) (context.Context, error) {
+	if role == "authenticated" {
+		userToken := ctx.Value(userToken)
+		if userToken == nil {
+			return ctx, fmt.Errorf("user token not found")
+		}
+		ctx = context.WithValue(ctx, token, userToken.(string))
+		return ctx, nil
 	}
 
-	return context.WithValue(ctx, token, t), err
+	return ctx, nil
 }
 
 func InitializeCommonStepDefs(ctx *godog.ScenarioContext) {

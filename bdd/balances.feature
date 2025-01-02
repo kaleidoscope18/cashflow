@@ -4,21 +4,21 @@ Feature: Balances
     And it will adjust the account's balances for each transaction
 
   Scenario: Adding a balance
-    Given authenticated as "user@example.com"
+    Given login as "authenticated"
     Given there is an account
     When I add a balance to it
     And I list the balances
     Then it should be in balances list
 
   Scenario: Adding a balance without a date
-    Given authenticated as "user@example.com"
+    Given login as "authenticated"
     Given there is an account
     When I add a balance without a date to it
     And I list the balances
     Then the new balance should have today's date
 
   Scenario: Listing transactions with balances
-    Given authenticated as "user@example.com"
+    Given login as "authenticated"
     Given there is an account with transactions
     When I add a balance to it
     And I list the transactions
