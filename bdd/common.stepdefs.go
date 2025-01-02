@@ -39,22 +39,27 @@ func iListTheBalances(ctx context.Context) (context.Context, error) {
 	return context.WithValue(ctx, balances, &result), err
 }
 
-func authenticatedAs(ctx context.Context, username string) (context.Context, error) {
+func loginAs(ctx context.Context, username string) (context.Context, error) {
 	password := os.Getenv("BDD_USER_PASSWORD")
 	email := os.Getenv("BDD_USER_EMAIL")
 	query := fmt.Sprintf(`{ "query": "query { loginEmail(email: \"%s\", password: \"%s\") }" }`, email, password)
 
-	var t string
+	var t *string
 	err := PostGraphQL(ctx, query, "loginEmail", &t)
+	if t == nil {
+		return ctx, fmt.Errorf("login failed: received nil token")
+	}
+	if err != nil {
+		return ctx, err
+	}
 
 	return context.WithValue(ctx, token, t), err
 }
 
 func InitializeCommonStepDefs(ctx *godog.ScenarioContext) {
-	ctx.Step(`^authenticated as "([^"]*)"$`, authenticatedAs)
+	ctx.Step(`^login as "([^"]*)"$`, loginAs)
 	ctx.Step(`^there is an account$`, thereIsAnAccount)
 	ctx.Step(`^there is an account with transactions$`, thereIsAnAccountWithTransactions)
-
 	ctx.Step(`^I list the balances$`, iListTheBalances)
 	ctx.Step(`^I list the transactions$`, iListTheTransactions)
 }

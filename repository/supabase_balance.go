@@ -30,6 +30,7 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
+	// TODO here fix the query
 	rows, err := repo.db.Query(ctx, "SELECT amount, date FROM balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), ctx.Value(models.UserId).(string))
 
 	if err != nil {

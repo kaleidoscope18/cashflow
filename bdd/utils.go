@@ -12,10 +12,14 @@ import (
 func PostGraphQL(ctx context.Context, query string, queryName string, result interface{}) error {
 	// fmt.Println(query)
 	url := ctx.Value(url).(string)
-	token := ctx.Value(token).(string)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
+
+	token := ctx.Value(token)
+	if token != nil {
+		token := token.(*string)
+		req.Header.Set("Authorization", "Bearer "+*token)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

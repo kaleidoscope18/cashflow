@@ -37,7 +37,7 @@ func TestBDD(t *testing.T) {
 
 func InitializeScenarios(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		graphURL := fmt.Sprintf("http://%s:%s/graphql", os.Getenv("APP_HOST"), os.Getenv("APP_PORT"))
+		graphURL := fmt.Sprintf("http://%s:%s/graphql", os.Getenv("HOST"), os.Getenv("PORT"))
 		return context.WithValue(ctx, url, graphURL), nil
 	})
 
@@ -46,8 +46,10 @@ func InitializeScenarios(ctx *godog.ScenarioContext) {
 	InitializeBalancesScenarioStepDefs(ctx)
 
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		ctx = cleanupTransactions(ctx)
-		ctx = cleanupBalances(ctx)
+		if ctx.Value(token) != nil {
+			ctx = cleanupTransactions(ctx)
+			ctx = cleanupBalances(ctx)
+		}
 		return ctx, nil
 	})
 }

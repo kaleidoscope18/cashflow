@@ -11,6 +11,7 @@ import (
 func cleanupTransactions(ctx context.Context) context.Context {
 	query := `{ "query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance } }" }`
 	var result []models.ComputedTransaction
+
 	PostGraphQL(ctx, query, "listTransactions", &result)
 
 	if len(result) != 0 {
