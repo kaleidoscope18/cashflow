@@ -6,6 +6,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -56,14 +57,14 @@ func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (
 }
 
 func (s *transactionService) EditTransaction(ctx context.Context, editType models.TransactionEditType, edited models.TransactionEdit) (string, error) {
-	transaction, err := (*s.repository).GetTransactionById(ctx, edited.Id)
+	existingT, err := (*s.repository).GetTransactionById(ctx, edited.Id)
 	if err != nil {
 		return "", fmt.Errorf("cannot edit transaction, transaction with id %s not found", edited.Id)
 	}
 
 	switch editType {
 	case models.All:
-		editedTransaction := transaction
+		editedTransaction := existingT
 		if edited.Amount != nil {
 			editedTransaction.Amount = *edited.Amount
 		}
@@ -78,17 +79,17 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 		return (*s.repository).EditTransaction(ctx, editedTransaction)
 	case models.FromDate:
-		newRecurrency, err := recurrency.ChangeRecurrencyEnd(transaction.Recurrency, *edited.Date)
+		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
 		if err != nil {
 			return "", err
 		}
 
 		newT := models.Transaction{
-			Id:          transaction.Id,
-			Amount:      transaction.Amount,
+			Id:          existingT.Id,
+			Amount:      existingT.Amount,
 			Date:        *edited.Date,
-			Description: transaction.Description,
-			Recurrency:  transaction.Recurrency,
+			Description: existingT.Description,
+			Recurrency:  existingT.Recurrency,
 		}
 		if edited.Amount != nil {
 			newT.Amount = *edited.Amount
@@ -105,17 +106,72 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 
 		_, err = (*s.repository).EditTransaction(ctx, models.Transaction{
-			Id:          transaction.Id,
+			Id:          existingT.Id,
 			Recurrency:  newRecurrency,
-			Description: transaction.Description,
-			Amount:      transaction.Amount,
-			Date:        transaction.Date,
+			Description: existingT.Description,
+			Amount:      existingT.Amount,
+			Date:        existingT.Date,
 		})
 		if err != nil {
 			return (*s.repository).DeleteTransaction(ctx, newTId)
 		}
 		return newTId, nil
 	case models.OnDateOnly:
+		/*
+		       | ---------------- | ---------------- |
+		   start date           edited         end of recurrency
+		                     on date only
+		*/
+
+		// TODO: validate that the given date is correct regarding the recurrency
+
+		// Create new recurrent transaction to end until new date - 1 day
+		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
+		if err != nil {
+			return "", err
+		}
+		newStartTId, err := (*s.repository).InsertTransaction(ctx, models.Transaction{
+			Recurrency:  newRecurrency,
+			Description: existingT.Description,
+			Amount:      existingT.Amount,
+			Date:        existingT.Date,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		// Create new recurrent transaction starting from new date + 1 day
+		newT := models.Transaction{
+			Description: existingT.Description,
+			Amount:      existingT.Amount,
+			Date:        utils.ParseDateToTime(*edited.Date).AddDate(0, 0, 1).Format("2006-01-02"),
+			Recurrency:  existingT.Recurrency,
+		}
+		newEndTId, err := (*s.repository).InsertTransaction(ctx, newT)
+		if err != nil {
+			return (*s.repository).DeleteTransaction(ctx, newStartTId)
+		}
+
+		// Create single transaction on given date with edited data
+		_, err = (*s.repository).InsertTransaction(ctx, models.Transaction{
+			Description: *edited.Description,
+			Amount:      *edited.Amount,
+			Date:        *edited.Date,
+			Recurrency:  "",
+		})
+		if err != nil {
+			_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId)
+			_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId)
+			if errOne != nil || errTwo != nil {
+				log.Printf("cannot rollback!! please fix manually, error: %s, %s", errOne, errTwo)
+				return "", fmt.Errorf("cannot rollback, error: %s, %s", errOne, errTwo)
+			}
+			return "", err
+		}
+
+		// Delete old transaction
+		return (*s.repository).DeleteTransaction(ctx, existingT.Id)
+
 	default:
 	}
 

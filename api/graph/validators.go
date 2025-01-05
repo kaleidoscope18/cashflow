@@ -41,8 +41,12 @@ func validateDescription(description *string) string {
 }
 
 func validateType(input generated.TransactionEditInput) error {
-	if input.Type == models.FromDate && input.Date == nil {
-		return fmt.Errorf("date is required for fromDate type")
+	if input.Type == models.All {
+		return nil
 	}
+	if input.Date == nil {
+		return fmt.Errorf("date is required for %s type", input.Type)
+	}
+
 	return nil
 }

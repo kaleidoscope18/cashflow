@@ -64,11 +64,11 @@ func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transacti
 	var id string
 	err := row.Scan(&id)
 	if err != nil {
-		log.Printf("error scanning transaction: %v", err)
-		return "", fmt.Errorf("error scanning transaction: %w", err)
+		log.Printf("error inserting transaction: %v", err)
+		return "", fmt.Errorf("error inserting transaction: %w", err)
 	}
 
-	return transaction.Id, nil
+	return id, nil
 }
 
 func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string) (string, error) {

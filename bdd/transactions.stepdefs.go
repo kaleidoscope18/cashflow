@@ -221,7 +221,7 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	return ctx, nil
 }
 
-func iAddATransactionOnDateToIt(ctx context.Context, date string) (context.Context, error) {
+func iAddATransactionOnDate(ctx context.Context, date string) (context.Context, error) {
 	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\"})}"}`, date)
 	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
@@ -300,16 +300,24 @@ func iShouldSeeChangedTransactions(ctx context.Context) (context.Context, error)
 	return ctx, nil
 }
 
-func iEditTheTransactionInfoFrom(ctx context.Context, date string) (context.Context, error) {
+func iEditTheTransactionFrom(ctx context.Context, date string) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 	id := strings.Split(transactions[0].Id, "-")[0]
 
 	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999, date: \"%s\"})}"}`, id, date)
-	return ctx, PostGraphQL(ctx, query, "editTransaction", nil)
+	err := PostGraphQL(ctx, query, "editTransaction", nil)
+	if err != nil {
+		return context.WithValue(ctx, response, err.Error()), err
+	}
+	return ctx, nil
 }
 
-func iEditTheTransactionInfoOn(ctx context.Context) (context.Context, error) {
-	return ctx, nil
+func iEditTheTransactionOn(ctx context.Context, date string) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	id := strings.Split(transactions[0].Id, "-")[0]
+
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: ON_DATE_ONLY, id: \"%s\", amount: 999, date: \"%s\"})}"}`, id, date)
+	return ctx, PostGraphQL(ctx, query, "editTransaction", nil)
 }
 
 func iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange(ctx context.Context, date string) (context.Context, error) {
@@ -337,45 +345,69 @@ func iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange(ctx context.Con
 	return ctx, nil
 }
 
-func iShouldSeeUnchangedTransactionsExceptTransactionOn(ctx context.Context) (context.Context, error) {
+func iShouldSeeUnchangedTransactionsExceptTransactionOn(ctx context.Context, date string) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+
+	for _, t := range transactions {
+		if utils.ParseDateToTime(t.Date).Equal(utils.ParseDateToTime(date)) && t.Amount != 999.00 {
+			return ctx, fmt.Errorf("expected transaction on %s to be changed to 999.00 but got %.2f", date, t.Amount)
+		}
+
+		if !utils.ParseDateToTime(t.Date).Equal(utils.ParseDateToTime(date)) && t.Amount != 1000 {
+			return ctx, fmt.Errorf("expected transaction on %s to be unchanged but got %.2f", date, t.Amount)
+		}
+	}
 
 	return ctx, nil
 }
 
-func iEditTheTransactionInfoFromNoDate(ctx context.Context) (context.Context, error) {
+func iEditTheTransactionInfoNoDate(ctx context.Context, t string) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 	id := strings.Split(transactions[0].Id, "-")[0]
 
-	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999})}"}`, id)
+	var editType models.TransactionEditType
+	if t == "from date" {
+		editType = models.FromDate
+	} else if t == "on date only" {
+		editType = models.OnDateOnly
+	}
+
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: %s, id: \"%s\", amount: 999})}"}`, editType, id)
+
 	err := PostGraphQL(ctx, query, "editTransaction", nil)
 	return context.WithValue(ctx, response, err.Error()), nil
 }
 
-func iShouldHaveAnError(ctx context.Context) (context.Context, error) {
+func iShouldHaveAnExpectedDateError(ctx context.Context) (context.Context, error) {
 	res := ctx.Value(response).(string)
-	expected := "date is required for fromDate type"
-	if res != expected {
-		return ctx, fmt.Errorf("expected error \"%s\" but got \"%s\"", expected, res)
+	if !strings.Contains(res, "date is required for") || !strings.Contains(res, "type") {
+		return ctx, fmt.Errorf("expected error message containing \"date is required for <type> type\" but got \"%s\"", res)
 	}
 	return ctx, nil
 }
 
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I add a recurring transaction to it on "([^"]*)" until "([^"]*)"$`, iAddARecurringTransactionToIt)
-	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionOnDateToIt)
-	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
-	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
-	ctx.Step(`^I should see remaining transactions$`, iShouldSeeRemainingTransactions)
+	ctx.Step(`^I add a transaction on "([^"]*)"$`, iAddATransactionOnDate)
 	ctx.Step(`^I should see the new transaction$`, iShouldSeeTheNewTransaction)
-	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
+
+	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
+	ctx.Step(`^I should see remaining transactions$`, iShouldSeeRemainingTransactions)
+
 	ctx.Step(`^I add a transaction today and another later$`, iAddATransactionTodayAndAnotherLater)
 	ctx.Step(`^I should be able to see the correct statuses for each transaction$`, iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction)
+
+	ctx.Step(`^I add a recurring transaction to it on "([^"]*)" until "([^"]*)"$`, iAddARecurringTransactionToIt)
+	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
+
 	ctx.Step(`^I edit the transaction info$`, iEditTheTransactionInfo)
-	ctx.Step(`^I edit the transaction info from "([^"]*)"$`, iEditTheTransactionInfoFrom)
-	ctx.Step(`^I edit the transaction info from no date$`, iEditTheTransactionInfoFromNoDate)
-	ctx.Step(`^I edit the transaction info on "([^"]*)"$`, iEditTheTransactionInfoOn)
 	ctx.Step(`^I should see changed transactions$`, iShouldSeeChangedTransactions)
+
+	ctx.Step(`^I edit the transaction info ([^"]*) without a date$`, iEditTheTransactionInfoNoDate)
+	ctx.Step(`^I should have an expected date error$`, iShouldHaveAnExpectedDateError)
+
+	ctx.Step(`^I edit the transaction from "([^"]*)"$`, iEditTheTransactionFrom)
 	ctx.Step(`^I should see unchanged transactions before "([^"]*)" and the rest should change$`, iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange)
+
+	ctx.Step(`^I edit the transaction on "([^"]*)"$`, iEditTheTransactionOn)
 	ctx.Step(`^I should see unchanged transactions except transaction on "([^"]*)"$`, iShouldSeeUnchangedTransactionsExceptTransactionOn)
-	ctx.Step(`^I should have an error$`, iShouldHaveAnError)
 }
