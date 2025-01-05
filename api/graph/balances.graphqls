@@ -9,7 +9,8 @@ input NewBalance {
 }
 
 extend type Query {
-  listBalances(from: Date, to: Date): [Balance!]! @auth(requires: authenticated)
+  listBalances(from: String!, to: String!): [Balance!]!
+    @auth(requires: authenticated)
 }
 
 extend type Mutation {

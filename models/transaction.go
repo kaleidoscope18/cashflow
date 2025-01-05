@@ -19,6 +19,7 @@ type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
 	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error
 	DeleteTransaction(ctx context.Context, id string) (string, error)
+	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time) (string, error)
 	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) (string, error)
 }
 

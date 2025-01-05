@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -63,19 +62,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBalance      func(childComplexity int, input NewBalance) int
-		CreateTransaction  func(childComplexity int, input NewTransaction) int
-		CreateTransactions func(childComplexity int, input []*NewTransaction) int
-		DeleteBalance      func(childComplexity int, date string) int
-		DeleteTransaction  func(childComplexity int, id string) int
-		DeleteTransactions func(childComplexity int, ids []string) int
-		EditTransaction    func(childComplexity int, input TransactionEditInput) int
+		CreateBalance              func(childComplexity int, input NewBalance) int
+		CreateTransaction          func(childComplexity int, input NewTransaction) int
+		CreateTransactions         func(childComplexity int, input []*NewTransaction) int
+		DeleteBalance              func(childComplexity int, date string) int
+		DeleteRecurringTransaction func(childComplexity int, id string, date string) int
+		DeleteTransaction          func(childComplexity int, id string) int
+		DeleteTransactions         func(childComplexity int, ids []string) int
+		EditTransaction            func(childComplexity int, input TransactionEditInput) int
 	}
 
 	Query struct {
 		Health           func(childComplexity int) int
-		ListBalances     func(childComplexity int, from *time.Time, to *time.Time) int
-		ListTransactions func(childComplexity int, from *time.Time, to *time.Time) int
+		ListBalances     func(childComplexity int, from string, to string) int
+		ListTransactions func(childComplexity int, from string, to string) int
 		LoginEmail       func(childComplexity int, email string, password string) int
 	}
 
@@ -94,13 +94,14 @@ type MutationResolver interface {
 	CreateTransactions(ctx context.Context, input []*NewTransaction) ([]string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 	DeleteTransactions(ctx context.Context, ids []string) ([]string, error)
+	DeleteRecurringTransaction(ctx context.Context, id string, date string) (string, error)
 	EditTransaction(ctx context.Context, input TransactionEditInput) (string, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	LoginEmail(ctx context.Context, email string, password string) (string, error)
-	ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error)
-	ListTransactions(ctx context.Context, from *time.Time, to *time.Time) ([]*models.ComputedTransaction, error)
+	ListBalances(ctx context.Context, from string, to string) ([]*models.Balance, error)
+	ListTransactions(ctx context.Context, from string, to string) ([]*models.ComputedTransaction, error)
 }
 
 type executableSchema struct {
@@ -226,6 +227,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteBalance(childComplexity, args["date"].(string)), true
 
+	case "Mutation.deleteRecurringTransaction":
+		if e.complexity.Mutation.DeleteRecurringTransaction == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteRecurringTransaction_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteRecurringTransaction(childComplexity, args["id"].(string), args["date"].(string)), true
+
 	case "Mutation.deleteTransaction":
 		if e.complexity.Mutation.DeleteTransaction == nil {
 			break
@@ -279,7 +292,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListBalances(childComplexity, args["from"].(*time.Time), args["to"].(*time.Time)), true
+		return e.complexity.Query.ListBalances(childComplexity, args["from"].(string), args["to"].(string)), true
 
 	case "Query.listTransactions":
 		if e.complexity.Query.ListTransactions == nil {
@@ -291,7 +304,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListTransactions(childComplexity, args["from"].(*time.Time), args["to"].(*time.Time)), true
+		return e.complexity.Query.ListTransactions(childComplexity, args["from"].(string), args["to"].(string)), true
 
 	case "Query.loginEmail":
 		if e.complexity.Query.LoginEmail == nil {
@@ -456,7 +469,8 @@ input NewBalance {
 }
 
 extend type Query {
-  listBalances(from: Date, to: Date): [Balance!]! @auth(requires: authenticated)
+  listBalances(from: String!, to: String!): [Balance!]!
+    @auth(requires: authenticated)
 }
 
 extend type Mutation {
@@ -521,12 +535,8 @@ input TransactionEditInput {
   recurrency: String
 }
 
-# input TransactionDeleteInput {
-#   type: TransactionEditType!
-# }
-
 extend type Query {
-  listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+  listTransactions(from: String!, to: String!): [ComputedTransaction!]!
     @auth(requires: authenticated)
 }
 
@@ -536,8 +546,10 @@ extend type Mutation {
   createTransactions(input: [NewTransaction!]!): [String!]!
     @auth(requires: authenticated)
 
-  deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput
+  deleteTransaction(id: ID!): ID! @auth(requires: authenticated)
   deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: authenticated)
+  deleteRecurringTransaction(id: ID!, date: String!): String!
+    @auth(requires: authenticated)
 
   editTransaction(input: TransactionEditInput!): ID!
     @auth(requires: authenticated)
@@ -625,6 +637,30 @@ func (ec *executionContext) field_Mutation_deleteBalance_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteRecurringTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["date"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["date"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -688,19 +724,19 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_listBalances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *time.Time
+	var arg0 string
 	if tmp, ok := rawArgs["from"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg0, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["from"] = arg0
-	var arg1 *time.Time
+	var arg1 string
 	if tmp, ok := rawArgs["to"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg1, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -712,19 +748,19 @@ func (ec *executionContext) field_Query_listBalances_args(ctx context.Context, r
 func (ec *executionContext) field_Query_listTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *time.Time
+	var arg0 string
 	if tmp, ok := rawArgs["from"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg0, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["from"] = arg0
-	var arg1 *time.Time
+	var arg1 string
 	if tmp, ok := rawArgs["to"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg1, err = ec.unmarshalODate2ᚖtimeᚐTime(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1624,6 +1660,85 @@ func (ec *executionContext) fieldContext_Mutation_deleteTransactions(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_deleteRecurringTransaction(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRecurringTransaction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteRecurringTransaction(rctx, fc.Args["id"].(string), fc.Args["date"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteRecurringTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteRecurringTransaction_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_editTransaction(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_editTransaction(ctx, field)
 	if err != nil {
@@ -1817,7 +1932,7 @@ func (ec *executionContext) _Query_listBalances(ctx context.Context, field graph
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+			return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(string), fc.Args["to"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1902,7 +2017,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(*time.Time), fc.Args["to"].(*time.Time))
+			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(string), fc.Args["to"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -4373,6 +4488,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteRecurringTransaction":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteRecurringTransaction(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "editTransaction":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_editTransaction(ctx, field)
@@ -5499,22 +5621,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalODate2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalTime(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalODate2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalTime(*v)
 	return res
 }
 

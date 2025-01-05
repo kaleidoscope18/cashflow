@@ -83,9 +83,11 @@ Feature: Transactions
     And I list the transactions
     Then I should see unchanged transactions except transaction on "2022-12-15"
 
-  @wip
   Scenario: Deleting a recurring transaction
     Given login as "authenticated"
     Given there is an account
     When I add a recurring transaction to it on "2022-09-20" until "2023-10-31"
-    Then I should see unchanged transactions except transaction on "2022-12-15"
+    And I list the transactions
+    And I delete the recurring transaction on "2022-12-15"
+    And I list the transactions
+    Then I should not see the recurring transaction on "2022-12-15" but see the rest

@@ -11,7 +11,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 )
 
 // CreateTransaction is the resolver for the createTransaction field.
@@ -86,6 +85,11 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 	return results, err
 }
 
+// DeleteRecurringTransaction is the resolver for the deleteRecurringTransaction field.
+func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, id string, date string) (string, error) {
+	return (*r.TransactionService).DeleteRecurringTransaction(ctx, id, utils.ParseDateToTime(date))
+}
+
 // EditTransaction is the resolver for the editTransaction field.
 func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.TransactionEditInput) (string, error) {
 	recurrency, err := validateRecurrency(input.Recurrency)
@@ -109,13 +113,20 @@ func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.
 }
 
 // ListTransactions is the resolver for the listTransactions field.
-func (r *queryResolver) ListTransactions(ctx context.Context, from *time.Time, to *time.Time) ([]*models.ComputedTransaction, error) {
-	if from == nil || to == nil {
+func (r *queryResolver) ListTransactions(ctx context.Context, from string, to string) ([]*models.ComputedTransaction, error) {
+	if from == "" || to == "" {
 		err := fmt.Errorf("please provide from and to dates")
 		return nil, err
 	}
 
-	result, err := (*r.TransactionService).ListTransactions(ctx, *from, *to)
+	fromDate := validateDate(&from)
+	toDate := validateDate(&to)
+	if fromDate == nil || toDate == nil {
+		err := fmt.Errorf("please provide valid from and to dates")
+		return nil, err
+	}
+
+	result, err := (*r.TransactionService).ListTransactions(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate))
 	if err != nil {
 		return nil, err
 	}

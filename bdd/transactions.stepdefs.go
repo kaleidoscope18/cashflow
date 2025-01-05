@@ -386,6 +386,30 @@ func iShouldHaveAnExpectedDateError(ctx context.Context) (context.Context, error
 	return ctx, nil
 }
 
+func iDeleteTheRecurringTransactionOn(ctx context.Context, date string) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	id := strings.Split(transactions[0].Id, "-")[0]
+
+	query := fmt.Sprintf(`{"query": "mutation {deleteRecurringTransaction(id: \"%s\", date: \"%s\")}"}`, id, date)
+	return ctx, PostGraphQL(ctx, query, "deleteRecurringTransaction", nil)
+}
+
+func iShouldNotSeeTheRecurringTransactionOnButSeeTheRest(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+
+	for _, t := range transactions {
+		if t.Date == "2022-12-15" {
+			return ctx, fmt.Errorf("expected to not see the recurring transaction on %s but got %s", t.Date, t.Id)
+		}
+	}
+
+	if len(transactions) != 25 {
+		return ctx, fmt.Errorf("expected 25 transactions, got %d", len(transactions))
+	}
+
+	return ctx, nil
+}
+
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a transaction on "([^"]*)"$`, iAddATransactionOnDate)
 	ctx.Step(`^I should see the new transaction$`, iShouldSeeTheNewTransaction)
@@ -410,4 +434,7 @@ func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`^I edit the transaction on "([^"]*)"$`, iEditTheTransactionOn)
 	ctx.Step(`^I should see unchanged transactions except transaction on "([^"]*)"$`, iShouldSeeUnchangedTransactionsExceptTransactionOn)
+
+	ctx.Step(`^I delete the recurring transaction on "([^"]*)"$`, iDeleteTheRecurringTransactionOn)
+	ctx.Step(`^I should not see the recurring transaction on "([^"]*)" but see the rest$`, iShouldNotSeeTheRecurringTransactionOnButSeeTheRest)
 }

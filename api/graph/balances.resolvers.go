@@ -10,7 +10,6 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
-	"time"
 )
 
 // CreateBalance is the resolver for the createBalance field.
@@ -25,12 +24,18 @@ func (r *mutationResolver) DeleteBalance(ctx context.Context, date string) (stri
 }
 
 // ListBalances is the resolver for the listBalances field.
-func (r *queryResolver) ListBalances(ctx context.Context, from *time.Time, to *time.Time) ([]*models.Balance, error) {
-	if from == nil || to == nil {
+func (r *queryResolver) ListBalances(ctx context.Context, from string, to string) ([]*models.Balance, error) {
+	if from == "" || to == "" {
 		err := fmt.Errorf("please provide from and to dates")
 		return nil, err
 	}
+	fromDate := validateDate(&from)
+	toDate := validateDate(&to)
+	if fromDate == nil || toDate == nil {
+		err := fmt.Errorf("please provide valid from and to dates")
+		return nil, err
+	}
 
-	balances, err := (*r.BalanceService).ListBalances(ctx, *from, *to)
+	balances, err := (*r.BalanceService).ListBalances(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate))
 	return utils.ConvertStructToPointersArray(balances), err
 }

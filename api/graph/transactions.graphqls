@@ -41,12 +41,8 @@ input TransactionEditInput {
   recurrency: String
 }
 
-# input TransactionDeleteInput {
-#   type: TransactionEditType!
-# }
-
 extend type Query {
-  listTransactions(from: Date, to: Date): [ComputedTransaction!]!
+  listTransactions(from: String!, to: String!): [ComputedTransaction!]!
     @auth(requires: authenticated)
 }
 
@@ -56,8 +52,10 @@ extend type Mutation {
   createTransactions(input: [NewTransaction!]!): [String!]!
     @auth(requires: authenticated)
 
-  deleteTransaction(id: ID!): ID! @auth(requires: authenticated) # todo use TransactionDeleteInput
+  deleteTransaction(id: ID!): ID! @auth(requires: authenticated)
   deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: authenticated)
+  deleteRecurringTransaction(id: ID!, date: String!): String!
+    @auth(requires: authenticated)
 
   editTransaction(input: TransactionEditInput!): ID!
     @auth(requires: authenticated)

@@ -9,6 +9,7 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/cucumber/godog v0.14.1
 	github.com/jackc/pgx/v5 v5.7.2
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/teambition/rrule-go v1.8.2
 	github.com/vektah/gqlparser/v2 v2.5.11
@@ -20,7 +21,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 )
 

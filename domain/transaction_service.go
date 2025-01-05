@@ -52,6 +52,64 @@ func (s *transactionService) WriteTransaction(ctx context.Context, date string, 
 	return nil
 }
 
+func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id string, date time.Time) (string, error) {
+	existingT, err := (*s.repository).GetTransactionById(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("cannot delete transaction, transaction with id %s not found", id)
+	}
+	if existingT.Recurrency == "" {
+		return "", fmt.Errorf("cannot delete transaction, transaction with id %s is not recurring", id)
+	}
+
+	/*
+	     | ---------------- | ---------------- |
+	   start             removed         end of recurrency
+	                   on date only
+	*/
+
+	// TODO: validate that the given date is correct regarding the recurrency
+
+	// Create new recurrent transaction to end until date - 1 day
+	newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, date.Format(utils.DateLayout))
+	if err != nil {
+		return "", err
+	}
+	newStartTId, err := (*s.repository).InsertTransaction(ctx, models.Transaction{
+		Recurrency:  newRecurrency,
+		Description: existingT.Description,
+		Amount:      existingT.Amount,
+		Date:        existingT.Date,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// Create new recurrent transaction starting from date + 1 day
+	newT := models.Transaction{
+		Description: existingT.Description,
+		Amount:      existingT.Amount,
+		Date:        utils.ParseDateToTime(date.Format(utils.DateLayout)).AddDate(0, 0, 1).Format(utils.DateLayout),
+		Recurrency:  existingT.Recurrency,
+	}
+	newEndTId, err := (*s.repository).InsertTransaction(ctx, newT)
+	if err != nil {
+		return (*s.repository).DeleteTransaction(ctx, newStartTId)
+	}
+
+	// Delete old transaction
+	_, err = (*s.repository).DeleteTransaction(ctx, existingT.Id)
+	if err != nil {
+		_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId)
+		_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId)
+		if errOne != nil || errTwo != nil {
+			log.Printf("cannot rollback!! please fix manually, error: %s, %s", errOne, errTwo)
+			return "", fmt.Errorf("cannot rollback, error: %s, %s", errOne, errTwo)
+		}
+		return "", err
+	}
+	return "", nil
+}
+
 func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {
 	return (*s.repository).DeleteTransaction(ctx, id)
 }
@@ -63,6 +121,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 	}
 
 	switch editType {
+	default:
 	case models.All:
 		editedTransaction := existingT
 		if edited.Amount != nil {
@@ -171,9 +230,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 
 		// Delete old transaction
 		return (*s.repository).DeleteTransaction(ctx, existingT.Id)
-
-	default:
 	}
 
-	return "", nil
+	return "", fmt.Errorf("error on edit transaction, edit type %s not found", editType)
 }
