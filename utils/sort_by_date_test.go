@@ -7,9 +7,9 @@ import (
 
 func TestSortByDateBalances(t *testing.T) {
 	unorderedData := []models.Balance{
-		{Amount: 2.00, Date: "2022/11/14"},
-		{Amount: 1.00, Date: "2022/10/01"},
-		{Amount: 3.00, Date: "2022/11/15"},
+		{Amount: 2.00, Date: "2022-11-14"},
+		{Amount: 1.00, Date: "2022-10-01"},
+		{Amount: 3.00, Date: "2022-11-15"},
 	}
 
 	result := SortByDate(unorderedData)
@@ -23,25 +23,25 @@ func TestSortByDateBalances(t *testing.T) {
 
 func TestSortByDateTransactions(t *testing.T) {
 	unorderedData := []models.Transaction{
-		{Amount: -91, Date: "2022/11/04"},
-		{Amount: -117, Date: "2022/11/01"},
-		{Amount: -1333, Date: "2022/11/01"},
-		{Amount: 2800.69, Date: "2022/11/01"},
-		{Amount: -788, Date: "2022/11/01"},
-		{Amount: 2763.69, Date: "2022/11/15"},
-		{Amount: -1000, Date: "2022/11/16"},
-		{Amount: -115, Date: "2022/10/27"},
+		{Amount: -91, Date: "2022-11-04"},
+		{Amount: -117, Date: "2022-11-01"},
+		{Amount: -1333, Date: "2022-11-01"},
+		{Amount: 2800.69, Date: "2022-11-01"},
+		{Amount: -788, Date: "2022-11-01"},
+		{Amount: 2763.69, Date: "2022-11-15"},
+		{Amount: -1000, Date: "2022-11-16"},
+		{Amount: -115, Date: "2022-10-27"},
 	}
 
 	orderedData := []models.Transaction{
-		{Amount: -115, Date: "2022/10/27"},
-		{Amount: -117, Date: "2022/11/01"},
-		{Amount: -1333, Date: "2022/11/01"},
-		{Amount: 2800.69, Date: "2022/11/01"},
-		{Amount: -788, Date: "2022/11/01"},
-		{Amount: -91, Date: "2022/11/04"},
-		{Amount: 2763.69, Date: "2022/11/15"},
-		{Amount: -1000, Date: "2022/11/16"},
+		{Amount: -115, Date: "2022-10-27"},
+		{Amount: -117, Date: "2022-11-01"},
+		{Amount: -1333, Date: "2022-11-01"},
+		{Amount: 2800.69, Date: "2022-11-01"},
+		{Amount: -788, Date: "2022-11-01"},
+		{Amount: -91, Date: "2022-11-04"},
+		{Amount: 2763.69, Date: "2022-11-15"},
+		{Amount: -1000, Date: "2022-11-16"},
 	}
 
 	result := SortByDate(unorderedData)

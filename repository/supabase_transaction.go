@@ -41,7 +41,7 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency FROM transactions WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format("2006-01-01"), to.Format("2006-01-01"), utils.GetContextValue(ctx, models.UserId))
+	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency FROM transactions WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId))
 	if err != nil {
 		log.Printf("error listing transactions: %v", err)
 		return nil, err

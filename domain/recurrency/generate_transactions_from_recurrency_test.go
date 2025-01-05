@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var from = utils.ParseDateToTime("2000/01/01")
-var to = utils.ParseDateToTime("2000/03/01")
+var from = utils.ParseDateToTime("2000-01-01")
+var to = utils.ParseDateToTime("2000-03-01")
 
 func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 	data := []models.Transaction{
 		{
-			Date:        "2000/01/01",
+			Date:        "2000-01-01",
 			Amount:      2000,
 			Id:          "1",
 			Description: "Payday",
@@ -24,14 +24,14 @@ func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 	results, _ := GenerateTransactionsFromRecurrency(data, from, to)
 	expected := []models.Transaction{
 		{
-			Date:        "2000/01/15",
+			Date:        "2000-01-15",
 			Amount:      2000,
 			Id:          "1-0",
 			Description: "Payday",
 			Recurrency:  "",
 		},
 		{
-			Date:        "2000/02/15",
+			Date:        "2000-02-15",
 			Amount:      2000,
 			Id:          "1-1",
 			Description: "Payday",
@@ -51,7 +51,7 @@ func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 func TestNoRecurrencyInTransaction(t *testing.T) {
 	data := []models.Transaction{
 		{
-			Date:        "2000/01/01",
+			Date:        "2000-01-01",
 			Amount:      2000,
 			Id:          "1",
 			Description: "Payday",

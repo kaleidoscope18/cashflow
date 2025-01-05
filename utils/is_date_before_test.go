@@ -11,10 +11,10 @@ type DatesComparisonTestData struct {
 }
 
 var datesComparisonTestData = []DatesComparisonTestData{
-	{"2000/02/01", "2000/01/01", false},
-	{"2000/01/01", "2000/02/01", true},
-	{"2000/01/01", "2000/01/11", true},
-	{"2022/10/27", "2022/11/16", true},
+	{"2000-02-01", "2000-01-01", false},
+	{"2000-01-01", "2000-02-01", true},
+	{"2000-01-01", "2000-01-11", true},
+	{"2022-10-27", "2022-11-16", true},
 }
 
 func TestIsDateBefore(t *testing.T) {

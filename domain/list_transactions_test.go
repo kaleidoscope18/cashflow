@@ -7,19 +7,19 @@ import (
 	"testing"
 )
 
-var startDate = utils.ParseDateToTime("1999/12/30")
-var endDate = utils.ParseDateToTime("2000/01/11")
+var startDate = utils.ParseDateToTime("1999-12-30")
+var endDate = utils.ParseDateToTime("2000-01-11")
 
 var balances = []models.Balance{
-	{Date: "2000/01/01", Amount: 20},
-	{Date: "2000/01/10", Amount: 100},
+	{Date: "2000-01-01", Amount: 20},
+	{Date: "2000-01-10", Amount: 100},
 }
 var transactions = []models.Transaction{
-	{Id: "000", Amount: -2.99, Date: "1999/12/30", Description: "No balance yet"},
-	{Id: "001", Amount: 2.00, Date: "2000/01/01", Description: "Balance will override this"},
-	{Id: "002", Amount: -3.00, Date: "2000/01/02", Description: "Balance will decrease"},
-	{Id: "003", Amount: 4.00, Date: "2000/01/03", Description: "Balance will increase"},
-	{Id: "004", Amount: -5.00, Date: "2000/01/11", Description: "Balance will change and decrease"},
+	{Id: "000", Amount: -2.99, Date: "1999-12-30", Description: "No balance yet"},
+	{Id: "001", Amount: 2.00, Date: "2000-01-01", Description: "Balance will override this"},
+	{Id: "002", Amount: -3.00, Date: "2000-01-02", Description: "Balance will decrease"},
+	{Id: "003", Amount: 4.00, Date: "2000-01-03", Description: "Balance will increase"},
+	{Id: "004", Amount: -5.00, Date: "2000-01-11", Description: "Balance will change and decrease"},
 }
 var expected = []models.ComputedTransaction{
 	{Transaction: &transactions[0], Balance: -2.99},
@@ -30,7 +30,7 @@ var expected = []models.ComputedTransaction{
 }
 
 func TestGetBalanceOnSameDayFound(t *testing.T) {
-	result := getBalanceOnSameDay("2000/01/01", balances)
+	result := getBalanceOnSameDay("2000-01-01", balances)
 
 	if result == nil {
 		t.Error("It should have found the balance on same day")
@@ -38,7 +38,7 @@ func TestGetBalanceOnSameDayFound(t *testing.T) {
 }
 
 func TestGetBalanceOnSameDayNotFound(t *testing.T) {
-	result := getBalanceOnSameDay("2000/01/02", balances)
+	result := getBalanceOnSameDay("2000-01-02", balances)
 
 	if result != nil {
 		t.Error("It not should have found the balance on same day")

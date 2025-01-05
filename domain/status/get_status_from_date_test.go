@@ -12,8 +12,8 @@ type Expected struct {
 }
 
 var expected = []Expected{
-	{"2000/01/01", models.StatusDone},
-	{"3000/12/30", models.StatusTodo},
+	{"2000-01-01", models.StatusDone},
+	{"3000-12-30", models.StatusTodo},
 	{utils.GetTodayDate(), models.StatusDone},
 }
 

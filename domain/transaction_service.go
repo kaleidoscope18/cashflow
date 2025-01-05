@@ -144,7 +144,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		newT := models.Transaction{
 			Description: existingT.Description,
 			Amount:      existingT.Amount,
-			Date:        utils.ParseDateToTime(*edited.Date).AddDate(0, 0, 1).Format("2006-01-02"),
+			Date:        utils.ParseDateToTime(*edited.Date).AddDate(0, 0, 1).Format(utils.DateLayout),
 			Recurrency:  existingT.Recurrency,
 		}
 		newEndTId, err := (*s.repository).InsertTransaction(ctx, newT)

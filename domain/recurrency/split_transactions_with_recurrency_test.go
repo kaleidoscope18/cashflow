@@ -10,7 +10,7 @@ import (
 func TestSplitTransactionsWithRecurrency(t *testing.T) {
 	expectedWith := []models.Transaction{
 		{
-			Date:        "2000/01/01",
+			Date:        "2000-01-01",
 			Amount:      2000,
 			Id:          "1",
 			Description: "",
@@ -20,7 +20,7 @@ func TestSplitTransactionsWithRecurrency(t *testing.T) {
 
 	expectedWithout := []models.Transaction{
 		{
-			Date:        "2000/01/01",
+			Date:        "2000-01-01",
 			Amount:      2000,
 			Id:          "2",
 			Description: "",

@@ -11,7 +11,7 @@ import (
 )
 
 func iAddARecurringTransactionToIt(ctx context.Context, startDate string, endDate string) (context.Context, error) {
-	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\", recurrency: \"FREQ=MONTHLY;BYMONTHDAY=15,1;UNTIL=%s\", description: \"pay\"})}"}`, startDate, strings.ReplaceAll(endDate, "/", ""))
+	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\", recurrency: \"FREQ=MONTHLY;BYMONTHDAY=15,1;UNTIL=%s\", description: \"pay\"})}"}`, startDate, strings.ReplaceAll(endDate, "-", ""))
 	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
 
@@ -25,182 +25,182 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	expected := []models.ComputedTransaction{
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/10/01",
+				Date:   "2022-10-01",
 				Amount: 1000,
 			},
 			Balance: 1000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/10/15",
+				Date:   "2022-10-15",
 				Amount: 1000,
 			},
 			Balance: 2000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/11/01",
+				Date:   "2022-11-01",
 				Amount: 1000,
 			},
 			Balance: 3000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/11/15",
+				Date:   "2022-11-15",
 				Amount: 1000,
 			},
 			Balance: 4000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/12/01",
+				Date:   "2022-12-01",
 				Amount: 1000,
 			},
 			Balance: 5000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2022/12/15",
+				Date:   "2022-12-15",
 				Amount: 1000,
 			},
 			Balance: 6000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/01/01",
+				Date:   "2023-01-01",
 				Amount: 1000,
 			},
 			Balance: 7000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/01/15",
+				Date:   "2023-01-15",
 				Amount: 1000,
 			},
 			Balance: 8000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/02/01",
+				Date:   "2023-02-01",
 				Amount: 1000,
 			},
 			Balance: 9000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/02/15",
+				Date:   "2023-02-15",
 				Amount: 1000,
 			},
 			Balance: 10000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/03/01",
+				Date:   "2023-03-01",
 				Amount: 1000,
 			},
 			Balance: 11000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/03/15",
+				Date:   "2023-03-15",
 				Amount: 1000,
 			},
 			Balance: 12000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/04/01",
+				Date:   "2023-04-01",
 				Amount: 1000,
 			},
 			Balance: 13000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/04/15",
+				Date:   "2023-04-15",
 				Amount: 1000,
 			},
 			Balance: 14000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/05/01",
+				Date:   "2023-05-01",
 				Amount: 1000,
 			},
 			Balance: 15000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/05/15",
+				Date:   "2023-05-15",
 				Amount: 1000,
 			},
 			Balance: 16000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/06/01",
+				Date:   "2023-06-01",
 				Amount: 1000,
 			},
 			Balance: 17000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/06/15",
+				Date:   "2023-06-15",
 				Amount: 1000,
 			},
 			Balance: 18000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/07/01",
+				Date:   "2023-07-01",
 				Amount: 1000,
 			},
 			Balance: 19000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/07/15",
+				Date:   "2023-07-15",
 				Amount: 1000,
 			},
 			Balance: 20000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/08/01",
+				Date:   "2023-08-01",
 				Amount: 1000,
 			},
 			Balance: 21000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/08/15",
+				Date:   "2023-08-15",
 				Amount: 1000,
 			},
 			Balance: 22000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/09/01",
+				Date:   "2023-09-01",
 				Amount: 1000,
 			},
 			Balance: 23000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/09/15",
+				Date:   "2023-09-15",
 				Amount: 1000,
 			},
 			Balance: 24000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/10/01",
+				Date:   "2023-10-01",
 				Amount: 1000,
 			},
 			Balance: 25000,
 		},
 		{
 			Transaction: &models.Transaction{
-				Date:   "2023/10/15",
+				Date:   "2023-10-15",
 				Amount: 1000,
 			},
 			Balance: 26000,
