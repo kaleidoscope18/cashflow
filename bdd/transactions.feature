@@ -91,3 +91,12 @@ Feature: Transactions
     And I delete the recurring transaction on "2022-12-15"
     And I list the transactions
     Then I should not see the recurring transaction on "2022-12-15" but see the rest
+
+  Scenario: Having a mix of recurring and non recurring transactions
+    Given login as "authenticated"
+    Given there is an account
+    When I add a recurring transaction to it on "2022-09-20" until "2023-10-31"
+    And I add a transaction on "2022-12-13"
+    And I add a transaction on "2023-01-18"
+    And I list the transactions
+    Then I should be able to see all transactions in order

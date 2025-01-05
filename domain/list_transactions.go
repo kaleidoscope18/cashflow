@@ -6,6 +6,7 @@ import (
 	"cashflow/models"
 	"cashflow/utils"
 	"errors"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -16,6 +17,9 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 	transactionsToEnrich := append(withoutRecurrency, recurrencyOffsprings...)
 
 	enrichedTransactions := make([]models.ComputedTransaction, len(transactionsToEnrich))
+	sort.Slice(transactionsToEnrich, func(i, j int) bool {
+		return utils.ParseDateToTime(transactionsToEnrich[i].Date).Before(utils.ParseDateToTime(transactionsToEnrich[j].Date))
+	})
 	today := utils.GetTodayDate()
 
 	for i, t := range transactionsToEnrich {

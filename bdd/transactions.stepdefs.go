@@ -410,6 +410,24 @@ func iShouldNotSeeTheRecurringTransactionOnButSeeTheRest(ctx context.Context) (c
 	return ctx, nil
 }
 
+func iShouldBeAbleToSeeAllTransactionsInOrder(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+
+	for i, t := range transactions {
+		if i == 0 {
+			continue
+		}
+
+		a := utils.ParseDateToTime(transactions[i-1].Date)
+		b := utils.ParseDateToTime(t.Date)
+		if !b.After(a) && !b.Equal(a) {
+			return ctx, fmt.Errorf("expected transaction on %s to be after %s", t.Date, transactions[i-1].Date)
+		}
+	}
+
+	return ctx, nil
+}
+
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I add a transaction on "([^"]*)"$`, iAddATransactionOnDate)
 	ctx.Step(`^I should see the new transaction$`, iShouldSeeTheNewTransaction)
@@ -437,4 +455,6 @@ func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 
 	ctx.Step(`^I delete the recurring transaction on "([^"]*)"$`, iDeleteTheRecurringTransactionOn)
 	ctx.Step(`^I should not see the recurring transaction on "([^"]*)" but see the rest$`, iShouldNotSeeTheRecurringTransactionOnButSeeTheRest)
+
+	ctx.Step(`^I should be able to see all transactions in order$`, iShouldBeAbleToSeeAllTransactionsInOrder)
 }
