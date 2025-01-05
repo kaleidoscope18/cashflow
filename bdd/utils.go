@@ -60,6 +60,7 @@ func PostGraphQL(ctx context.Context, query string, queryName string, result int
 		return nil
 	}
 	err = unmarshalWrappedBody(body, queryName, result)
+	// dev.PrintJson(result)
 	if err != nil {
 		formattedError := fmt.Sprintf("failed to parse JSON response: %s - %v", string(body), err)
 		log.Println(formattedError)

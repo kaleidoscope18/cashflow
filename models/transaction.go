@@ -10,7 +10,7 @@ type TransactionRepository interface {
 	Close() error
 	GetTransactionById(ctx context.Context, id string) (Transaction, error)
 	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
-	InsertTransaction(ctx context.Context, transaction Transaction) error
+	InsertTransaction(ctx context.Context, transaction Transaction) (string, error)
 	DeleteTransaction(ctx context.Context, id string) (string, error)
 	EditTransaction(ctx context.Context, transaction Transaction) (string, error)
 }

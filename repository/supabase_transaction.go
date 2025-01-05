@@ -56,17 +56,19 @@ func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.
 	return transactions, nil
 }
 
-func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transaction models.Transaction) error {
+func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transaction models.Transaction) (string, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, err := repo.db.Exec(ctx, "INSERT INTO transactions (description, amount, date, recurrency, author) VALUES ($1, $2, $3, $4, $5)", transaction.Description, transaction.Amount, transaction.Date, transaction.Recurrency, utils.GetContextValue(ctx, models.UserId))
+	row := repo.db.QueryRow(ctx, "INSERT INTO transactions (description, amount, date, recurrency, author) VALUES ($1, $2, $3, $4, $5) RETURNING id", transaction.Description, transaction.Amount, transaction.Date, transaction.Recurrency, utils.GetContextValue(ctx, models.UserId))
+	var id string
+	err := row.Scan(&id)
 	if err != nil {
-		log.Printf("error inserting transaction: %v", err)
-		return fmt.Errorf("error inserting transaction: %w", err)
+		log.Printf("error scanning transaction: %v", err)
+		return "", fmt.Errorf("error scanning transaction: %w", err)
 	}
 
-	return nil
+	return transaction.Id, nil
 }
 
 func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string) (string, error) {

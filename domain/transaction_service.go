@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"cashflow/domain/recurrency"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -36,7 +37,7 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 }
 
 func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error {
-	err := (*s.repository).InsertTransaction(ctx, models.Transaction{
+	_, err := (*s.repository).InsertTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(date),
 		Description: description,
@@ -77,6 +78,43 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 		return (*s.repository).EditTransaction(ctx, editedTransaction)
 	case models.FromDate:
+		newRecurrency, err := recurrency.ChangeRecurrencyEnd(transaction.Recurrency, *edited.Date)
+		if err != nil {
+			return "", err
+		}
+
+		newT := models.Transaction{
+			Id:          transaction.Id,
+			Amount:      transaction.Amount,
+			Date:        *edited.Date,
+			Description: transaction.Description,
+			Recurrency:  transaction.Recurrency,
+		}
+		if edited.Amount != nil {
+			newT.Amount = *edited.Amount
+		}
+		if edited.Description != nil && *edited.Description != "" {
+			newT.Description = *edited.Description
+		}
+		if edited.Recurrency != nil && *edited.Recurrency != "" {
+			newT.Recurrency = *edited.Recurrency
+		}
+		newTId, err := (*s.repository).InsertTransaction(ctx, newT)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = (*s.repository).EditTransaction(ctx, models.Transaction{
+			Id:          transaction.Id,
+			Recurrency:  newRecurrency,
+			Description: transaction.Description,
+			Amount:      transaction.Amount,
+			Date:        transaction.Date,
+		})
+		if err != nil {
+			return (*s.repository).DeleteTransaction(ctx, newTId)
+		}
+		return newTId, nil
 	case models.OnDateOnly:
 	default:
 	}

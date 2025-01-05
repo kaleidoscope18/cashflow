@@ -304,17 +304,36 @@ func iEditTheTransactionInfoFrom(ctx context.Context, date string) (context.Cont
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 	id := strings.Split(transactions[0].Id, "-")[0]
 
-	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999})}"}`, id)
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999, date: \"%s\"})}"}`, id, date)
 	return ctx, PostGraphQL(ctx, query, "editTransaction", nil)
 }
 
 func iEditTheTransactionInfoOn(ctx context.Context) (context.Context, error) {
-
 	return ctx, nil
 }
 
-func iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange(ctx context.Context) (context.Context, error) {
+func iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange(ctx context.Context, date string) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
+	duplicateCount := 0
+	for _, t := range transactions {
+		if utils.ParseDateToTime(t.Date).After(utils.ParseDateToTime(date)) {
+			if t.Amount != 999.00 {
+				return ctx, fmt.Errorf("expected amount of 999.00 for transaction %s on %s but got %.2f", t.Id, t.Date, t.Amount)
+			}
+		}
+
+		if utils.ParseDateToTime(t.Date).Equal(utils.ParseDateToTime(date)) {
+			duplicateCount++
+			if duplicateCount > 1 {
+				return ctx, fmt.Errorf("expected only one transaction on %s but got %d", date, duplicateCount)
+			}
+		}
+
+		if t.Description == "" {
+			return ctx, fmt.Errorf("expected description for transaction %s on %s but got empty strings", t.Id, t.Date)
+		}
+	}
 	return ctx, nil
 }
 
@@ -356,7 +375,7 @@ func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I edit the transaction info from no date$`, iEditTheTransactionInfoFromNoDate)
 	ctx.Step(`^I edit the transaction info on "([^"]*)"$`, iEditTheTransactionInfoOn)
 	ctx.Step(`^I should see changed transactions$`, iShouldSeeChangedTransactions)
-	ctx.Step(`^I should see unchanged transactions before and the rest should change$`, iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange)
+	ctx.Step(`^I should see unchanged transactions before "([^"]*)" and the rest should change$`, iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange)
 	ctx.Step(`^I should see unchanged transactions except transaction on "([^"]*)"$`, iShouldSeeUnchangedTransactionsExceptTransactionOn)
 	ctx.Step(`^I should have an error$`, iShouldHaveAnError)
 }

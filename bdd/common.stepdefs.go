@@ -19,7 +19,7 @@ func thereIsAnAccountWithTransactions(ctx context.Context) (context.Context, err
 }
 
 func iListTheTransactions(ctx context.Context) (context.Context, error) {
-	query := `{"query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance status } }"}`
+	query := `{"query": "query { listTransactions(from:\"1999-01-01T00:00:00.000Z\", to:\"3000-01-01T00:00:00.000Z\") { id date amount balance status description } }"}`
 
 	var result []models.ComputedTransaction
 	err := PostGraphQL(ctx, query, "listTransactions", &result)

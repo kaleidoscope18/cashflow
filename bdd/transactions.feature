@@ -57,7 +57,6 @@ Feature: Transactions
     And I edit the transaction info from no date
     Then I should have an error
 
-  @wip
   Scenario: Editing a recurring transaction from given date
     Given login as "authenticated"
     Given there is an account
@@ -65,7 +64,7 @@ Feature: Transactions
     And I list the transactions
     And I edit the transaction info from "2022/12/15"
     And I list the transactions
-    Then I should see unchanged transactions before and the rest should change
+    Then I should see unchanged transactions before "2022/12/15" and the rest should change
 
   @wip
   Scenario: Editing a recurring transaction only on date
