@@ -267,6 +267,7 @@ func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context)
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	for _, t := range transactions {
+		dev.PrintJson(t)
 		if utils.ParseDateToTime(t.Date).Before(today) && t.Status != models.StatusDone {
 			return ctx, fmt.Errorf("should have been status DONE but got status \"%s\"", string(t.Status))
 		}

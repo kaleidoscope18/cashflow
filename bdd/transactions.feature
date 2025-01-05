@@ -24,6 +24,7 @@ Feature: Transactions
     And I list the transactions
     Then I should be able to see all recurring transactions
 
+  @only
   Scenario: Getting transactions statuses
     Given login as "authenticated"
     Given there is an account with transactions

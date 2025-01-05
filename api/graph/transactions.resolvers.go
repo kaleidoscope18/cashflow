@@ -18,11 +18,12 @@ import (
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (string, error) {
 	description := validateDescription(input.Description)
 	recurrency, err := validateRecurrency(input.Recurrency)
+	date := validateDate(&input.Date)
 	if err != nil {
 		return "", err
 	}
 
-	err = (*r.TransactionService).WriteTransaction(ctx, input.Date, input.Amount, description, recurrency)
+	err = (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency)
 	if err != nil {
 		return "", err
 	}

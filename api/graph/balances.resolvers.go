@@ -15,13 +15,13 @@ import (
 
 // CreateBalance is the resolver for the createBalance field.
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, input.Date)
+	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, validateDate(input.Date))
 	return &newBalance, err
 }
 
 // DeleteBalance is the resolver for the deleteBalance field.
 func (r *mutationResolver) DeleteBalance(ctx context.Context, date string) (string, error) {
-	return date, (*r.BalanceService).DeleteBalance(ctx, date)
+	return date, (*r.BalanceService).DeleteBalance(ctx, *validateDate(&date))
 }
 
 // ListBalances is the resolver for the listBalances field.

@@ -7,10 +7,10 @@ import (
 	"github.com/araddon/dateparse"
 )
 
-const separator = "/"
-const numberOfReplacements = 3
+const separator = "-"
+const numberOfReplacements = 2
 
-// ParseDate formats various date strings to YYYY/MM/DD
+// ParseDate formats various date strings to YYYY-MM-DD
 func ParseDate(datestring string) string {
 	t, _ := dateparse.ParseAny(datestring)
 	return strings.Replace(strings.Split(t.UTC().String(), " ")[0], "-", separator, numberOfReplacements)

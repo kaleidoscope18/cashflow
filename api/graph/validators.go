@@ -19,9 +19,11 @@ func validateRecurrency(recurrency *string) (string, error) {
 
 func validateDate(date *string) *string {
 	if date != nil {
-		utils.ParseDate(*date)
+		parsedDate := utils.ParseDate(*date)
+		return &parsedDate
 	}
-	return date
+
+	return nil
 }
 
 func validateDescription(description *string) string {
