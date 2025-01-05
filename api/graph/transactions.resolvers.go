@@ -88,16 +88,22 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 
 // EditTransaction is the resolver for the editTransaction field.
 func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.TransactionEditInput) (string, error) {
-	_, err := validateRecurrency(input.Recurrency)
+	recurrency, err := validateRecurrency(input.Recurrency)
 	if err != nil {
 		return "", err
 	}
+	err = validateType(input)
+	if err != nil {
+		return "", err
+	}
+	description := validateDescription(input.Description)
+	date := validateDate(input.Date)
 
 	return (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
 		Id:          input.ID,
-		Date:        validateDate(input.Date), // what happens when date is wrong?
-		Description: input.Description,
-		Recurrency:  input.Recurrency,
+		Date:        date,
+		Description: &description,
+		Recurrency:  &recurrency,
 		Amount:      input.Amount,
 	})
 }

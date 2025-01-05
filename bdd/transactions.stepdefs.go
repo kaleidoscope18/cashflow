@@ -10,8 +10,8 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func iAddARecurringTransactionToIt(ctx context.Context) (context.Context, error) {
-	query := `{"query": "mutation {createTransaction(input: {amount: 1000, date: \"september 20, 2022\", recurrency: \"FREQ=MONTHLY;BYMONTHDAY=15,1;UNTIL=20231031T000000Z\", description: \"pay\"})}"}`
+func iAddARecurringTransactionToIt(ctx context.Context, startDate string, endDate string) (context.Context, error) {
+	query := fmt.Sprintf(`{"query": "mutation {createTransaction(input: {amount: 1000, date: \"%s\", recurrency: \"FREQ=MONTHLY;BYMONTHDAY=15,1;UNTIL=%s\", description: \"pay\"})}"}`, startDate, strings.ReplaceAll(endDate, "/", ""))
 	return ctx, PostGraphQL(ctx, query, "createTransaction", nil)
 }
 
@@ -300,9 +300,12 @@ func iShouldSeeChangedTransactions(ctx context.Context) (context.Context, error)
 	return ctx, nil
 }
 
-func iEditTheTransactionInfoFrom(ctx context.Context) (context.Context, error) {
+func iEditTheTransactionInfoFrom(ctx context.Context, date string) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	id := strings.Split(transactions[0].Id, "-")[0]
 
-	return ctx, nil
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999})}"}`, id)
+	return ctx, PostGraphQL(ctx, query, "editTransaction", nil)
 }
 
 func iEditTheTransactionInfoOn(ctx context.Context) (context.Context, error) {
@@ -320,8 +323,26 @@ func iShouldSeeUnchangedTransactionsExceptTransactionOn(ctx context.Context) (co
 	return ctx, nil
 }
 
+func iEditTheTransactionInfoFromNoDate(ctx context.Context) (context.Context, error) {
+	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
+	id := strings.Split(transactions[0].Id, "-")[0]
+
+	query := fmt.Sprintf(`{"query": "mutation {editTransaction(input: {type: FROM_DATE, id: \"%s\", amount: 999})}"}`, id)
+	err := PostGraphQL(ctx, query, "editTransaction", nil)
+	return context.WithValue(ctx, response, err.Error()), nil
+}
+
+func iShouldHaveAnError(ctx context.Context) (context.Context, error) {
+	res := ctx.Value(response).(string)
+	expected := "date is required for fromDate type"
+	if res != expected {
+		return ctx, fmt.Errorf("expected error \"%s\" but got \"%s\"", expected, res)
+	}
+	return ctx, nil
+}
+
 func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I add a recurring transaction to it$`, iAddARecurringTransactionToIt)
+	ctx.Step(`^I add a recurring transaction to it on "([^"]*)" until "([^"]*)"$`, iAddARecurringTransactionToIt)
 	ctx.Step(`^I add a transaction on "([^"]*)" to it$`, iAddATransactionOnDateToIt)
 	ctx.Step(`^I remove a transaction$`, iRemoveATransaction)
 	ctx.Step(`^I should be able to see all recurring transactions$`, iShouldBeAbleToSeeAllRecurringTransactions)
@@ -332,8 +353,10 @@ func InitializeTransactionsScenarioStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I should be able to see the correct statuses for each transaction$`, iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction)
 	ctx.Step(`^I edit the transaction info$`, iEditTheTransactionInfo)
 	ctx.Step(`^I edit the transaction info from "([^"]*)"$`, iEditTheTransactionInfoFrom)
+	ctx.Step(`^I edit the transaction info from no date$`, iEditTheTransactionInfoFromNoDate)
 	ctx.Step(`^I edit the transaction info on "([^"]*)"$`, iEditTheTransactionInfoOn)
 	ctx.Step(`^I should see changed transactions$`, iShouldSeeChangedTransactions)
 	ctx.Step(`^I should see unchanged transactions before and the rest should change$`, iShouldSeeUnchangedTransactionsBeforeAndTheRestShouldChange)
 	ctx.Step(`^I should see unchanged transactions except transaction on "([^"]*)"$`, iShouldSeeUnchangedTransactionsExceptTransactionOn)
+	ctx.Step(`^I should have an error$`, iShouldHaveAnError)
 }

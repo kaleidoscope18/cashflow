@@ -6,12 +6,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"reflect"
+	"strings"
 )
 
 func PostGraphQL(ctx context.Context, query string, queryName string, result interface{}) error {
-	fmt.Println(query)
+	// dev.PrintJson(query)
+	if result != nil && reflect.TypeOf(result).Kind() != reflect.Ptr {
+		return fmt.Errorf("result must be a pointer, got %T", result)
+	}
+
 	url := ctx.Value(url).(string)
 	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
 	req.Header.Set("Content-Type", "application/json")
@@ -33,17 +40,30 @@ func PostGraphQL(ctx context.Context, query string, queryName string, result int
 	}
 
 	body, err := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %v", err)
+		formattedError := fmt.Sprintf("failed to read response body: %v", err)
+		log.Println(formattedError)
+		return fmt.Errorf(formattedError)
 	}
 
+	if strings.Contains(string(body), `"errors"`) {
+		var response map[string][]map[string]interface{}
+		if err := json.Unmarshal(body, &response); err != nil {
+			return err
+		}
+
+		if errors, ok := response["errors"]; ok {
+			return fmt.Errorf(errors[0]["message"].(string))
+		}
+	}
 	if result == nil {
 		return nil
 	}
 	err = unmarshalWrappedBody(body, queryName, result)
 	if err != nil {
-		return fmt.Errorf("failed to parse JSON response: %s - %v", string(body), err)
+		formattedError := fmt.Sprintf("failed to parse JSON response: %s - %v", string(body), err)
+		log.Println(formattedError)
+		return fmt.Errorf(formattedError)
 	}
 
 	return nil

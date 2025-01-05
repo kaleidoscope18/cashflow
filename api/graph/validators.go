@@ -1,7 +1,10 @@
 package graph
 
 import (
+	"cashflow/api/graph/generated"
+	"cashflow/models"
 	"cashflow/utils"
+	"fmt"
 
 	"github.com/teambition/rrule-go"
 )
@@ -35,4 +38,11 @@ func validateDescription(description *string) string {
 	}
 
 	return d
+}
+
+func validateType(input generated.TransactionEditInput) error {
+	if input.Type == models.FromDate && input.Date == nil {
+		return fmt.Errorf("date is required for fromDate type")
+	}
+	return nil
 }

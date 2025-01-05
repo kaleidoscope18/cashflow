@@ -12,4 +12,5 @@ var (
 	transactions = contextKey("transactions")
 	userToken    = contextKey("userToken")
 	token        = contextKey("token")
+	response     = contextKey("response")
 )

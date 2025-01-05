@@ -20,7 +20,7 @@ Feature: Transactions
   Scenario: Adding a recurring transaction
     Given login as "authenticated"
     Given there is an account
-    When I add a recurring transaction to it
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
     And I list the transactions
     Then I should be able to see all recurring transactions
 
@@ -43,17 +43,26 @@ Feature: Transactions
   Scenario: Editing a recurring transaction
     Given login as "authenticated"
     Given there is an account
-    When I add a recurring transaction to it
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
     And I list the transactions
     And I edit the transaction info
     And I list the transactions
     Then I should see changed transactions
 
+  Scenario: Editing a recurring transaction from given date but no date is provided
+    Given login as "authenticated"
+    Given there is an account
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
+    And I list the transactions
+    And I edit the transaction info from no date
+    Then I should have an error
+
   @wip
   Scenario: Editing a recurring transaction from given date
     Given login as "authenticated"
     Given there is an account
-    When I add a recurring transaction to it
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
+    And I list the transactions
     And I edit the transaction info from "2022/12/15"
     And I list the transactions
     Then I should see unchanged transactions before and the rest should change
@@ -62,7 +71,7 @@ Feature: Transactions
   Scenario: Editing a recurring transaction only on date
     Given login as "authenticated"
     Given there is an account
-    When I add a recurring transaction to it
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
     And I edit the transaction info on "2022/12/15"
     And I list the transactions
     Then I should see unchanged transactions except transaction on "2022/12/15"
@@ -71,5 +80,5 @@ Feature: Transactions
   Scenario: Deleting a recurring transaction
     Given login as "authenticated"
     Given there is an account
-    When I add a recurring transaction to it
+    When I add a recurring transaction to it on "2022/09/20" until "2023/10/31"
     Then I should see unchanged transactions except transaction on "2022/12/15"
