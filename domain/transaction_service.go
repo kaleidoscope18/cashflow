@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -61,8 +60,6 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		return "", fmt.Errorf("cannot edit transaction, transaction with id %s not found", edited.Id)
 	}
 
-	dev.PrintJson(transaction)
-
 	switch editType {
 	case models.All:
 		editedTransaction := transaction
@@ -78,7 +75,6 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		if edited.Description != nil {
 			editedTransaction.Description = *edited.Description
 		}
-		dev.PrintJson(editedTransaction)
 		return (*s.repository).EditTransaction(ctx, editedTransaction)
 	case models.FromDate:
 	case models.OnDateOnly:

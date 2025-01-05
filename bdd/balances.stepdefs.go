@@ -23,12 +23,12 @@ func iAddABalanceWithoutADateToIt(ctx context.Context) (context.Context, error) 
 func itShouldBeInBalancesList(ctx context.Context) (context.Context, error) {
 	b := *ctx.Value(balances).(*[]models.Balance)
 	for _, balance := range b {
-		if balance.Date == "2022/10/30" {
+		if balance.Date == "2022-10-30" {
 			return ctx, nil
 		}
 	}
 
-	return ctx, errors.New("balance with date \"2022/10/30\" was not found")
+	return ctx, errors.New("balance with date \"2022-10-30\" was not found")
 }
 
 func theNewBalanceShouldHaveTodaysDate(ctx context.Context) (context.Context, error) {

@@ -15,7 +15,7 @@ func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id strin
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	row, err := repo.db.Query(ctx, "SELECT id, description, amount, date, recurrency FROM transactions WHERE id = $1 AND author = $2", id, utils.GetContextValue(ctx, models.UserId))
+	row, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency FROM transactions WHERE id = $1 AND author = $2", id, utils.GetContextValue(ctx, models.UserId))
 
 	if err != nil {
 		log.Printf("error querying transaction: %v", err)
@@ -26,7 +26,8 @@ func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id strin
 		return models.Transaction{}, fmt.Errorf("transaction not found")
 	}
 
-	transaction, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Transaction])
+	var transaction models.Transaction
+	err = row.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date, &transaction.Recurrency)
 	if err != nil {
 		log.Printf("error scanning transaction: %v", err)
 		return models.Transaction{}, fmt.Errorf("error scanning transaction: %w", err)

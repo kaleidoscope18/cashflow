@@ -1,7 +1,6 @@
 package bdd
 
 import (
-	"cashflow/dev"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
@@ -20,7 +19,6 @@ func iShouldBeAbleToSeeAllRecurringTransactions(ctx context.Context) (context.Co
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	if len(transactions) != 26 {
-		dev.PrintJson(transactions)
 		return ctx, fmt.Errorf("should have been 26 transactions (2 per month, for 13 months), but got %d", len(transactions))
 	}
 
@@ -246,8 +244,8 @@ func iShouldSeeRemainingTransactions(ctx context.Context) (context.Context, erro
 func iShouldSeeTheNewTransaction(ctx context.Context) (context.Context, error) {
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
-	if transactions[0].Date != "2022/10/20" || transactions[0].Amount != 1000.00 || transactions[0].Balance != 1000.00 {
-		return ctx, fmt.Errorf("expected amount and balance of 1000.00 on 2022/10/20 but got %.2f on %s",
+	if transactions[0].Date != "2022-10-20" || transactions[0].Amount != 1000.00 || transactions[0].Balance != 1000.00 {
+		return ctx, fmt.Errorf("expected amount and balance of 1000.00 on 2022-10-20 but got %.2f on %s",
 			transactions[0].Balance, transactions[0].Date)
 	}
 
@@ -267,7 +265,6 @@ func iShouldBeAbleToSeeTheCorrectStatusesForEachTransaction(ctx context.Context)
 	transactions := *ctx.Value(transactions).(*[]models.ComputedTransaction)
 
 	for _, t := range transactions {
-		dev.PrintJson(t)
 		if utils.ParseDateToTime(t.Date).Before(today) && t.Status != models.StatusDone {
 			return ctx, fmt.Errorf("should have been status DONE but got status \"%s\"", string(t.Status))
 		}
