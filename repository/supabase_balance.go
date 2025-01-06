@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float64, date string) (models.Balance, error) {
+func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float64, date string, account string) (models.Balance, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
@@ -20,12 +20,13 @@ func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float6
 	}
 
 	return models.Balance{
-		Amount: amount,
-		Date:   date,
+		Amount:  amount,
+		Date:    date,
+		Account: account,
 	}, nil
 }
 
-func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time, to time.Time) ([]models.Balance, error) {
+func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time, to time.Time, account string) ([]models.Balance, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -44,7 +45,7 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	return balances, nil
 }
 
-func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string) error {
+func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string, account string) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

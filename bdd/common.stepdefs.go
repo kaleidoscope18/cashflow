@@ -8,11 +8,15 @@ import (
 	"github.com/cucumber/godog"
 )
 
-func thereIsAnAccount(ctx context.Context) (context.Context, error) {
-	return ctx, nil
+func thereIsAccount(ctx context.Context, accountName string) (context.Context, error) {
+	return context.WithValue(ctx, account, accountName), nil
 }
 
-func thereIsAnAccountWithTransactions(ctx context.Context) (context.Context, error) {
+func thereIsNoAccount(ctx context.Context) (context.Context, error) {
+	return context.WithValue(ctx, account, ""), nil
+}
+
+func thereIsAccountWithTransactions(ctx context.Context, accountName string) (context.Context, error) {
 	query := `{"query": "mutation { createTransactions(input: [{amount: -10, date: \"october 27, 2022\"}, {amount: 100.10, date: \"november 15, 2022\", description: \"Paie\"}]) }"}`
 
 	return ctx, PostGraphQL(ctx, query, "createTransactions", nil)
@@ -51,8 +55,9 @@ func loginAs(ctx context.Context, role string) (context.Context, error) {
 
 func InitializeCommonStepDefs(ctx *godog.ScenarioContext) {
 	ctx.Step(`^login as "([^"]*)"$`, loginAs)
-	ctx.Step(`^there is an account$`, thereIsAnAccount)
-	ctx.Step(`^there is an account with transactions$`, thereIsAnAccountWithTransactions)
+	ctx.Step(`^there is a (\w+) account$`, thereIsAccount)
+	ctx.Step(`^there is a (\w+) account with transactions$`, thereIsAccountWithTransactions)
+	ctx.Step(`^there is no account specified$`, thereIsNoAccount)
 	ctx.Step(`^I list the balances$`, iListTheBalances)
 	ctx.Step(`^I list the transactions$`, iListTheTransactions)
 }

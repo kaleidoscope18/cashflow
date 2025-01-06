@@ -3,17 +3,31 @@ type Balance {
   amount: Float!
 }
 
-input NewBalance {
+input ListBalancesInput {
+  from: String!
+  to: String!
+  account: String!
+}
+
+input NewBalanceInput {
   date: String
   amount: Float!
+  account: String!
+}
+
+input DeleteBalanceInput {
+  date: String!
+  account: String!
 }
 
 extend type Query {
-  listBalances(from: String!, to: String!): [Balance!]!
+  listBalances(input: ListBalancesInput!): [Balance!]!
     @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createBalance(input: NewBalance!): Balance! @auth(requires: authenticated)
-  deleteBalance(date: String!): String! @auth(requires: authenticated)
+  createBalance(input: NewBalanceInput!): Balance!
+    @auth(requires: authenticated)
+  deleteBalance(input: DeleteBalanceInput!): String!
+    @auth(requires: authenticated)
 }

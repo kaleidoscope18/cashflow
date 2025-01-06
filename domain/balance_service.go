@@ -17,24 +17,24 @@ func NewBalanceService(repo *models.Repository) models.BalanceService {
 	return s
 }
 
-func (s *balanceService) WriteBalance(ctx context.Context, balance float64, date *string) (models.Balance, error) {
+func (s *balanceService) WriteBalance(ctx context.Context, balance float64, date *string, account string) (models.Balance, error) {
 	if date != nil {
-		newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.ParseDate(*date))
+		newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.ParseDate(*date), account)
 		if err != nil {
 			return models.Balance{}, err
 		}
 		return newBalance, nil
 	}
 
-	newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.GetTodayDate())
+	newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.GetTodayDate(), account)
 	if err != nil {
 		return models.Balance{}, err
 	}
 	return newBalance, nil
 }
 
-func (s *balanceService) ListBalances(ctx context.Context, from time.Time, to time.Time) ([]models.Balance, error) {
-	result, err := (*s.repository).ListBalances(ctx, from, to)
+func (s *balanceService) ListBalances(ctx context.Context, from time.Time, to time.Time, account string) ([]models.Balance, error) {
+	result, err := (*s.repository).ListBalances(ctx, from, to, account)
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}
@@ -42,7 +42,7 @@ func (s *balanceService) ListBalances(ctx context.Context, from time.Time, to ti
 	return result, nil
 }
 
-func (s *balanceService) DeleteBalance(ctx context.Context, date string) error {
-	err := (*s.repository).DeleteBalance(ctx, date)
+func (s *balanceService) DeleteBalance(ctx context.Context, date string, account string) error {
+	err := (*s.repository).DeleteBalance(ctx, date, account)
 	return err
 }

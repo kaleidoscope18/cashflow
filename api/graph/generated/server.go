@@ -53,6 +53,7 @@ type ComplexityRoot struct {
 	}
 
 	ComputedTransaction struct {
+		Account     func(childComplexity int) int
 		Amount      func(childComplexity int) int
 		Balance     func(childComplexity int) int
 		Date        func(childComplexity int) int
@@ -62,24 +63,25 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBalance              func(childComplexity int, input NewBalance) int
-		CreateTransaction          func(childComplexity int, input NewTransaction) int
-		CreateTransactions         func(childComplexity int, input []*NewTransaction) int
-		DeleteBalance              func(childComplexity int, date string) int
-		DeleteRecurringTransaction func(childComplexity int, id string, date string) int
-		DeleteTransaction          func(childComplexity int, id string) int
-		DeleteTransactions         func(childComplexity int, ids []string) int
+		CreateBalance              func(childComplexity int, input NewBalanceInput) int
+		CreateTransaction          func(childComplexity int, input NewTransactionInput) int
+		CreateTransactions         func(childComplexity int, input []*NewTransactionInput) int
+		DeleteBalance              func(childComplexity int, input DeleteBalanceInput) int
+		DeleteRecurringTransaction func(childComplexity int, input DeleteRecurringTransactionInput) int
+		DeleteTransaction          func(childComplexity int, input DeleteTransactionInput) int
+		DeleteTransactions         func(childComplexity int, input []*DeleteTransactionInput) int
 		EditTransaction            func(childComplexity int, input TransactionEditInput) int
 	}
 
 	Query struct {
 		Health           func(childComplexity int) int
-		ListBalances     func(childComplexity int, from string, to string) int
-		ListTransactions func(childComplexity int, from string, to string) int
+		ListBalances     func(childComplexity int, input ListBalancesInput) int
+		ListTransactions func(childComplexity int, input ListTransactionsInput) int
 		LoginEmail       func(childComplexity int, email string, password string) int
 	}
 
 	Transaction struct {
+		Account     func(childComplexity int) int
 		Amount      func(childComplexity int) int
 		Date        func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -88,20 +90,20 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateBalance(ctx context.Context, input NewBalance) (*models.Balance, error)
-	DeleteBalance(ctx context.Context, date string) (string, error)
-	CreateTransaction(ctx context.Context, input NewTransaction) (string, error)
-	CreateTransactions(ctx context.Context, input []*NewTransaction) ([]string, error)
-	DeleteTransaction(ctx context.Context, id string) (string, error)
-	DeleteTransactions(ctx context.Context, ids []string) ([]string, error)
-	DeleteRecurringTransaction(ctx context.Context, id string, date string) (string, error)
+	CreateBalance(ctx context.Context, input NewBalanceInput) (*models.Balance, error)
+	DeleteBalance(ctx context.Context, input DeleteBalanceInput) (string, error)
+	CreateTransaction(ctx context.Context, input NewTransactionInput) (string, error)
+	CreateTransactions(ctx context.Context, input []*NewTransactionInput) ([]string, error)
+	DeleteTransaction(ctx context.Context, input DeleteTransactionInput) (string, error)
+	DeleteTransactions(ctx context.Context, input []*DeleteTransactionInput) ([]string, error)
+	DeleteRecurringTransaction(ctx context.Context, input DeleteRecurringTransactionInput) (string, error)
 	EditTransaction(ctx context.Context, input TransactionEditInput) (string, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	LoginEmail(ctx context.Context, email string, password string) (string, error)
-	ListBalances(ctx context.Context, from string, to string) ([]*models.Balance, error)
-	ListTransactions(ctx context.Context, from string, to string) ([]*models.ComputedTransaction, error)
+	ListBalances(ctx context.Context, input ListBalancesInput) ([]*models.Balance, error)
+	ListTransactions(ctx context.Context, input ListTransactionsInput) ([]*models.ComputedTransaction, error)
 }
 
 type executableSchema struct {
@@ -136,6 +138,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Balance.Date(childComplexity), true
+
+	case "ComputedTransaction.account":
+		if e.complexity.ComputedTransaction.Account == nil {
+			break
+		}
+
+		return e.complexity.ComputedTransaction.Account(childComplexity), true
 
 	case "ComputedTransaction.amount":
 		if e.complexity.ComputedTransaction.Amount == nil {
@@ -189,7 +198,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateBalance(childComplexity, args["input"].(NewBalance)), true
+		return e.complexity.Mutation.CreateBalance(childComplexity, args["input"].(NewBalanceInput)), true
 
 	case "Mutation.createTransaction":
 		if e.complexity.Mutation.CreateTransaction == nil {
@@ -201,7 +210,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTransaction(childComplexity, args["input"].(NewTransaction)), true
+		return e.complexity.Mutation.CreateTransaction(childComplexity, args["input"].(NewTransactionInput)), true
 
 	case "Mutation.createTransactions":
 		if e.complexity.Mutation.CreateTransactions == nil {
@@ -213,7 +222,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTransactions(childComplexity, args["input"].([]*NewTransaction)), true
+		return e.complexity.Mutation.CreateTransactions(childComplexity, args["input"].([]*NewTransactionInput)), true
 
 	case "Mutation.deleteBalance":
 		if e.complexity.Mutation.DeleteBalance == nil {
@@ -225,7 +234,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteBalance(childComplexity, args["date"].(string)), true
+		return e.complexity.Mutation.DeleteBalance(childComplexity, args["input"].(DeleteBalanceInput)), true
 
 	case "Mutation.deleteRecurringTransaction":
 		if e.complexity.Mutation.DeleteRecurringTransaction == nil {
@@ -237,7 +246,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRecurringTransaction(childComplexity, args["id"].(string), args["date"].(string)), true
+		return e.complexity.Mutation.DeleteRecurringTransaction(childComplexity, args["input"].(DeleteRecurringTransactionInput)), true
 
 	case "Mutation.deleteTransaction":
 		if e.complexity.Mutation.DeleteTransaction == nil {
@@ -249,7 +258,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteTransaction(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.DeleteTransaction(childComplexity, args["input"].(DeleteTransactionInput)), true
 
 	case "Mutation.deleteTransactions":
 		if e.complexity.Mutation.DeleteTransactions == nil {
@@ -261,7 +270,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteTransactions(childComplexity, args["ids"].([]string)), true
+		return e.complexity.Mutation.DeleteTransactions(childComplexity, args["input"].([]*DeleteTransactionInput)), true
 
 	case "Mutation.editTransaction":
 		if e.complexity.Mutation.EditTransaction == nil {
@@ -292,7 +301,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListBalances(childComplexity, args["from"].(string), args["to"].(string)), true
+		return e.complexity.Query.ListBalances(childComplexity, args["input"].(ListBalancesInput)), true
 
 	case "Query.listTransactions":
 		if e.complexity.Query.ListTransactions == nil {
@@ -304,7 +313,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ListTransactions(childComplexity, args["from"].(string), args["to"].(string)), true
+		return e.complexity.Query.ListTransactions(childComplexity, args["input"].(ListTransactionsInput)), true
 
 	case "Query.loginEmail":
 		if e.complexity.Query.LoginEmail == nil {
@@ -317,6 +326,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.LoginEmail(childComplexity, args["email"].(string), args["password"].(string)), true
+
+	case "Transaction.account":
+		if e.complexity.Transaction.Account == nil {
+			break
+		}
+
+		return e.complexity.Transaction.Account(childComplexity), true
 
 	case "Transaction.amount":
 		if e.complexity.Transaction.Amount == nil {
@@ -354,8 +370,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputNewBalance,
-		ec.unmarshalInputNewTransaction,
+		ec.unmarshalInputDeleteBalanceInput,
+		ec.unmarshalInputDeleteRecurringTransactionInput,
+		ec.unmarshalInputDeleteTransactionInput,
+		ec.unmarshalInputListBalancesInput,
+		ec.unmarshalInputListTransactionsInput,
+		ec.unmarshalInputNewBalanceInput,
+		ec.unmarshalInputNewTransactionInput,
 		ec.unmarshalInputTransactionEditInput,
 	)
 	first := true
@@ -463,19 +484,33 @@ var sources = []*ast.Source{
   amount: Float!
 }
 
-input NewBalance {
+input ListBalancesInput {
+  from: String!
+  to: String!
+  account: String!
+}
+
+input NewBalanceInput {
   date: String
   amount: Float!
+  account: String!
+}
+
+input DeleteBalanceInput {
+  date: String!
+  account: String!
 }
 
 extend type Query {
-  listBalances(from: String!, to: String!): [Balance!]!
+  listBalances(input: ListBalancesInput!): [Balance!]!
     @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createBalance(input: NewBalance!): Balance! @auth(requires: authenticated)
-  deleteBalance(date: String!): String! @auth(requires: authenticated)
+  createBalance(input: NewBalanceInput!): Balance!
+    @auth(requires: authenticated)
+  deleteBalance(input: DeleteBalanceInput!): String!
+    @auth(requires: authenticated)
 }
 `, BuiltIn: false},
 	{Name: "../common.graphqls", Input: `scalar Date
@@ -502,6 +537,7 @@ type Transaction {
   amount: Float!
   date: String!
   description: String
+  account: String!
 }
 
 type ComputedTransaction {
@@ -511,13 +547,21 @@ type ComputedTransaction {
   description: String
   balance: Float!
   status: Status!
+  account: String!
 }
 
-input NewTransaction {
+input ListTransactionsInput {
+  from: String!
+  to: String!
+  account: String!
+}
+
+input NewTransactionInput {
   date: String!
   amount: Float!
   recurrency: String
   description: String
+  account: String!
 }
 
 enum TransactionEditType {
@@ -533,22 +577,36 @@ input TransactionEditInput {
   amount: Float
   description: String
   recurrency: String
+  account: String!
+}
+
+input DeleteTransactionInput {
+  id: ID!
+  account: String!
+}
+
+input DeleteRecurringTransactionInput {
+  id: ID!
+  account: String!
+  date: String!
 }
 
 extend type Query {
-  listTransactions(from: String!, to: String!): [ComputedTransaction!]!
+  listTransactions(input: ListTransactionsInput!): [ComputedTransaction!]!
     @auth(requires: authenticated)
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransaction!): String!
+  createTransaction(input: NewTransactionInput!): String!
     @auth(requires: authenticated)
-  createTransactions(input: [NewTransaction!]!): [String!]!
+  createTransactions(input: [NewTransactionInput!]!): [String!]!
     @auth(requires: authenticated)
 
-  deleteTransaction(id: ID!): ID! @auth(requires: authenticated)
-  deleteTransactions(ids: [ID!]!): [ID!]! @auth(requires: authenticated)
-  deleteRecurringTransaction(id: ID!, date: String!): String!
+  deleteTransaction(input: DeleteTransactionInput!): ID!
+    @auth(requires: authenticated)
+  deleteTransactions(input: [DeleteTransactionInput!]!): [ID!]!
+    @auth(requires: authenticated)
+  deleteRecurringTransaction(input: DeleteRecurringTransactionInput!): String!
     @auth(requires: authenticated)
 
   editTransaction(input: TransactionEditInput!): ID!
@@ -580,10 +638,10 @@ func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[strin
 func (ec *executionContext) field_Mutation_createBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 NewBalance
+	var arg0 NewBalanceInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewBalance2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalance(ctx, tmp)
+		arg0, err = ec.unmarshalNNewBalanceInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalanceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -595,10 +653,10 @@ func (ec *executionContext) field_Mutation_createBalance_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_createTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 NewTransaction
+	var arg0 NewTransactionInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTransaction2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransaction(ctx, tmp)
+		arg0, err = ec.unmarshalNNewTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -610,10 +668,10 @@ func (ec *executionContext) field_Mutation_createTransaction_args(ctx context.Co
 func (ec *executionContext) field_Mutation_createTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []*NewTransaction
+	var arg0 []*NewTransactionInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTransaction2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalNNewTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -625,69 +683,60 @@ func (ec *executionContext) field_Mutation_createTransactions_args(ctx context.C
 func (ec *executionContext) field_Mutation_deleteBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["date"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 DeleteBalanceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteBalanceInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteBalanceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["date"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_deleteRecurringTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 DeleteRecurringTransactionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteRecurringTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteRecurringTransactionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["date"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["date"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_deleteTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	var arg0 DeleteTransactionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_deleteTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []string
-	if tmp, ok := rawArgs["ids"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
-		arg0, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
+	var arg0 []*DeleteTransactionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["ids"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -724,48 +773,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_listBalances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 ListBalancesInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNListBalancesInput2cashflowᚋapiᚋgraphᚋgeneratedᚐListBalancesInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["from"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["to"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["to"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_listTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 ListTransactionsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNListTransactionsInput2cashflowᚋapiᚋgraphᚋgeneratedᚐListTransactionsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["from"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["to"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["to"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1180,6 +1211,50 @@ func (ec *executionContext) fieldContext_ComputedTransaction_status(_ context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _ComputedTransaction_account(ctx context.Context, field graphql.CollectedField, obj *models.ComputedTransaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComputedTransaction_account(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Account, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComputedTransaction_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComputedTransaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createBalance(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createBalance(ctx, field)
 	if err != nil {
@@ -1195,7 +1270,7 @@ func (ec *executionContext) _Mutation_createBalance(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateBalance(rctx, fc.Args["input"].(NewBalance))
+			return ec.resolvers.Mutation().CreateBalance(rctx, fc.Args["input"].(NewBalanceInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1280,7 +1355,7 @@ func (ec *executionContext) _Mutation_deleteBalance(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteBalance(rctx, fc.Args["date"].(string))
+			return ec.resolvers.Mutation().DeleteBalance(rctx, fc.Args["input"].(DeleteBalanceInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1359,7 +1434,7 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTransaction(rctx, fc.Args["input"].(NewTransaction))
+			return ec.resolvers.Mutation().CreateTransaction(rctx, fc.Args["input"].(NewTransactionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1438,7 +1513,7 @@ func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransaction))
+			return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransactionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1517,7 +1592,7 @@ func (ec *executionContext) _Mutation_deleteTransaction(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteTransaction(rctx, fc.Args["id"].(string))
+			return ec.resolvers.Mutation().DeleteTransaction(rctx, fc.Args["input"].(DeleteTransactionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1596,7 +1671,7 @@ func (ec *executionContext) _Mutation_deleteTransactions(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["ids"].([]string))
+			return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["input"].([]*DeleteTransactionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1675,7 +1750,7 @@ func (ec *executionContext) _Mutation_deleteRecurringTransaction(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteRecurringTransaction(rctx, fc.Args["id"].(string), fc.Args["date"].(string))
+			return ec.resolvers.Mutation().DeleteRecurringTransaction(rctx, fc.Args["input"].(DeleteRecurringTransactionInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -1932,7 +2007,7 @@ func (ec *executionContext) _Query_listBalances(ctx context.Context, field graph
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().ListBalances(rctx, fc.Args["from"].(string), fc.Args["to"].(string))
+			return ec.resolvers.Query().ListBalances(rctx, fc.Args["input"].(ListBalancesInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -2017,7 +2092,7 @@ func (ec *executionContext) _Query_listTransactions(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["from"].(string), fc.Args["to"].(string))
+			return ec.resolvers.Query().ListTransactions(rctx, fc.Args["input"].(ListTransactionsInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
@@ -2077,6 +2152,8 @@ func (ec *executionContext) fieldContext_Query_listTransactions(ctx context.Cont
 				return ec.fieldContext_ComputedTransaction_balance(ctx, field)
 			case "status":
 				return ec.fieldContext_ComputedTransaction_status(ctx, field)
+			case "account":
+				return ec.fieldContext_ComputedTransaction_account(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComputedTransaction", field.Name)
 		},
@@ -2385,6 +2462,50 @@ func (ec *executionContext) _Transaction_description(ctx context.Context, field 
 }
 
 func (ec *executionContext) fieldContext_Transaction_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transaction_account(ctx context.Context, field graphql.CollectedField, obj *models.Transaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transaction_account(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Account, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transaction_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Transaction",
 		Field:      field,
@@ -4170,14 +4291,205 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewBalance(ctx context.Context, obj interface{}) (NewBalance, error) {
-	var it NewBalance
+func (ec *executionContext) unmarshalInputDeleteBalanceInput(ctx context.Context, obj interface{}) (DeleteBalanceInput, error) {
+	var it DeleteBalanceInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "amount"}
+	fieldsInOrder := [...]string{"date", "account"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteRecurringTransactionInput(ctx context.Context, obj interface{}) (DeleteRecurringTransactionInput, error) {
+	var it DeleteRecurringTransactionInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "account", "date"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteTransactionInput(ctx context.Context, obj interface{}) (DeleteTransactionInput, error) {
+	var it DeleteTransactionInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "account"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputListBalancesInput(ctx context.Context, obj interface{}) (ListBalancesInput, error) {
+	var it ListBalancesInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"from", "to", "account"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "from":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.From = data
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputListTransactionsInput(ctx context.Context, obj interface{}) (ListTransactionsInput, error) {
+	var it ListTransactionsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"from", "to", "account"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "from":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.From = data
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewBalanceInput(ctx context.Context, obj interface{}) (NewBalanceInput, error) {
+	var it NewBalanceInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"date", "amount", "account"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4198,20 +4510,27 @@ func (ec *executionContext) unmarshalInputNewBalance(ctx context.Context, obj in
 				return it, err
 			}
 			it.Amount = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewTransaction(ctx context.Context, obj interface{}) (NewTransaction, error) {
-	var it NewTransaction
+func (ec *executionContext) unmarshalInputNewTransactionInput(ctx context.Context, obj interface{}) (NewTransactionInput, error) {
+	var it NewTransactionInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "amount", "recurrency", "description"}
+	fieldsInOrder := [...]string{"date", "amount", "recurrency", "description", "account"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4246,6 +4565,13 @@ func (ec *executionContext) unmarshalInputNewTransaction(ctx context.Context, ob
 				return it, err
 			}
 			it.Description = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
 		}
 	}
 
@@ -4259,7 +4585,7 @@ func (ec *executionContext) unmarshalInputTransactionEditInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "type", "date", "amount", "description", "recurrency"}
+	fieldsInOrder := [...]string{"id", "type", "date", "amount", "description", "recurrency", "account"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4308,6 +4634,13 @@ func (ec *executionContext) unmarshalInputTransactionEditInput(ctx context.Conte
 				return it, err
 			}
 			it.Recurrency = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
 		}
 	}
 
@@ -4401,6 +4734,11 @@ func (ec *executionContext) _ComputedTransaction(ctx context.Context, sel ast.Se
 			}
 		case "status":
 			out.Values[i] = ec._ComputedTransaction_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "account":
+			out.Values[i] = ec._ComputedTransaction_account(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4691,6 +5029,11 @@ func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec._Transaction_description(ctx, field, obj)
+		case "account":
+			out.Values[i] = ec._Transaction_account(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5167,6 +5510,43 @@ func (ec *executionContext) marshalNComputedTransaction2ᚖcashflowᚋmodelsᚐC
 	return ec._ComputedTransaction(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeleteBalanceInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteBalanceInput(ctx context.Context, v interface{}) (DeleteBalanceInput, error) {
+	res, err := ec.unmarshalInputDeleteBalanceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDeleteRecurringTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteRecurringTransactionInput(ctx context.Context, v interface{}) (DeleteRecurringTransactionInput, error) {
+	res, err := ec.unmarshalInputDeleteRecurringTransactionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDeleteTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx context.Context, v interface{}) (DeleteTransactionInput, error) {
+	res, err := ec.unmarshalInputDeleteTransactionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDeleteTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInputᚄ(ctx context.Context, v interface{}) ([]*DeleteTransactionInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*DeleteTransactionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDeleteTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNDeleteTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx context.Context, v interface{}) (*DeleteTransactionInput, error) {
+	res, err := ec.unmarshalInputDeleteTransactionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5229,26 +5609,36 @@ func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast
 	return ret
 }
 
-func (ec *executionContext) unmarshalNNewBalance2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalance(ctx context.Context, v interface{}) (NewBalance, error) {
-	res, err := ec.unmarshalInputNewBalance(ctx, v)
+func (ec *executionContext) unmarshalNListBalancesInput2cashflowᚋapiᚋgraphᚋgeneratedᚐListBalancesInput(ctx context.Context, v interface{}) (ListBalancesInput, error) {
+	res, err := ec.unmarshalInputListBalancesInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewTransaction2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransaction(ctx context.Context, v interface{}) (NewTransaction, error) {
-	res, err := ec.unmarshalInputNewTransaction(ctx, v)
+func (ec *executionContext) unmarshalNListTransactionsInput2cashflowᚋapiᚋgraphᚋgeneratedᚐListTransactionsInput(ctx context.Context, v interface{}) (ListTransactionsInput, error) {
+	res, err := ec.unmarshalInputListTransactionsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewTransaction2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionᚄ(ctx context.Context, v interface{}) ([]*NewTransaction, error) {
+func (ec *executionContext) unmarshalNNewBalanceInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalanceInput(ctx context.Context, v interface{}) (NewBalanceInput, error) {
+	res, err := ec.unmarshalInputNewBalanceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx context.Context, v interface{}) (NewTransactionInput, error) {
+	res, err := ec.unmarshalInputNewTransactionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInputᚄ(ctx context.Context, v interface{}) ([]*NewTransactionInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*NewTransaction, len(vSlice))
+	res := make([]*NewTransactionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNNewTransaction2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransaction(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNNewTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -5256,8 +5646,8 @@ func (ec *executionContext) unmarshalNNewTransaction2ᚕᚖcashflowᚋapiᚋgrap
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNNewTransaction2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransaction(ctx context.Context, v interface{}) (*NewTransaction, error) {
-	res, err := ec.unmarshalInputNewTransaction(ctx, v)
+func (ec *executionContext) unmarshalNNewTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx context.Context, v interface{}) (*NewTransactionInput, error) {
+	res, err := ec.unmarshalInputNewTransactionInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

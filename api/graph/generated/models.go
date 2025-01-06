@@ -9,19 +9,49 @@ import (
 	"strconv"
 )
 
+type DeleteBalanceInput struct {
+	Date    string `json:"date"`
+	Account string `json:"account"`
+}
+
+type DeleteRecurringTransactionInput struct {
+	ID      string `json:"id"`
+	Account string `json:"account"`
+	Date    string `json:"date"`
+}
+
+type DeleteTransactionInput struct {
+	ID      string `json:"id"`
+	Account string `json:"account"`
+}
+
+type ListBalancesInput struct {
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Account string `json:"account"`
+}
+
+type ListTransactionsInput struct {
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Account string `json:"account"`
+}
+
 type Mutation struct {
 }
 
-type NewBalance struct {
-	Date   *string `json:"date,omitempty"`
-	Amount float64 `json:"amount"`
+type NewBalanceInput struct {
+	Date    *string `json:"date,omitempty"`
+	Amount  float64 `json:"amount"`
+	Account string  `json:"account"`
 }
 
-type NewTransaction struct {
+type NewTransactionInput struct {
 	Date        string  `json:"date"`
 	Amount      float64 `json:"amount"`
 	Recurrency  *string `json:"recurrency,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Account     string  `json:"account"`
 }
 
 type Query struct {
@@ -34,6 +64,7 @@ type TransactionEditInput struct {
 	Amount      *float64                   `json:"amount,omitempty"`
 	Description *string                    `json:"description,omitempty"`
 	Recurrency  *string                    `json:"recurrency,omitempty"`
+	Account     string                     `json:"account"`
 }
 
 type Role string

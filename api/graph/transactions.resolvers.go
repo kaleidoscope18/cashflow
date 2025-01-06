@@ -14,7 +14,7 @@ import (
 )
 
 // CreateTransaction is the resolver for the createTransaction field.
-func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransaction) (string, error) {
+func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransactionInput) (string, error) {
 	description := validateDescription(input.Description)
 	recurrency, err := validateRecurrency(input.Recurrency)
 	date := validateDate(&input.Date)
@@ -22,7 +22,7 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 		return "", err
 	}
 
-	err = (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency)
+	err = (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency, input.Account)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 }
 
 // CreateTransactions is the resolver for the createTransactions field.
-func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransaction) ([]string, error) {
+func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransactionInput) ([]string, error) {
 	results := make([]string, 0)
 	errors := make([]string, 0)
 
@@ -56,21 +56,21 @@ func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*gene
 }
 
 // DeleteTransaction is the resolver for the deleteTransaction field.
-func (r *mutationResolver) DeleteTransaction(ctx context.Context, id string) (string, error) {
-	return (*r.TransactionService).DeleteTransaction(ctx, id)
+func (r *mutationResolver) DeleteTransaction(ctx context.Context, input generated.DeleteTransactionInput) (string, error) {
+	return (*r.TransactionService).DeleteTransaction(ctx, input.ID, input.Account)
 }
 
 // DeleteTransactions is the resolver for the deleteTransactions field.
-func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string) ([]string, error) {
+func (r *mutationResolver) DeleteTransactions(ctx context.Context, input []*generated.DeleteTransactionInput) ([]string, error) {
 	results := make([]string, 0)
 	errors := make([]string, 0)
 
-	for _, id := range ids {
-		deletedId, err := r.DeleteTransaction(ctx, id)
+	for _, input := range input {
+		deletedId, err := r.DeleteTransaction(ctx, *input)
 		if err == nil {
 			results = append(results, deletedId)
 		} else {
-			errors = append(errors, id)
+			errors = append(errors, input.ID)
 		}
 	}
 
@@ -86,8 +86,8 @@ func (r *mutationResolver) DeleteTransactions(ctx context.Context, ids []string)
 }
 
 // DeleteRecurringTransaction is the resolver for the deleteRecurringTransaction field.
-func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, id string, date string) (string, error) {
-	return (*r.TransactionService).DeleteRecurringTransaction(ctx, id, utils.ParseDateToTime(date))
+func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input generated.DeleteRecurringTransactionInput) (string, error) {
+	return (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, utils.ParseDateToTime(input.Date), input.Account)
 }
 
 // EditTransaction is the resolver for the editTransaction field.
@@ -113,20 +113,15 @@ func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.
 }
 
 // ListTransactions is the resolver for the listTransactions field.
-func (r *queryResolver) ListTransactions(ctx context.Context, from string, to string) ([]*models.ComputedTransaction, error) {
-	if from == "" || to == "" {
-		err := fmt.Errorf("please provide from and to dates")
-		return nil, err
-	}
-
-	fromDate := validateDate(&from)
-	toDate := validateDate(&to)
+func (r *queryResolver) ListTransactions(ctx context.Context, input generated.ListTransactionsInput) ([]*models.ComputedTransaction, error) {
+	fromDate := validateDate(&input.From)
+	toDate := validateDate(&input.To)
 	if fromDate == nil || toDate == nil {
 		err := fmt.Errorf("please provide valid from and to dates")
 		return nil, err
 	}
 
-	result, err := (*r.TransactionService).ListTransactions(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate))
+	result, err := (*r.TransactionService).ListTransactions(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate), input.Account)
 	if err != nil {
 		return nil, err
 	}

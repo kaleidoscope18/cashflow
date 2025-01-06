@@ -8,18 +8,18 @@ import (
 type TransactionRepository interface {
 	Init() error
 	Close() error
-	GetTransactionById(ctx context.Context, id string) (Transaction, error)
-	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]Transaction, error)
+	GetTransactionById(ctx context.Context, id string, account string) (Transaction, error)
+	ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]Transaction, error)
 	InsertTransaction(ctx context.Context, transaction Transaction) (string, error)
-	DeleteTransaction(ctx context.Context, id string) (string, error)
+	DeleteTransaction(ctx context.Context, id string, account string) (string, error)
 	EditTransaction(ctx context.Context, transaction Transaction) (string, error)
 }
 
 type TransactionService interface {
-	ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]ComputedTransaction, error)
-	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error
-	DeleteTransaction(ctx context.Context, id string) (string, error)
-	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time) (string, error)
+	ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]ComputedTransaction, error)
+	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) error
+	DeleteTransaction(ctx context.Context, id string, account string) (string, error)
+	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time, account string) (string, error)
 	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) (string, error)
 }
 
@@ -29,6 +29,7 @@ type Transaction struct {
 	Date        string
 	Description string
 	Recurrency  string
+	Account     string
 }
 
 type TransactionEdit struct {
@@ -37,6 +38,7 @@ type TransactionEdit struct {
 	Date        *string
 	Description *string
 	Recurrency  *string
+	Account     string
 }
 
 type Status string

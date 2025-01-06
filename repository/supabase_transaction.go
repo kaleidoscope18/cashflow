@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id string) (models.Transaction, error) {
+func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id string, account string) (models.Transaction, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -37,7 +37,7 @@ func (repo *supabaseRepository) GetTransactionById(ctx context.Context, id strin
 	return transaction, nil
 }
 
-func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.Transaction, error) {
+func (repo *supabaseRepository) ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]models.Transaction, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -71,7 +71,7 @@ func (repo *supabaseRepository) InsertTransaction(ctx context.Context, transacti
 	return id, nil
 }
 
-func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string) (string, error) {
+func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string, account string) (string, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

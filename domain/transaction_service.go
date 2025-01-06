@@ -22,13 +22,13 @@ func NewTransactionService(repo *models.Repository, balanceService *models.Balan
 	return s
 }
 
-func (s *transactionService) ListTransactions(ctx context.Context, from time.Time, to time.Time) ([]models.ComputedTransaction, error) {
-	transactions, err := (*s.repository).ListTransactions(ctx, from, to)
+func (s *transactionService) ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]models.ComputedTransaction, error) {
+	transactions, err := (*s.repository).ListTransactions(ctx, from, to, account)
 	if err != nil {
 		return nil, err
 	}
 
-	balances, err := (*s.balanceService).ListBalances(ctx, from, to)
+	balances, err := (*s.balanceService).ListBalances(ctx, from, to, account)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +37,13 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return results, err
 }
 
-func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string) error {
+func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) error {
 	_, err := (*s.repository).InsertTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        utils.ParseDate(date),
 		Description: description,
 		Recurrency:  recurrency,
+		Account:     account,
 	})
 
 	if err != nil {
@@ -52,8 +53,8 @@ func (s *transactionService) WriteTransaction(ctx context.Context, date string, 
 	return nil
 }
 
-func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id string, date time.Time) (string, error) {
-	existingT, err := (*s.repository).GetTransactionById(ctx, id)
+func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id string, date time.Time, account string) (string, error) {
+	existingT, err := (*s.repository).GetTransactionById(ctx, id, account)
 	if err != nil {
 		return "", fmt.Errorf("cannot delete transaction, transaction with id %s not found", id)
 	}
@@ -93,14 +94,14 @@ func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id 
 	}
 	newEndTId, err := (*s.repository).InsertTransaction(ctx, newT)
 	if err != nil {
-		return (*s.repository).DeleteTransaction(ctx, newStartTId)
+		return (*s.repository).DeleteTransaction(ctx, newStartTId, account)
 	}
 
 	// Delete old transaction
-	_, err = (*s.repository).DeleteTransaction(ctx, existingT.Id)
+	_, err = (*s.repository).DeleteTransaction(ctx, existingT.Id, account)
 	if err != nil {
-		_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId)
-		_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId)
+		_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId, account)
+		_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId, account)
 		if errOne != nil || errTwo != nil {
 			log.Printf("cannot rollback!! please fix manually, error: %s, %s", errOne, errTwo)
 			return "", fmt.Errorf("cannot rollback, error: %s, %s", errOne, errTwo)
@@ -110,12 +111,12 @@ func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id 
 	return "", nil
 }
 
-func (s *transactionService) DeleteTransaction(ctx context.Context, id string) (string, error) {
-	return (*s.repository).DeleteTransaction(ctx, id)
+func (s *transactionService) DeleteTransaction(ctx context.Context, id string, account string) (string, error) {
+	return (*s.repository).DeleteTransaction(ctx, id, account)
 }
 
 func (s *transactionService) EditTransaction(ctx context.Context, editType models.TransactionEditType, edited models.TransactionEdit) (string, error) {
-	existingT, err := (*s.repository).GetTransactionById(ctx, edited.Id)
+	existingT, err := (*s.repository).GetTransactionById(ctx, edited.Id, edited.Account)
 	if err != nil {
 		return "", fmt.Errorf("cannot edit transaction, transaction with id %s not found", edited.Id)
 	}
@@ -172,7 +173,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 			Date:        existingT.Date,
 		})
 		if err != nil {
-			return (*s.repository).DeleteTransaction(ctx, newTId)
+			return (*s.repository).DeleteTransaction(ctx, newTId, edited.Account)
 		}
 		return newTId, nil
 	case models.OnDateOnly:
@@ -208,7 +209,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 		newEndTId, err := (*s.repository).InsertTransaction(ctx, newT)
 		if err != nil {
-			return (*s.repository).DeleteTransaction(ctx, newStartTId)
+			return (*s.repository).DeleteTransaction(ctx, newStartTId, edited.Account)
 		}
 
 		// Create single transaction on given date with edited data
@@ -219,8 +220,8 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 			Recurrency:  "",
 		})
 		if err != nil {
-			_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId)
-			_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId)
+			_, errOne := (*s.repository).DeleteTransaction(ctx, newStartTId, edited.Account)
+			_, errTwo := (*s.repository).DeleteTransaction(ctx, newEndTId, edited.Account)
 			if errOne != nil || errTwo != nil {
 				log.Printf("cannot rollback!! please fix manually, error: %s, %s", errOne, errTwo)
 				return "", fmt.Errorf("cannot rollback, error: %s, %s", errOne, errTwo)
@@ -229,7 +230,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 
 		// Delete old transaction
-		return (*s.repository).DeleteTransaction(ctx, existingT.Id)
+		return (*s.repository).DeleteTransaction(ctx, existingT.Id, edited.Account)
 	}
 
 	return "", fmt.Errorf("error on edit transaction, edit type %s not found", editType)

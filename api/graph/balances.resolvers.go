@@ -13,29 +13,25 @@ import (
 )
 
 // CreateBalance is the resolver for the createBalance field.
-func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalance) (*models.Balance, error) {
-	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, validateDate(input.Date))
+func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalanceInput) (*models.Balance, error) {
+	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, validateDate(input.Date), input.Account)
 	return &newBalance, err
 }
 
 // DeleteBalance is the resolver for the deleteBalance field.
-func (r *mutationResolver) DeleteBalance(ctx context.Context, date string) (string, error) {
-	return date, (*r.BalanceService).DeleteBalance(ctx, *validateDate(&date))
+func (r *mutationResolver) DeleteBalance(ctx context.Context, input generated.DeleteBalanceInput) (string, error) {
+	return input.Date, (*r.BalanceService).DeleteBalance(ctx, *validateDate(&input.Date), input.Account)
 }
 
 // ListBalances is the resolver for the listBalances field.
-func (r *queryResolver) ListBalances(ctx context.Context, from string, to string) ([]*models.Balance, error) {
-	if from == "" || to == "" {
-		err := fmt.Errorf("please provide from and to dates")
-		return nil, err
-	}
-	fromDate := validateDate(&from)
-	toDate := validateDate(&to)
+func (r *queryResolver) ListBalances(ctx context.Context, input generated.ListBalancesInput) ([]*models.Balance, error) {
+	fromDate := validateDate(&input.From)
+	toDate := validateDate(&input.To)
 	if fromDate == nil || toDate == nil {
 		err := fmt.Errorf("please provide valid from and to dates")
 		return nil, err
 	}
 
-	balances, err := (*r.BalanceService).ListBalances(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate))
+	balances, err := (*r.BalanceService).ListBalances(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate), input.Account)
 	return utils.ConvertStructToPointersArray(balances), err
 }
