@@ -27,6 +27,7 @@ func GenerateTransactionsFromRecurrency(transactions []models.Transaction, from 
 				Amount:      t.Amount,
 				Description: t.Description,
 				Recurrency:  "",
+				Account:     t.Account,
 			})
 		}
 	}

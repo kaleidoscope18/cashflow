@@ -6,11 +6,11 @@ package graph
 
 import (
 	"cashflow/api/graph/generated"
+	"cashflow/api/validation"
 	"cashflow/models"
 	"cashflow/utils"
 	"context"
 	"fmt"
-	"strings"
 )
 
 // CreateTransaction is the resolver for the createTransaction field.
@@ -22,72 +22,30 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 		return "", err
 	}
 
-	err = (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency, input.Account)
+	id, err := (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency, input.Account)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("transaction created on %s", input.Date), nil
-}
-
-// CreateTransactions is the resolver for the createTransactions field.
-func (r *mutationResolver) CreateTransactions(ctx context.Context, input []*generated.NewTransactionInput) ([]string, error) {
-	results := make([]string, 0)
-	errors := make([]string, 0)
-
-	for _, transaction := range input {
-		_, err := r.CreateTransaction(ctx, *transaction)
-		if err == nil {
-			results = append(results, fmt.Sprintf("transaction created on %s", transaction.Date))
-		} else {
-			errors = append(errors, fmt.Sprintf("on %s, error: %s", transaction.Date, err.Error()))
-		}
-	}
-
-	var err error
-	if len(errors) != 0 {
-		err = fmt.Errorf("transactions that were created: [%s] - transactions not created: [%s]",
-			strings.Join(results, ","),
-			strings.Join(errors, ","),
-		)
-	}
-
-	return results, err
+	return string(id), nil
 }
 
 // DeleteTransaction is the resolver for the deleteTransaction field.
-func (r *mutationResolver) DeleteTransaction(ctx context.Context, input generated.DeleteTransactionInput) (string, error) {
-	return (*r.TransactionService).DeleteTransaction(ctx, input.ID, input.Account)
-}
-
-// DeleteTransactions is the resolver for the deleteTransactions field.
-func (r *mutationResolver) DeleteTransactions(ctx context.Context, input []*generated.DeleteTransactionInput) ([]string, error) {
-	results := make([]string, 0)
-	errors := make([]string, 0)
-
-	for _, input := range input {
-		deletedId, err := r.DeleteTransaction(ctx, *input)
-		if err == nil {
-			results = append(results, deletedId)
-		} else {
-			errors = append(errors, input.ID)
-		}
+func (r *mutationResolver) DeleteTransaction(ctx context.Context, input generated.DeleteTransactionInput) (bool, error) {
+	err := (*r.TransactionService).DeleteTransaction(ctx, input.ID, input.Account)
+	if err != nil {
+		return false, err
 	}
-
-	var err error
-	if len(errors) != 0 {
-		err = fmt.Errorf("transactions that were deleted: %s - transactions not found: %s",
-			strings.Join(results, ","),
-			strings.Join(errors, ","),
-		)
-	}
-
-	return results, err
+	return true, nil
 }
 
 // DeleteRecurringTransaction is the resolver for the deleteRecurringTransaction field.
-func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input generated.DeleteRecurringTransactionInput) (string, error) {
-	return (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, utils.ParseDateToTime(input.Date), input.Account)
+func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input generated.DeleteRecurringTransactionInput) (bool, error) {
+	err := (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, utils.ParseDateToTime(input.Date), input.Account)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // EditTransaction is the resolver for the editTransaction field.
@@ -100,24 +58,35 @@ func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.
 	if err != nil {
 		return "", err
 	}
-	description := validateDescription(input.Description)
 	date := validateDate(input.Date)
 
-	return (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
+	err = (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
 		Id:          input.ID,
 		Date:        date,
-		Description: &description,
+		Description: input.Description,
 		Recurrency:  &recurrency,
 		Amount:      input.Amount,
+		Account:     input.Account,
 	})
+	if err != nil {
+		return "", err
+	}
+
+	return input.ID, nil
 }
 
 // ListTransactions is the resolver for the listTransactions field.
 func (r *queryResolver) ListTransactions(ctx context.Context, input generated.ListTransactionsInput) ([]*models.ComputedTransaction, error) {
-	fromDate := validateDate(&input.From)
-	toDate := validateDate(&input.To)
+	fromDate, err := validation.VerifyDate(&input.From)
+	if err != nil {
+		return nil, fmt.Errorf("invalid from date: %w", err)
+	}
+	toDate, err := validation.VerifyDate(&input.To)
+	if err != nil {
+		return nil, fmt.Errorf("invalid to date: %w", err)
+	}
 	if fromDate == nil || toDate == nil {
-		err := fmt.Errorf("please provide valid from and to dates")
+		err := fmt.Errorf("please provide from and to dates")
 		return nil, err
 	}
 

@@ -1,8 +1,7 @@
-package bdd
+package utils
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,19 +12,18 @@ import (
 	"strings"
 )
 
-func PostGraphQL(ctx context.Context, query string, queryName string, result interface{}) error {
-	// dev.PrintJson(query)
+// todo automate extracting the query name from the query
+func PostGraphQL(query string, queryName string, token string, result interface{}) error {
 	if result != nil && reflect.TypeOf(result).Kind() != reflect.Ptr {
 		return fmt.Errorf("result must be a pointer, got %T", result)
 	}
 
-	url := ctx.Value(url).(string)
-	req, _ := http.NewRequest("POST", url, bytes.NewBufferString(query))
+	jsonValue, _ := json.Marshal(map[string]string{"query": query})
+	req, _ := http.NewRequest("POST", os.Getenv("GRAPHQL_URL"), bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
 
-	token := ctx.Value(token)
-	if token != nil && token.(string) != "" {
-		req.Header.Set("Authorization", "Bearer "+token.(string))
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -60,7 +58,6 @@ func PostGraphQL(ctx context.Context, query string, queryName string, result int
 		return nil
 	}
 	err = unmarshalWrappedBody(body, queryName, result)
-	// dev.PrintJson(result)
 	if err != nil {
 		formattedError := fmt.Sprintf("failed to parse JSON response: %s - %v", string(body), err)
 		log.Println(formattedError)
@@ -87,22 +84,4 @@ func unmarshalWrappedBody(body []byte, queryName string, target interface{}) err
 	}
 
 	return nil
-}
-
-func LoginBDDUser(graphqlURL string) string {
-	password := os.Getenv("BDD_USER_PASSWORD")
-	email := os.Getenv("BDD_USER_EMAIL")
-	query := fmt.Sprintf(`{ "query": "query { loginEmail(email: \"%s\", password: \"%s\") }" }`, email, password)
-
-	ctx := context.WithValue(context.Background(), url, graphqlURL)
-	var t *string
-	err := PostGraphQL(ctx, query, "loginEmail", &t)
-	if t == nil {
-		panic("login failed: received nil token")
-	}
-	if err != nil {
-		panic(fmt.Sprintf("login failed: %v", err))
-	}
-
-	return *t
 }

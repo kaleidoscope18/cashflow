@@ -2,9 +2,8 @@ package recurrency
 
 import (
 	"cashflow/models"
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestSplitTransactionsWithRecurrency(t *testing.T) {
@@ -30,6 +29,8 @@ func TestSplitTransactionsWithRecurrency(t *testing.T) {
 
 	resultWith, resultWithout := SplitTransactionsWithRecurrency(append(expectedWith, expectedWithout...))
 
-	require.Equal(t, expectedWith, resultWith)
-	require.Equal(t, expectedWithout, resultWithout)
+	if !reflect.DeepEqual(expectedWith, resultWith) || !reflect.DeepEqual(expectedWithout, resultWithout) {
+		t.Errorf("Expected %v, got %v", expectedWith, resultWith)
+		t.Errorf("Expected %v, got %v", expectedWithout, resultWithout)
+	}
 }

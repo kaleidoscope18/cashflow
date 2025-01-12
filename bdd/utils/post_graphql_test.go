@@ -1,4 +1,4 @@
-package bdd
+package utils
 
 import (
 	"cashflow/models"

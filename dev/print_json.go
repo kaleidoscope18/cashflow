@@ -5,10 +5,12 @@ import (
 	"fmt"
 )
 
-func PrintJson(anyStruct interface{}) {
-	b, err := json.MarshalIndent(anyStruct, "", "  ")
-	if err != nil {
-		fmt.Println(err)
+func PrintJson(anyStruct ...interface{}) {
+	for _, v := range anyStruct {
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(b))
 	}
-	fmt.Println(string(b))
 }

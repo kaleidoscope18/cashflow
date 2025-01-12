@@ -20,3 +20,8 @@ func ParseDateToTime(datestring string) time.Time {
 	t, _ := dateparse.ParseAny(datestring)
 	return t.UTC()
 }
+
+func IsValidDate(datestring string) bool {
+	_, err := dateparse.ParseAny(datestring)
+	return err == nil
+}

@@ -8,19 +8,19 @@ import (
 type TransactionRepository interface {
 	Init() error
 	Close() error
-	GetTransactionById(ctx context.Context, id string, account string) (Transaction, error)
-	ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]Transaction, error)
-	InsertTransaction(ctx context.Context, transaction Transaction) (string, error)
-	DeleteTransaction(ctx context.Context, id string, account string) (string, error)
-	EditTransaction(ctx context.Context, transaction Transaction) (string, error)
+	CreateTransaction(ctx context.Context, transaction Transaction) (string, error)
+	ReadTransactionById(ctx context.Context, id string, account string) (Transaction, error)
+	ReadTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]Transaction, error)
+	UpdateTransaction(ctx context.Context, transaction Transaction) error
+	DeleteTransaction(ctx context.Context, id string, account string) error
 }
 
 type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]ComputedTransaction, error)
-	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) error
-	DeleteTransaction(ctx context.Context, id string, account string) (string, error)
-	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time, account string) (string, error)
-	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) (string, error)
+	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) (string, error)
+	DeleteTransaction(ctx context.Context, id string, account string) error
+	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time, account string) error
+	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) error
 }
 
 type Transaction struct {

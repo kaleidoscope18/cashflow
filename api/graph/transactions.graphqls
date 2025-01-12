@@ -68,16 +68,13 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransactionInput!): String!
-    @auth(requires: authenticated)
-  createTransactions(input: [NewTransactionInput!]!): [String!]!
+  createTransaction(input: NewTransactionInput!): ID!
     @auth(requires: authenticated)
 
-  deleteTransaction(input: DeleteTransactionInput!): ID!
+  deleteTransaction(input: DeleteTransactionInput!): Boolean!
     @auth(requires: authenticated)
-  deleteTransactions(input: [DeleteTransactionInput!]!): [ID!]!
-    @auth(requires: authenticated)
-  deleteRecurringTransaction(input: DeleteRecurringTransactionInput!): String!
+
+  deleteRecurringTransaction(input: DeleteRecurringTransactionInput!): Boolean!
     @auth(requires: authenticated)
 
   editTransaction(input: TransactionEditInput!): ID!

@@ -4,8 +4,6 @@ import (
 	"cashflow/models"
 	"cashflow/utils"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 var from = utils.ParseDateToTime("2000-01-01")
@@ -40,11 +38,21 @@ func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 	}
 
 	for i := range results {
-		require.Equal(t, expected[i].Id, results[i].Id)
-		require.Equal(t, expected[i].Date, results[i].Date)
-		require.Equal(t, expected[i].Description, results[i].Description)
-		require.Equal(t, expected[i].Amount, results[i].Amount)
-		require.Equal(t, expected[i].Recurrency, results[i].Recurrency)
+		if expected[i].Id != results[i].Id {
+			t.Errorf("Expected ID %s, got %s", expected[i].Id, results[i].Id)
+		}
+		if expected[i].Date != results[i].Date {
+			t.Errorf("Expected date %s, got %s", expected[i].Date, results[i].Date)
+		}
+		if expected[i].Description != results[i].Description {
+			t.Errorf("Expected description %s, got %s", expected[i].Description, results[i].Description)
+		}
+		if expected[i].Amount != results[i].Amount {
+			t.Errorf("Expected amount %d, got %d", expected[i].Amount, results[i].Amount)
+		}
+		if expected[i].Recurrency != results[i].Recurrency {
+			t.Errorf("Expected recurrency %s, got %s", expected[i].Recurrency, results[i].Recurrency)
+		}
 	}
 }
 
@@ -59,5 +67,7 @@ func TestNoRecurrencyInTransaction(t *testing.T) {
 		},
 	}
 	_, err := GenerateTransactionsFromRecurrency(data, from, to)
-	require.Error(t, err)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
 }
