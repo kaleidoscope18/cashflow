@@ -48,8 +48,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Balance struct {
-		Amount func(childComplexity int) int
-		Date   func(childComplexity int) int
+		Account func(childComplexity int) int
+		Amount  func(childComplexity int) int
+		Date    func(childComplexity int) int
 	}
 
 	ComputedTransaction struct {
@@ -65,11 +66,9 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateBalance              func(childComplexity int, input NewBalanceInput) int
 		CreateTransaction          func(childComplexity int, input NewTransactionInput) int
-		CreateTransactions         func(childComplexity int, input []*NewTransactionInput) int
 		DeleteBalance              func(childComplexity int, input DeleteBalanceInput) int
 		DeleteRecurringTransaction func(childComplexity int, input DeleteRecurringTransactionInput) int
 		DeleteTransaction          func(childComplexity int, input DeleteTransactionInput) int
-		DeleteTransactions         func(childComplexity int, input []*DeleteTransactionInput) int
 		EditTransaction            func(childComplexity int, input TransactionEditInput) int
 	}
 
@@ -93,10 +92,8 @@ type MutationResolver interface {
 	CreateBalance(ctx context.Context, input NewBalanceInput) (*models.Balance, error)
 	DeleteBalance(ctx context.Context, input DeleteBalanceInput) (string, error)
 	CreateTransaction(ctx context.Context, input NewTransactionInput) (string, error)
-	CreateTransactions(ctx context.Context, input []*NewTransactionInput) ([]string, error)
-	DeleteTransaction(ctx context.Context, input DeleteTransactionInput) (string, error)
-	DeleteTransactions(ctx context.Context, input []*DeleteTransactionInput) ([]string, error)
-	DeleteRecurringTransaction(ctx context.Context, input DeleteRecurringTransactionInput) (string, error)
+	DeleteTransaction(ctx context.Context, input DeleteTransactionInput) (bool, error)
+	DeleteRecurringTransaction(ctx context.Context, input DeleteRecurringTransactionInput) (bool, error)
 	EditTransaction(ctx context.Context, input TransactionEditInput) (string, error)
 }
 type QueryResolver interface {
@@ -124,6 +121,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Balance.account":
+		if e.complexity.Balance.Account == nil {
+			break
+		}
+
+		return e.complexity.Balance.Account(childComplexity), true
 
 	case "Balance.amount":
 		if e.complexity.Balance.Amount == nil {
@@ -212,18 +216,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateTransaction(childComplexity, args["input"].(NewTransactionInput)), true
 
-	case "Mutation.createTransactions":
-		if e.complexity.Mutation.CreateTransactions == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createTransactions_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateTransactions(childComplexity, args["input"].([]*NewTransactionInput)), true
-
 	case "Mutation.deleteBalance":
 		if e.complexity.Mutation.DeleteBalance == nil {
 			break
@@ -259,18 +251,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteTransaction(childComplexity, args["input"].(DeleteTransactionInput)), true
-
-	case "Mutation.deleteTransactions":
-		if e.complexity.Mutation.DeleteTransactions == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteTransactions_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteTransactions(childComplexity, args["input"].([]*DeleteTransactionInput)), true
 
 	case "Mutation.editTransaction":
 		if e.complexity.Mutation.EditTransaction == nil {
@@ -482,6 +462,7 @@ var sources = []*ast.Source{
 	{Name: "../balances.graphqls", Input: `type Balance {
   date: String!
   amount: Float!
+  account: String!
 }
 
 input ListBalancesInput {
@@ -509,6 +490,7 @@ extend type Query {
 extend type Mutation {
   createBalance(input: NewBalanceInput!): Balance!
     @auth(requires: authenticated)
+
   deleteBalance(input: DeleteBalanceInput!): String!
     @auth(requires: authenticated)
 }
@@ -597,16 +579,13 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTransaction(input: NewTransactionInput!): String!
-    @auth(requires: authenticated)
-  createTransactions(input: [NewTransactionInput!]!): [String!]!
+  createTransaction(input: NewTransactionInput!): ID!
     @auth(requires: authenticated)
 
-  deleteTransaction(input: DeleteTransactionInput!): ID!
+  deleteTransaction(input: DeleteTransactionInput!): Boolean!
     @auth(requires: authenticated)
-  deleteTransactions(input: [DeleteTransactionInput!]!): [ID!]!
-    @auth(requires: authenticated)
-  deleteRecurringTransaction(input: DeleteRecurringTransactionInput!): String!
+
+  deleteRecurringTransaction(input: DeleteRecurringTransactionInput!): Boolean!
     @auth(requires: authenticated)
 
   editTransaction(input: TransactionEditInput!): ID!
@@ -665,21 +644,6 @@ func (ec *executionContext) field_Mutation_createTransaction_args(ctx context.Co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 []*NewTransactionInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInputᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteBalance_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -717,21 +681,6 @@ func (ec *executionContext) field_Mutation_deleteTransaction_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNDeleteTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteTransactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 []*DeleteTransactionInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNDeleteTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInputᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -945,6 +894,50 @@ func (ec *executionContext) fieldContext_Balance_amount(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Balance_account(ctx context.Context, field graphql.CollectedField, obj *models.Balance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Balance_account(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Account, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Balance_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Balance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1322,6 +1315,8 @@ func (ec *executionContext) fieldContext_Mutation_createBalance(ctx context.Cont
 				return ec.fieldContext_Balance_date(ctx, field)
 			case "amount":
 				return ec.fieldContext_Balance_amount(ctx, field)
+			case "account":
+				return ec.fieldContext_Balance_account(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Balance", field.Name)
 		},
@@ -1471,7 +1466,7 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1481,7 +1476,7 @@ func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	defer func() {
@@ -1492,85 +1487,6 @@ func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createTransaction_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createTransactions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createTransactions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTransactions(rctx, fc.Args["input"].([]*NewTransactionInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.Auth == nil {
-				return nil, errors.New("directive auth is not implemented")
-			}
-			return ec.directives.Auth(ctx, nil, directive0, requires)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.([]string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createTransactions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1612,10 +1528,10 @@ func (ec *executionContext) _Mutation_deleteTransaction(ctx context.Context, fie
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(string); ok {
+		if data, ok := tmp.(bool); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1627,9 +1543,9 @@ func (ec *executionContext) _Mutation_deleteTransaction(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1639,7 +1555,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteTransaction(ctx context.
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -1650,85 +1566,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteTransaction(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTransaction_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteTransactions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteTransactions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteTransactions(rctx, fc.Args["input"].([]*DeleteTransactionInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.Auth == nil {
-				return nil, errors.New("directive auth is not implemented")
-			}
-			return ec.directives.Auth(ctx, nil, directive0, requires)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.([]string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteTransactions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1770,10 +1607,10 @@ func (ec *executionContext) _Mutation_deleteRecurringTransaction(ctx context.Con
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(string); ok {
+		if data, ok := tmp.(bool); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1785,9 +1622,9 @@ func (ec *executionContext) _Mutation_deleteRecurringTransaction(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteRecurringTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1797,7 +1634,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteRecurringTransaction(ctx
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -2059,6 +1896,8 @@ func (ec *executionContext) fieldContext_Query_listBalances(ctx context.Context,
 				return ec.fieldContext_Balance_date(ctx, field)
 			case "amount":
 				return ec.fieldContext_Balance_amount(ctx, field)
+			case "account":
+				return ec.fieldContext_Balance_account(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Balance", field.Name)
 		},
@@ -4676,6 +4515,11 @@ func (ec *executionContext) _Balance(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "account":
+			out.Values[i] = ec._Balance_account(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4805,23 +4649,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createTransactions":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createTransactions(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteTransaction":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTransaction(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteTransactions":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteTransactions(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -5525,28 +5355,6 @@ func (ec *executionContext) unmarshalNDeleteTransactionInput2cashflowᚋapiᚋgr
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDeleteTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInputᚄ(ctx context.Context, v interface{}) ([]*DeleteTransactionInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*DeleteTransactionInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDeleteTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNDeleteTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐDeleteTransactionInput(ctx context.Context, v interface{}) (*DeleteTransactionInput, error) {
-	res, err := ec.unmarshalInputDeleteTransactionInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5577,38 +5385,6 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalNListBalancesInput2cashflowᚋapiᚋgraphᚋgeneratedᚐListBalancesInput(ctx context.Context, v interface{}) (ListBalancesInput, error) {
 	res, err := ec.unmarshalInputListBalancesInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5627,28 +5403,6 @@ func (ec *executionContext) unmarshalNNewBalanceInput2cashflowᚋapiᚋgraphᚋg
 func (ec *executionContext) unmarshalNNewTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx context.Context, v interface{}) (NewTransactionInput, error) {
 	res, err := ec.unmarshalInputNewTransactionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNNewTransactionInput2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInputᚄ(ctx context.Context, v interface{}) ([]*NewTransactionInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*NewTransactionInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNNewTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNNewTransactionInput2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx context.Context, v interface{}) (*NewTransactionInput, error) {
-	res, err := ec.unmarshalInputNewTransactionInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNStatus2cashflowᚋmodelsᚐStatus(ctx context.Context, v interface{}) (models.Status, error) {
@@ -5680,38 +5434,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalNTransactionEditInput2cashflowᚋapiᚋgraphᚋgeneratedᚐTransactionEditInput(ctx context.Context, v interface{}) (TransactionEditInput, error) {

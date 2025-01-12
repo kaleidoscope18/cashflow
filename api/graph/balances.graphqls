@@ -1,6 +1,7 @@
 type Balance {
   date: String!
   amount: Float!
+  account: String!
 }
 
 input ListBalancesInput {
@@ -28,6 +29,7 @@ extend type Query {
 extend type Mutation {
   createBalance(input: NewBalanceInput!): Balance!
     @auth(requires: authenticated)
+
   deleteBalance(input: DeleteBalanceInput!): String!
     @auth(requires: authenticated)
 }
