@@ -48,7 +48,7 @@ func TestGenerateTransactionsFromRecurrency(t *testing.T) {
 			t.Errorf("Expected description %s, got %s", expected[i].Description, results[i].Description)
 		}
 		if expected[i].Amount != results[i].Amount {
-			t.Errorf("Expected amount %d, got %d", expected[i].Amount, results[i].Amount)
+			t.Errorf("Expected amount %2.f, got %2.f", expected[i].Amount, results[i].Amount)
 		}
 		if expected[i].Recurrency != results[i].Recurrency {
 			t.Errorf("Expected recurrency %s, got %s", expected[i].Recurrency, results[i].Recurrency)

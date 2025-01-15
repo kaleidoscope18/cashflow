@@ -11,18 +11,26 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"time"
 )
 
 // CreateTransaction is the resolver for the createTransaction field.
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input generated.NewTransactionInput) (string, error) {
-	description := validateDescription(input.Description)
-	recurrency, err := validateRecurrency(input.Recurrency)
-	date := validateDate(&input.Date)
-	if err != nil {
-		return "", err
+	err1 := validateRecurrency(input.Recurrency)
+	err2 := validateDate(&input.Date, true)
+	if err1 != nil || err2 != nil {
+		return "", fmt.Errorf("invalid input: %w %w", err1, err2)
 	}
-
-	id, err := (*r.TransactionService).WriteTransaction(ctx, *date, input.Amount, description, recurrency, input.Account)
+	description := ""
+	if input.Description != nil {
+		description = *input.Description
+	}
+	recurrency := ""
+	if input.Recurrency != nil {
+		recurrency = *input.Recurrency
+	}
+	date := utils.ParseDateToTime(input.Date)
+	id, err := (*r.TransactionService).WriteTransaction(ctx, date, input.Amount, description, recurrency, input.Account)
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +49,12 @@ func (r *mutationResolver) DeleteTransaction(ctx context.Context, input generate
 
 // DeleteRecurringTransaction is the resolver for the deleteRecurringTransaction field.
 func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input generated.DeleteRecurringTransactionInput) (bool, error) {
-	err := (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, utils.ParseDateToTime(input.Date), input.Account)
+	err := validateDate(&input.Date, true)
+	if err != nil {
+		return false, fmt.Errorf("invalid date: %w", err)
+	}
+	date := utils.ParseDateToTime(input.Date)
+	err = (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, date, input.Account)
 	if err != nil {
 		return false, err
 	}
@@ -50,21 +63,24 @@ func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input
 
 // EditTransaction is the resolver for the editTransaction field.
 func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.TransactionEditInput) (string, error) {
-	recurrency, err := validateRecurrency(input.Recurrency)
-	if err != nil {
-		return "", err
+	err1 := validateRecurrency(input.Recurrency)
+	err3 := validateDate(input.Date, false) // date is not required for type == All
+	err2 := validateType(input)             // will also check if date is required for the given type
+	if err1 != nil || err2 != nil || err3 != nil {
+		return "", fmt.Errorf("invalid input: %w %w %w", err1, err2, err3)
 	}
-	err = validateType(input)
-	if err != nil {
-		return "", err
-	}
-	date := validateDate(input.Date)
 
-	err = (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
+	var datePtr *time.Time
+	if input.Date != nil {
+		date := utils.ParseDateToTime(*input.Date)
+		datePtr = &date
+	}
+
+	err := (*r.TransactionService).EditTransaction(ctx, input.Type, models.TransactionEdit{
 		Id:          input.ID,
-		Date:        date,
+		Date:        datePtr,
 		Description: input.Description,
-		Recurrency:  &recurrency,
+		Recurrency:  input.Recurrency,
 		Amount:      input.Amount,
 		Account:     input.Account,
 	})

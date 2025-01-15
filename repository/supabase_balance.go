@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float64, date string, account string) (models.Balance, error) {
+func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float64, date time.Time, account string) (models.Balance, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
@@ -21,7 +21,7 @@ func (repo *supabaseRepository) InsertBalance(ctx context.Context, amount float6
 
 	return models.Balance{
 		Amount:  amount,
-		Date:    date,
+		Date:    date.Format(utils.DateLayout),
 		Account: account,
 	}, nil
 }
@@ -45,11 +45,11 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	return balances, nil
 }
 
-func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date string, account string) error {
+func (repo *supabaseRepository) DeleteBalance(ctx context.Context, date time.Time, account string) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, err := repo.db.Exec(ctx, "DELETE FROM cashflow.balances WHERE date = $1 AND author = $2 AND account = $3", date, utils.GetContextValue(ctx, models.UserId), account)
+	_, err := repo.db.Exec(ctx, "DELETE FROM cashflow.balances WHERE date = $1 AND author = $2 AND account = $3", date.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId), account)
 
 	if err != nil {
 		return err

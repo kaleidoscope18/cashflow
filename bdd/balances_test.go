@@ -125,8 +125,9 @@ func TestBalances(t *testing.T) {
 		mutation { 
 			createTransaction(input: {
 				amount: 1000,
-				date: "2022-10-30",
+				date: "2031-10-30",
 				account: "chequing"
+				description: "test-list-transactions-with-balances"
 			})
 		}
 		`
@@ -141,7 +142,7 @@ func TestBalances(t *testing.T) {
 		mutation { 
 			createBalance(input: {
 				amount: 1000,
-				date: "2022-10-29",
+				date: "2031-10-29",
 				account: "chequing"
 			}) {
 				date
@@ -161,8 +162,8 @@ func TestBalances(t *testing.T) {
 		query {
 			listTransactions(input: {
 				account: "chequing"
-				from: "2022-10-29"
-				to: "2022-10-30"
+				from: "2031-10-29"
+				to: "2031-10-30"
 			}) {
 				id
 				amount

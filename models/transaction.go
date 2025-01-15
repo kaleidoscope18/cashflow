@@ -17,7 +17,7 @@ type TransactionRepository interface {
 
 type TransactionService interface {
 	ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]ComputedTransaction, error)
-	WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) (string, error)
+	WriteTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, account string) (string, error)
 	DeleteTransaction(ctx context.Context, id string, account string) error
 	DeleteRecurringTransaction(ctx context.Context, id string, date time.Time, account string) error
 	EditTransaction(ctx context.Context, editType TransactionEditType, edited TransactionEdit) error
@@ -26,7 +26,7 @@ type TransactionService interface {
 type Transaction struct {
 	Id          string
 	Amount      float64
-	Date        string
+	Date        string // TODO: change to time.Time
 	Description string
 	Recurrency  string
 	Account     string
@@ -35,7 +35,7 @@ type Transaction struct {
 type TransactionEdit struct {
 	Id          string
 	Amount      *float64
-	Date        *string
+	Date        *time.Time
 	Description *string
 	Recurrency  *string
 	Account     string

@@ -37,10 +37,10 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return results, err
 }
 
-func (s *transactionService) WriteTransaction(ctx context.Context, date string, amount float64, description string, recurrency string, account string) (string, error) {
+func (s *transactionService) WriteTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, account string) (string, error) {
 	id, err := (*s.repository).CreateTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
-		Date:        utils.ParseDate(date),
+		Date:        date.Format(utils.DateLayout),
 		Description: description,
 		Recurrency:  recurrency,
 		Account:     account,
@@ -71,7 +71,7 @@ func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id 
 	// TODO: validate that the given date is correct regarding the recurrency
 
 	// Create new recurrent transaction to end until date - 1 day
-	newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, date.Format(utils.DateLayout))
+	newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, date)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (s *transactionService) DeleteTransaction(ctx context.Context, id string, a
 func (s *transactionService) EditTransaction(ctx context.Context, editType models.TransactionEditType, edited models.TransactionEdit) error {
 	existingT, err := (*s.repository).ReadTransactionById(ctx, edited.Id, edited.Account)
 	if err != nil {
-		return fmt.Errorf("cannot edit transaction, transaction with id %s not found", edited.Id)
+		return fmt.Errorf("transaction with id %s not found", edited.Id)
 	}
 
 	switch editType {
@@ -131,16 +131,20 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 			editedTransaction.Amount = *edited.Amount
 		}
 		if edited.Date != nil {
-			editedTransaction.Date = *edited.Date
-		}
-		if *edited.Recurrency != "" {
-			editedTransaction.Recurrency = *edited.Recurrency
+			editedTransaction.Date = (*edited.Date).Format(utils.DateLayout)
 		}
 		if edited.Description != nil {
 			editedTransaction.Description = *edited.Description
 		}
+		if edited.Recurrency != nil {
+			editedTransaction.Recurrency = *edited.Recurrency
+		}
 		return (*s.repository).UpdateTransaction(ctx, editedTransaction)
 	case models.FromDate:
+		/*
+		     | ---------------- | ---- edited ---- |
+		   start            from date             end
+		*/
 		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
 		if err != nil {
 			return err
@@ -149,7 +153,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		newT := models.Transaction{
 			Id:          existingT.Id,
 			Amount:      existingT.Amount,
-			Date:        *edited.Date,
+			Date:        (*edited.Date).Format(utils.DateLayout),
 			Description: existingT.Description,
 			Recurrency:  existingT.Recurrency,
 			Account:     edited.Account,
@@ -182,12 +186,10 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		return nil
 	case models.OnDateOnly:
 		/*
-		       | ---------------- | ---------------- |
+		       | ---------------- X ---------------- |
 		   start date           edited         end of recurrency
 		                     on date only
 		*/
-
-		// TODO: validate that the given date is correct regarding the recurrency
 
 		// Create new recurrent transaction to end until new date - 1 day
 		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
@@ -209,7 +211,7 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		newT := models.Transaction{
 			Description: existingT.Description,
 			Amount:      existingT.Amount,
-			Date:        utils.ParseDateToTime(*edited.Date).AddDate(0, 0, 1).Format(utils.DateLayout),
+			Date:        (*edited.Date).AddDate(0, 0, 1).Format(utils.DateLayout),
 			Recurrency:  existingT.Recurrency,
 			Account:     edited.Account,
 		}
@@ -219,10 +221,14 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		}
 
 		// Create single transaction on given date with edited data
+		description := existingT.Description
+		if edited.Description != nil {
+			description = *edited.Description
+		}
 		_, err = (*s.repository).CreateTransaction(ctx, models.Transaction{
-			Description: *edited.Description,
+			Description: description,
 			Amount:      *edited.Amount,
-			Date:        *edited.Date,
+			Date:        (*edited.Date).Format(utils.DateLayout),
 			Recurrency:  "",
 			Account:     edited.Account,
 		})

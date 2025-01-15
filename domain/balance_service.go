@@ -17,16 +17,16 @@ func NewBalanceService(repo *models.Repository) models.BalanceService {
 	return s
 }
 
-func (s *balanceService) WriteBalance(ctx context.Context, balance float64, date *string, account string) (models.Balance, error) {
+func (s *balanceService) WriteBalance(ctx context.Context, balance float64, date *time.Time, account string) (models.Balance, error) {
 	if date != nil {
-		newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.ParseDate(*date), account)
+		newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), *date, account)
 		if err != nil {
 			return models.Balance{}, err
 		}
 		return newBalance, nil
 	}
 
-	newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.GetTodayDate(), account)
+	newBalance, err := (*s.repository).InsertBalance(ctx, utils.RoundToTwoDigits(balance), utils.GetTodayDateAsTime(), account)
 	if err != nil {
 		return models.Balance{}, err
 	}
@@ -42,7 +42,7 @@ func (s *balanceService) ListBalances(ctx context.Context, from time.Time, to ti
 	return result, nil
 }
 
-func (s *balanceService) DeleteBalance(ctx context.Context, date string, account string) error {
+func (s *balanceService) DeleteBalance(ctx context.Context, date time.Time, account string) error {
 	err := (*s.repository).DeleteBalance(ctx, date, account)
 	return err
 }

@@ -13,13 +13,13 @@ var examples = [][]string{
 	{"oct 7, '70", "1970-10-07"},
 	{"oct. 7, 1970", "1970-10-07"},
 	{"oct. 7, 70", "1970-10-07"},
-	{"Mon Jan  2 15:04:05 2006", "2006-01-02"},
-	{"Mon Jan  2 15:04:05 MST 2006", "2006-01-02"},
-	{"Mon Jan 02 15:04:05 -0700 2006", "2006-01-02"},
-	{"Monday, 02-Jan-06 15:04:05 MST", "2006-01-02"},
-	{"Mon, 02 Jan 2006 15:04:05 MST", "2006-01-02"},
+	{"Mon Jan  2 15:04:05 2007", "2007-01-02"},
+	{"Mon Jan  2 15:04:05 MST 2007", "2007-01-02"},
+	{"Mon Jan 02 15:04:05 -0700 2007", "2007-01-02"},
+	{"Monday, 02-Jan-07 15:04:05 MST", "2007-01-02"},
+	{"Mon, 02 Jan 2007 15:04:05 MST", "2007-01-02"},
 	{"Tue, 11 Jul 2017 16:28:13 +0200 (CEST)", "2017-07-11"},
-	{"Mon, 02 Jan 2006 15:04:05 -0700", "2006-01-02"},
+	{"Mon, 02 Jan 2007 15:04:05 -0700", "2007-01-02"},
 	{"Mon 30 Sep 2018 09:09:09 PM UTC", "2018-09-30"},
 	{"Mon Aug 10 15:44:11 UTC+0100 2015", "2015-08-10"},
 	{"Thu, 4 Jan 2018 17:53:36 +0000", "2018-01-04"},
@@ -71,7 +71,7 @@ var examples = [][]string{
 	{"2014:4:02 03:00:51", "2014-04-02"},
 	{"2012:03:19 10:11:59", "2012-03-19"},
 	{"2012:03:19 10:11:59.3186369", "2012-03-19"},
-	{"2006-01-02T15:04:05+0000", "2006-01-02"},
+	{"2007-01-02T15:04:05+0000", "2007-01-02"},
 	{"2009-08-12T22:15:09-07:00", "2009-08-13"}, // test w/ UTC
 	{"2009-08-12T22:15:09", "2009-08-12"},
 	{"2009-08-12T22:15:09.988", "2009-08-12"},
@@ -123,7 +123,13 @@ func TestParseDate(t *testing.T) {
 			t.Fatalf(`ParseDate("%s") should have given %s but resulted in %s instead`, v, want, trueResult)
 		}
 	}
+}
 
+func TestParseInvalidDate(t *testing.T) {
+	r := ParseDate("invalid date")
+	if r != "0001-01-01" {
+		t.Fatalf(`ParseDate("invalid date") should have given "0001-01-01" but resulted in %s instead`, r)
+	}
 }
 
 func TestParseDateToTime(t *testing.T) {
@@ -166,5 +172,12 @@ func TestParseDateToTime(t *testing.T) {
 				t.Errorf("ParseDateToTime(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestParseDateToTimeInvalidDate(t *testing.T) {
+	r := ParseDateToTime("invalid date")
+	if (r != time.Time{}) {
+		t.Fatalf(`ParseDateToTime("invalid date") should have given time.Time{} but resulted in %s instead`, r)
 	}
 }

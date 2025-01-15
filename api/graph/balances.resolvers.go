@@ -10,28 +10,48 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"time"
 )
 
 // CreateBalance is the resolver for the createBalance field.
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalanceInput) (*models.Balance, error) {
-	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, validateDate(input.Date), input.Account)
+	err := validateDate(input.Date, false)
+	if err != nil {
+		return nil, err
+	}
+	var date *time.Time
+	if input.Date != nil {
+		parsed := utils.ParseDateToTime(*input.Date)
+		date = &parsed
+	}
+	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, date, input.Account)
 	return &newBalance, err
 }
 
 // DeleteBalance is the resolver for the deleteBalance field.
 func (r *mutationResolver) DeleteBalance(ctx context.Context, input generated.DeleteBalanceInput) (string, error) {
-	return input.Date, (*r.BalanceService).DeleteBalance(ctx, *validateDate(&input.Date), input.Account)
+	err := validateDate(&input.Date, true)
+	if err != nil {
+		return "", err
+	}
+	date := utils.ParseDateToTime(input.Date)
+	err = (*r.BalanceService).DeleteBalance(ctx, date, input.Account)
+	if err != nil {
+		return "", err
+	}
+	return input.Date, nil
 }
 
 // ListBalances is the resolver for the listBalances field.
 func (r *queryResolver) ListBalances(ctx context.Context, input generated.ListBalancesInput) ([]*models.Balance, error) {
-	fromDate := validateDate(&input.From)
-	toDate := validateDate(&input.To)
-	if fromDate == nil || toDate == nil {
-		err := fmt.Errorf("please provide valid from and to dates")
-		return nil, err
+	fromDateErr := validateDate(&input.From, true)
+	toDateErr := validateDate(&input.To, true)
+	if fromDateErr != nil || toDateErr != nil {
+		return nil, fmt.Errorf("please provide valid from and to dates: %w, %w", fromDateErr, toDateErr)
 	}
 
-	balances, err := (*r.BalanceService).ListBalances(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate), input.Account)
+	fromDate := utils.ParseDateToTime(input.From)
+	toDate := utils.ParseDateToTime(input.To)
+	balances, err := (*r.BalanceService).ListBalances(ctx, fromDate, toDate, input.Account)
 	return utils.ConvertStructToPointersArray(balances), err
 }

@@ -30,7 +30,7 @@ func TestDeleteTransactions(t *testing.T) {
 				createTransaction(input: {
 					amount: 100,
 					date: "2029-09-20",
-					description: "Test transaction",
+					description: "test-delete-non-recurring",
 					account: "chequing"
 				})
 			}
@@ -92,7 +92,7 @@ func TestDeleteTransactions(t *testing.T) {
 				createTransaction(input: {
 					amount: 100,
 					date: "2030-09-20",
-					description: "Test recurring transaction",
+					description: "test-delete-recurring",
 					recurrency: "FREQ=MONTHLY;BYMONTHDAY=1,15;UNTIL=20310930"
 					account: "chequing"
 				})
@@ -104,7 +104,7 @@ func TestDeleteTransactions(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		// And I delete the recurring transaction on "2028-12-15".
+		// And I delete the recurring transaction on "2030-12-15".
 		query = `
 			mutation { 
 				deleteRecurringTransaction(input: {

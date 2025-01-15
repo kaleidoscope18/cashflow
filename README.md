@@ -127,3 +127,6 @@ Handles data persistence and retrieval operations. This layer abstracts the data
 
 - Use channels to validate inputs simultaneously in resolvers.
 - We can create modules inside modules.
+- Decide on ONE format, easy to manipulate (time.Time)
+- Resolvers do validate fields first, then map the values then call the services
+- Its not a good idea to use models for the api or repository layer since date objects are not easy to manipulate

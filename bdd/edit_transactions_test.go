@@ -170,13 +170,13 @@ func TestEditTransactions(t *testing.T) {
 	t.Run("Editing a recurring transaction from given date", func(t *testing.T) {
 		t.Parallel()
 
-		// When I add a recurring transaction to it on "2029-09-20" until "2030-10-31".
+		// When I add a recurring transaction to it on "1986-09-20" until "1987-10-31".
 		query := `
 		mutation {
 			createTransaction(input: {
 				amount: 1,
-				date: "2029-09-20",
-				recurrency: "FREQ=MONTHLY;BYMONTHDAY=1;UNTIL=20301031"
+				date: "1986-09-20",
+				recurrency: "FREQ=MONTHLY;BYMONTHDAY=1;UNTIL=19871031"
 				account: "chequing"
 				description: "test-edit-from-date-recurring"
 			})
@@ -188,7 +188,7 @@ func TestEditTransactions(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		// And I edit the transaction from "2029-12-15".
+		// And I edit the transaction from "1986-12-15".
 		query = `
 		mutation {
 			editTransaction(input: {
@@ -196,7 +196,7 @@ func TestEditTransactions(t *testing.T) {
 				id: "` + id + `"
 				amount: 999
 				account: "chequing"
-				date: "2029-12-15"
+				date: "1986-12-15"
 			})
 		}
 		`
@@ -205,12 +205,12 @@ func TestEditTransactions(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		// Then I should see unchanged transactions before "2029-12-15" and the rest should change.
+		// Then I should see unchanged transactions before "1986-12-15" and the rest should change.
 		query = `
 		query {
 			listTransactions(input: {
-				from: "2029-09-20"
-				to: "2030-10-31"
+				from: "1986-09-20"
+				to: "1987-10-31"
 				account: "chequing"
 			}) {
 				id
@@ -230,21 +230,17 @@ func TestEditTransactions(t *testing.T) {
 		var ids []string
 		for _, r := range transactions {
 			ids = append(ids, utils.ExtractIdFromSubid(r.Id))
-			if cutils.ParseDateToTime(r.Date).After(cutils.ParseDateToTime("2029-12-15")) {
+			if cutils.ParseDateToTime(r.Date).After(cutils.ParseDateToTime("1986-12-15")) {
 				if r.Amount != 999.00 {
 					t.Fatalf("expected amount of 999.00 for transaction %s on %s but got %.2f", r.Id, r.Date, r.Amount)
 				}
 			}
 
-			if cutils.ParseDateToTime(r.Date).Equal(cutils.ParseDateToTime("2029-12-15")) {
+			if cutils.ParseDateToTime(r.Date).Equal(cutils.ParseDateToTime("1986-12-15")) {
 				duplicateCount++
 				if duplicateCount > 1 {
-					t.Fatalf("expected only one transaction on %s but got %d", "2029-12-15", duplicateCount)
+					t.Fatalf("expected only one transaction on %s but got %d", "1986-12-15", duplicateCount)
 				}
-			}
-
-			if r.Description == "" {
-				t.Fatalf("expected description for transaction %s on %s but got empty strings", r.Id, r.Date)
 			}
 		}
 
@@ -357,6 +353,7 @@ func TestEditTransactions(t *testing.T) {
 				id
 				date
 				amount
+				description
 			}
 		}
 		`
@@ -373,14 +370,18 @@ func TestEditTransactions(t *testing.T) {
 				t.Fatalf("expected transaction on %s to be changed to 999.00 but got %.2f", "1970-12-15", r.Amount)
 			}
 
-			if !cutils.ParseDateToTime(r.Date).Equal(cutils.ParseDateToTime("1970-12-15")) && r.Amount != 1000 {
+			if !cutils.ParseDateToTime(r.Date).Equal(cutils.ParseDateToTime("1970-12-15")) && r.Amount != 1 {
 				t.Fatalf("expected transaction on %s to be unchanged but got %.2f", "1970-12-15", r.Amount)
+			}
+
+			if !cutils.ParseDateToTime(r.Date).Equal(cutils.ParseDateToTime("1970-12-15")) && r.Description == "" {
+				t.Fatalf("should have kept the description for transaction on 1970-12-15 but got empty string")
 			}
 		}
 
 		uniqueIds := slices.Compact(ids)
-		if len(uniqueIds) != 2 {
-			t.Fatalf("expected 2 unique ids, got %d", len(uniqueIds))
+		if len(uniqueIds) != 3 {
+			t.Fatalf("expected 3 unique ids, got %d", len(uniqueIds))
 		}
 
 		err = utils.CleanupTransactions(uniqueIds, token)
