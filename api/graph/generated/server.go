@@ -65,6 +65,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateBalance              func(childComplexity int, input NewBalanceInput) int
+		CreatePlan                 func(childComplexity int, input NewPlanInput) int
 		CreateTransaction          func(childComplexity int, input NewTransactionInput) int
 		DeleteBalance              func(childComplexity int, input DeleteBalanceInput) int
 		DeleteRecurringTransaction func(childComplexity int, input DeleteRecurringTransactionInput) int
@@ -72,9 +73,20 @@ type ComplexityRoot struct {
 		EditTransaction            func(childComplexity int, input TransactionEditInput) int
 	}
 
+	Plan struct {
+		FromAccount func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Recurrency  func(childComplexity int) int
+		StartDate   func(childComplexity int) int
+		ToAccount   func(childComplexity int) int
+		TotalAmount func(childComplexity int) int
+	}
+
 	Query struct {
 		Health           func(childComplexity int) int
 		ListBalances     func(childComplexity int, input ListBalancesInput) int
+		ListPlans        func(childComplexity int) int
 		ListTransactions func(childComplexity int, input ListTransactionsInput) int
 		LoginEmail       func(childComplexity int, email string, password string) int
 	}
@@ -91,6 +103,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateBalance(ctx context.Context, input NewBalanceInput) (*models.Balance, error)
 	DeleteBalance(ctx context.Context, input DeleteBalanceInput) (string, error)
+	CreatePlan(ctx context.Context, input NewPlanInput) (string, error)
 	CreateTransaction(ctx context.Context, input NewTransactionInput) (string, error)
 	DeleteTransaction(ctx context.Context, input DeleteTransactionInput) (bool, error)
 	DeleteRecurringTransaction(ctx context.Context, input DeleteRecurringTransactionInput) (bool, error)
@@ -100,6 +113,7 @@ type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	LoginEmail(ctx context.Context, email string, password string) (string, error)
 	ListBalances(ctx context.Context, input ListBalancesInput) ([]*models.Balance, error)
+	ListPlans(ctx context.Context) ([]*Plan, error)
 	ListTransactions(ctx context.Context, input ListTransactionsInput) ([]*models.ComputedTransaction, error)
 }
 
@@ -204,6 +218,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateBalance(childComplexity, args["input"].(NewBalanceInput)), true
 
+	case "Mutation.createPlan":
+		if e.complexity.Mutation.CreatePlan == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPlan_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePlan(childComplexity, args["input"].(NewPlanInput)), true
+
 	case "Mutation.createTransaction":
 		if e.complexity.Mutation.CreateTransaction == nil {
 			break
@@ -264,6 +290,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.EditTransaction(childComplexity, args["input"].(TransactionEditInput)), true
 
+	case "Plan.fromAccount":
+		if e.complexity.Plan.FromAccount == nil {
+			break
+		}
+
+		return e.complexity.Plan.FromAccount(childComplexity), true
+
+	case "Plan.id":
+		if e.complexity.Plan.ID == nil {
+			break
+		}
+
+		return e.complexity.Plan.ID(childComplexity), true
+
+	case "Plan.name":
+		if e.complexity.Plan.Name == nil {
+			break
+		}
+
+		return e.complexity.Plan.Name(childComplexity), true
+
+	case "Plan.recurrency":
+		if e.complexity.Plan.Recurrency == nil {
+			break
+		}
+
+		return e.complexity.Plan.Recurrency(childComplexity), true
+
+	case "Plan.startDate":
+		if e.complexity.Plan.StartDate == nil {
+			break
+		}
+
+		return e.complexity.Plan.StartDate(childComplexity), true
+
+	case "Plan.toAccount":
+		if e.complexity.Plan.ToAccount == nil {
+			break
+		}
+
+		return e.complexity.Plan.ToAccount(childComplexity), true
+
+	case "Plan.totalAmount":
+		if e.complexity.Plan.TotalAmount == nil {
+			break
+		}
+
+		return e.complexity.Plan.TotalAmount(childComplexity), true
+
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
 			break
@@ -282,6 +357,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.ListBalances(childComplexity, args["input"].(ListBalancesInput)), true
+
+	case "Query.listPlans":
+		if e.complexity.Query.ListPlans == nil {
+			break
+		}
+
+		return e.complexity.Query.ListPlans(childComplexity), true
 
 	case "Query.listTransactions":
 		if e.complexity.Query.ListTransactions == nil {
@@ -356,6 +438,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputListBalancesInput,
 		ec.unmarshalInputListTransactionsInput,
 		ec.unmarshalInputNewBalanceInput,
+		ec.unmarshalInputNewPlanInput,
 		ec.unmarshalInputNewTransactionInput,
 		ec.unmarshalInputTransactionEditInput,
 	)
@@ -509,6 +592,33 @@ type Query {
 
 type Mutation
 `, BuiltIn: false},
+	{Name: "../plans.graphqls", Input: `type Plan {
+  id: ID!
+  name: String!
+  toAccount: String!
+  fromAccount: String
+  startDate: String!
+  recurrency: String!
+  totalAmount: Float!
+}
+
+input NewPlanInput {
+  name: String!
+  toAccount: String!
+  fromAccount: String
+  startDate: String!
+  recurrency: String
+  totalAmount: Float!
+}
+
+extend type Query {
+  listPlans: [Plan!]! @auth(requires: authenticated)
+}
+
+extend type Mutation {
+  createPlan(input: NewPlanInput!): ID! @auth(requires: authenticated)
+}
+`, BuiltIn: false},
 	{Name: "../transactions.graphqls", Input: `enum Status {
   DONE
   TODO
@@ -621,6 +731,21 @@ func (ec *executionContext) field_Mutation_createBalance_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewBalanceInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewBalanceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createPlan_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 NewPlanInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewPlanInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewPlanInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1414,6 +1539,85 @@ func (ec *executionContext) fieldContext_Mutation_deleteBalance(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createPlan(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createPlan(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreatePlan(rctx, fc.Args["input"].(NewPlanInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createPlan(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createPlan_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createTransaction(ctx, field)
 	if err != nil {
@@ -1730,6 +1934,311 @@ func (ec *executionContext) fieldContext_Mutation_editTransaction(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Plan_id(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_name(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_toAccount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_toAccount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ToAccount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_toAccount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_fromAccount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_fromAccount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FromAccount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_fromAccount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_startDate(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_startDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_recurrency(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_recurrency(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Recurrency, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_recurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Plan_totalAmount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Plan_totalAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Plan_totalAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Plan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_health(ctx, field)
 	if err != nil {
@@ -1912,6 +2421,90 @@ func (ec *executionContext) fieldContext_Query_listBalances(ctx context.Context,
 	if fc.Args, err = ec.field_Query_listBalances_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_listPlans(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_listPlans(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().ListPlans(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			requires, err := ec.unmarshalORole2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐRole(ctx, "authenticated")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, requires)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*Plan); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*cashflow/api/graph/generated.Plan`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Plan)
+	fc.Result = res
+	return ec.marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlanᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_listPlans(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Plan_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Plan_name(ctx, field)
+			case "toAccount":
+				return ec.fieldContext_Plan_toAccount(ctx, field)
+			case "fromAccount":
+				return ec.fieldContext_Plan_fromAccount(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Plan_startDate(ctx, field)
+			case "recurrency":
+				return ec.fieldContext_Plan_recurrency(ctx, field)
+			case "totalAmount":
+				return ec.fieldContext_Plan_totalAmount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Plan", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -4362,6 +4955,68 @@ func (ec *executionContext) unmarshalInputNewBalanceInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPlanInput(ctx context.Context, obj interface{}) (NewPlanInput, error) {
+	var it NewPlanInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "toAccount", "fromAccount", "startDate", "recurrency", "totalAmount"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "toAccount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toAccount"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToAccount = data
+		case "fromAccount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromAccount"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FromAccount = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "recurrency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recurrency"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recurrency = data
+		case "totalAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalAmount"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TotalAmount = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewTransactionInput(ctx context.Context, obj interface{}) (NewTransactionInput, error) {
 	var it NewTransactionInput
 	asMap := map[string]interface{}{}
@@ -4642,6 +5297,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createPlan":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createPlan(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createTransaction":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createTransaction(ctx, field)
@@ -4667,6 +5329,72 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_editTransaction(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var planImplementors = []string{"Plan"}
+
+func (ec *executionContext) _Plan(ctx context.Context, sel ast.SelectionSet, obj *Plan) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, planImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Plan")
+		case "id":
+			out.Values[i] = ec._Plan_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Plan_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "toAccount":
+			out.Values[i] = ec._Plan_toAccount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fromAccount":
+			out.Values[i] = ec._Plan_fromAccount(ctx, field, obj)
+		case "startDate":
+			out.Values[i] = ec._Plan_startDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recurrency":
+			out.Values[i] = ec._Plan_recurrency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalAmount":
+			out.Values[i] = ec._Plan_totalAmount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4766,6 +5494,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_listBalances(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "listPlans":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_listPlans(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -5400,9 +6150,68 @@ func (ec *executionContext) unmarshalNNewBalanceInput2cashflowᚋapiᚋgraphᚋg
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNNewPlanInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewPlanInput(ctx context.Context, v interface{}) (NewPlanInput, error) {
+	res, err := ec.unmarshalInputNewPlanInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNNewTransactionInput2cashflowᚋapiᚋgraphᚋgeneratedᚐNewTransactionInput(ctx context.Context, v interface{}) (NewTransactionInput, error) {
 	res, err := ec.unmarshalInputNewTransactionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*Plan) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPlan2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlan(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPlan2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlan(ctx context.Context, sel ast.SelectionSet, v *Plan) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Plan(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNStatus2cashflowᚋmodelsᚐStatus(ctx context.Context, v interface{}) (models.Status, error) {

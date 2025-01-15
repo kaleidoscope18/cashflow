@@ -1,0 +1,26 @@
+type Plan {
+  id: ID!
+  name: String!
+  toAccount: String!
+  fromAccount: String
+  startDate: String!
+  recurrency: String!
+  totalAmount: Float!
+}
+
+input NewPlanInput {
+  name: String!
+  toAccount: String!
+  fromAccount: String
+  startDate: String!
+  recurrency: String
+  totalAmount: Float!
+}
+
+extend type Query {
+  listPlans: [Plan!]! @auth(requires: authenticated)
+}
+
+extend type Mutation {
+  createPlan(input: NewPlanInput!): ID! @auth(requires: authenticated)
+}

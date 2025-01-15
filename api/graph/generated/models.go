@@ -46,12 +46,31 @@ type NewBalanceInput struct {
 	Account string  `json:"account"`
 }
 
+type NewPlanInput struct {
+	Name        string  `json:"name"`
+	ToAccount   string  `json:"toAccount"`
+	FromAccount *string `json:"fromAccount,omitempty"`
+	StartDate   string  `json:"startDate"`
+	Recurrency  *string `json:"recurrency,omitempty"`
+	TotalAmount float64 `json:"totalAmount"`
+}
+
 type NewTransactionInput struct {
 	Date        string  `json:"date"`
 	Amount      float64 `json:"amount"`
 	Recurrency  *string `json:"recurrency,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Account     string  `json:"account"`
+}
+
+type Plan struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	ToAccount   string  `json:"toAccount"`
+	FromAccount *string `json:"fromAccount,omitempty"`
+	StartDate   string  `json:"startDate"`
+	Recurrency  string  `json:"recurrency"`
+	TotalAmount float64 `json:"totalAmount"`
 }
 
 type Query struct {
