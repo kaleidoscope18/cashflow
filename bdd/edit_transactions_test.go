@@ -389,16 +389,4 @@ func TestEditTransactions(t *testing.T) {
 			t.Fatalf("failed to cleanup transactions with ids %v: %v", uniqueIds, err)
 		}
 	})
-
-	// TODO: Fix this test
-	t.Run("Editing a recurring transaction only on date but no date is provided", func(t *testing.T) {
-		t.Parallel()
-
-		// When I add a recurring transaction to it on "2022-09-20" until "2023-10-31".
-
-		// And I edit the transaction info on date only without a date.
-
-		// Then I should have an expected date error.
-
-	})
 }

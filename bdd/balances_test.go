@@ -115,6 +115,20 @@ func TestBalances(t *testing.T) {
 		if balance.Date != today {
 			t.Fatalf("expected today's date (%s), got %s", today, balance.Date)
 		}
+
+		// and delete the balance
+		query = `
+		mutation { 
+			deleteBalance(input: {
+				date: "` + balance.Date + `"
+				account: "chequing"
+			})
+		}
+		`
+		err = utils.PostGraphQL(query, "deleteBalance", token, nil)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 	})
 
 	t.Run("Listing transactions with balances", func(t *testing.T) {
