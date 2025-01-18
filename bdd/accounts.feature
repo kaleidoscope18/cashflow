@@ -1,5 +1,5 @@
 Feature: Accounts
-    As a customer
+    As an authenticated customer
             I need to be able to manage my accounts
 
     Scenario: Filtering transactions from specific account
