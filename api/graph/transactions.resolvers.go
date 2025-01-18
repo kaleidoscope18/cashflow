@@ -30,7 +30,7 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 		recurrency = *input.Recurrency
 	}
 	date := utils.ParseDateToTime(input.Date)
-	id, err := (*r.TransactionService).WriteTransaction(ctx, date, input.Amount, description, recurrency, input.Account)
+	id, err := (*r.TransactionService).CreateTransaction(ctx, date, input.Amount, description, recurrency, input.Account)
 	if err != nil {
 		return "", err
 	}

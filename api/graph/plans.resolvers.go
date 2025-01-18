@@ -6,6 +6,7 @@ package graph
 
 import (
 	"cashflow/api/graph/generated"
+	"cashflow/models"
 	"context"
 	"fmt"
 )
@@ -16,6 +17,6 @@ func (r *mutationResolver) CreatePlan(ctx context.Context, input generated.NewPl
 }
 
 // ListPlans is the resolver for the listPlans field.
-func (r *queryResolver) ListPlans(ctx context.Context) ([]*generated.Plan, error) {
+func (r *queryResolver) ListPlans(ctx context.Context) ([]*models.Plan, error) {
 	panic(fmt.Errorf("not implemented: ListPlans - listPlans"))
 }

@@ -12,6 +12,7 @@ type App struct {
 	TransactionService *TransactionService
 	BalanceService     *BalanceService
 	AuthService        *AuthService
+	PlanService        *PlanService
 }
 
 type StorageStrategy string
@@ -24,6 +25,7 @@ type Repository interface {
 	AuthRepository
 	BalanceRepository
 	TransactionRepository
+	PlanRepository
 	Init() error
 	Close() error
 }

@@ -37,7 +37,7 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return results, err
 }
 
-func (s *transactionService) WriteTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, account string) (string, error) {
+func (s *transactionService) CreateTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, account string) (string, error) {
 	id, err := (*s.repository).CreateTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        date.Format(utils.DateLayout),

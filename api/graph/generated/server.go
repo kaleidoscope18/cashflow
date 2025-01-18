@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 
 	Plan struct {
 		FromAccount func(childComplexity int) int
-		ID          func(childComplexity int) int
+		Id          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Recurrency  func(childComplexity int) int
 		StartDate   func(childComplexity int) int
@@ -113,7 +113,7 @@ type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	LoginEmail(ctx context.Context, email string, password string) (string, error)
 	ListBalances(ctx context.Context, input ListBalancesInput) ([]*models.Balance, error)
-	ListPlans(ctx context.Context) ([]*Plan, error)
+	ListPlans(ctx context.Context) ([]*models.Plan, error)
 	ListTransactions(ctx context.Context, input ListTransactionsInput) ([]*models.ComputedTransaction, error)
 }
 
@@ -298,11 +298,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Plan.FromAccount(childComplexity), true
 
 	case "Plan.id":
-		if e.complexity.Plan.ID == nil {
+		if e.complexity.Plan.Id == nil {
 			break
 		}
 
-		return e.complexity.Plan.ID(childComplexity), true
+		return e.complexity.Plan.Id(childComplexity), true
 
 	case "Plan.name":
 		if e.complexity.Plan.Name == nil {
@@ -596,7 +596,7 @@ type Mutation
   id: ID!
   name: String!
   toAccount: String!
-  fromAccount: String
+  fromAccount: String!
   startDate: String!
   recurrency: String!
   totalAmount: Float!
@@ -1934,7 +1934,7 @@ func (ec *executionContext) fieldContext_Mutation_editTransaction(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_id(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_id(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1948,7 +1948,7 @@ func (ec *executionContext) _Plan_id(ctx context.Context, field graphql.Collecte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.Id, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1978,7 +1978,7 @@ func (ec *executionContext) fieldContext_Plan_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_name(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_name(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2022,7 +2022,7 @@ func (ec *executionContext) fieldContext_Plan_name(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_toAccount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_toAccount(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_toAccount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2066,7 +2066,7 @@ func (ec *executionContext) fieldContext_Plan_toAccount(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_fromAccount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_fromAccount(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_fromAccount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2087,11 +2087,14 @@ func (ec *executionContext) _Plan_fromAccount(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Plan_fromAccount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2107,7 +2110,7 @@ func (ec *executionContext) fieldContext_Plan_fromAccount(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_startDate(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_startDate(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_startDate(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2151,7 +2154,7 @@ func (ec *executionContext) fieldContext_Plan_startDate(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_recurrency(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_recurrency(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_recurrency(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2195,7 +2198,7 @@ func (ec *executionContext) fieldContext_Plan_recurrency(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Plan_totalAmount(ctx context.Context, field graphql.CollectedField, obj *Plan) (ret graphql.Marshaler) {
+func (ec *executionContext) _Plan_totalAmount(ctx context.Context, field graphql.CollectedField, obj *models.Plan) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Plan_totalAmount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2460,10 +2463,10 @@ func (ec *executionContext) _Query_listPlans(ctx context.Context, field graphql.
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]*Plan); ok {
+		if data, ok := tmp.([]*models.Plan); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*cashflow/api/graph/generated.Plan`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*cashflow/models.Plan`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2475,9 +2478,9 @@ func (ec *executionContext) _Query_listPlans(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Plan)
+	res := resTmp.([]*models.Plan)
 	fc.Result = res
-	return ec.marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlanᚄ(ctx, field.Selections, res)
+	return ec.marshalNPlan2ᚕᚖcashflowᚋmodelsᚐPlanᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_listPlans(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5357,7 +5360,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var planImplementors = []string{"Plan"}
 
-func (ec *executionContext) _Plan(ctx context.Context, sel ast.SelectionSet, obj *Plan) graphql.Marshaler {
+func (ec *executionContext) _Plan(ctx context.Context, sel ast.SelectionSet, obj *models.Plan) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, planImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5383,6 +5386,9 @@ func (ec *executionContext) _Plan(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "fromAccount":
 			out.Values[i] = ec._Plan_fromAccount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "startDate":
 			out.Values[i] = ec._Plan_startDate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6160,7 +6166,7 @@ func (ec *executionContext) unmarshalNNewTransactionInput2cashflowᚋapiᚋgraph
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*Plan) graphql.Marshaler {
+func (ec *executionContext) marshalNPlan2ᚕᚖcashflowᚋmodelsᚐPlanᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Plan) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6184,7 +6190,7 @@ func (ec *executionContext) marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgenerate
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPlan2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlan(ctx, sel, v[i])
+			ret[i] = ec.marshalNPlan2ᚖcashflowᚋmodelsᚐPlan(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6204,7 +6210,7 @@ func (ec *executionContext) marshalNPlan2ᚕᚖcashflowᚋapiᚋgraphᚋgenerate
 	return ret
 }
 
-func (ec *executionContext) marshalNPlan2ᚖcashflowᚋapiᚋgraphᚋgeneratedᚐPlan(ctx context.Context, sel ast.SelectionSet, v *Plan) graphql.Marshaler {
+func (ec *executionContext) marshalNPlan2ᚖcashflowᚋmodelsᚐPlan(ctx context.Context, sel ast.SelectionSet, v *models.Plan) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

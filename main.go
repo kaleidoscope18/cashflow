@@ -27,12 +27,14 @@ func main() {
 	repo := repository.Get()
 	bs := domain.NewBalanceService(repo)
 	ts := domain.NewTransactionService(repo, &bs)
+	ps := domain.NewPlanService(repo)
 	as := domain.NewAuthService(repo)
 
 	app := &models.App{
 		TransactionService: &ts,
 		BalanceService:     &bs,
 		AuthService:        &as,
+		PlanService:        &ps,
 	}
 
 	defer api.Run(app)

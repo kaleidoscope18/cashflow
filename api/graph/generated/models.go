@@ -63,16 +63,6 @@ type NewTransactionInput struct {
 	Account     string  `json:"account"`
 }
 
-type Plan struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	ToAccount   string  `json:"toAccount"`
-	FromAccount *string `json:"fromAccount,omitempty"`
-	StartDate   string  `json:"startDate"`
-	Recurrency  string  `json:"recurrency"`
-	TotalAmount float64 `json:"totalAmount"`
-}
-
 type Query struct {
 }
 

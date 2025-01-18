@@ -2,7 +2,7 @@ type Plan {
   id: ID!
   name: String!
   toAccount: String!
-  fromAccount: String
+  fromAccount: String!
   startDate: String!
   recurrency: String!
   totalAmount: Float!
@@ -11,10 +11,10 @@ type Plan {
 input NewPlanInput {
   name: String!
   toAccount: String!
-  fromAccount: String
   startDate: String!
-  recurrency: String
   totalAmount: Float!
+  fromAccount: String
+  recurrency: String
 }
 
 extend type Query {
