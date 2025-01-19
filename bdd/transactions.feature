@@ -19,3 +19,13 @@ Feature: Transactions
             And I set the balance on 2025-01-19 to 318$
             And I set the balance on 2025-04-16 to 1$
         Then I should see the transactions correctly
+
+    Scenario: Automatically reordering manual transactions
+        Given I created a manual withdrawal on 2025-01-01
+            And I created another smaller manual withdrawal on the same day
+            And I created an automatic transaction on the same day
+            And I created another smaller automatic transaction on the same day
+            And I created a manual deposit on the same day
+        When I list the transactions for this plan
+        Then I should see the transactions correctly ordered
+

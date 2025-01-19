@@ -30,7 +30,7 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, err := repo.db.Query(ctx, "SELECT amount, to_char(date, 'YYYY-MM-DD') as date, account FROM cashflow.balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId))
+	rows, err := repo.db.Query(ctx, "SELECT amount, to_char(date, 'YYYY-MM-DD') as date, account FROM cashflow.balances WHERE date >= $1 AND date <= $2 AND author = $3 AND account = $4 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId), account)
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}

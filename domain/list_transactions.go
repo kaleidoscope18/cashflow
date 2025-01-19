@@ -18,7 +18,17 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 
 	enrichedTransactions := make([]models.ComputedTransaction, len(transactionsToEnrich))
 	sort.Slice(transactionsToEnrich, func(i, j int) bool {
-		return utils.ParseDateToTime(transactionsToEnrich[i].Date).Before(utils.ParseDateToTime(transactionsToEnrich[j].Date))
+		dI := utils.ParseDateToTime(transactionsToEnrich[i].Date)
+		dJ := utils.ParseDateToTime(transactionsToEnrich[j].Date)
+
+		if dI.Equal(dJ) {
+			if transactionsToEnrich[i].IsManual == transactionsToEnrich[j].IsManual {
+				return transactionsToEnrich[i].Amount > transactionsToEnrich[j].Amount
+			}
+			return !transactionsToEnrich[i].IsManual
+		}
+
+		return dI.Before(dJ)
 	})
 	today := utils.GetTodayDate()
 

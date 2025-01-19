@@ -473,4 +473,137 @@ func TestTransactions(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Automatically reordering transactions", func(t *testing.T) {
+		// Given I created a manual withdrawal on 2025-01-01.
+		query := `
+			mutation {
+				createTransaction(input: {
+					date: "2025-01-01"
+					amount: -1000
+					description: "manual-withdrawal"
+					account: "chequing"
+					isManual: true
+				})
+			}
+		`
+		var id1 string
+		err = utils.PostGraphQL(query, "createTransaction", token, &id1)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// And I created another smaller manual withdrawal on the same day.
+		query = `
+			mutation {
+				createTransaction(input: {
+					date: "2025-01-01"
+					amount: -500
+					description: "manual-withdrawal-2"
+					account: "chequing"
+					isManual: true
+				})
+			}
+		`
+		var id2 string
+		err = utils.PostGraphQL(query, "createTransaction", token, &id2)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// And I created an automatic transaction on the same day.
+		query = `
+			mutation {
+				createTransaction(input: {
+					date: "2025-01-01"
+					amount: 1000
+					description: "automatic-transaction"
+					account: "chequing"
+				})
+			}
+		`
+		var id3 string
+		err = utils.PostGraphQL(query, "createTransaction", token, &id3)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// And I created another smaller automatic transaction on the same day.
+		query = `
+			mutation {
+				createTransaction(input: {
+					date: "2025-01-01"
+					amount: 500
+					description: "automatic-transaction-2"
+					account: "chequing"
+				})
+			}
+		`
+		var id4 string
+		err = utils.PostGraphQL(query, "createTransaction", token, &id4)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// And I created a manual deposit on the same day.
+		query = `
+			mutation {
+				createTransaction(input: {
+					date: "2025-01-01"
+					amount: 100
+					description: "manual-deposit"
+					account: "chequing"
+					isManual: true
+				})
+			}
+		`
+		var id5 string
+		err = utils.PostGraphQL(query, "createTransaction", token, &id5)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		defer utils.CleanupTransactions([]string{id1, id2, id3, id4, id5}, token)
+
+		// Then I should see the transactions correctly ordered.
+		query = `
+			query {
+				listTransactions(input: {
+					account: "chequing"
+					from: "2025-01-01"
+					to: "2025-01-02"
+				}) {
+					id
+					date
+					amount
+					account
+					balance
+					description
+				}
+			}
+		`
+		var result []models.ComputedTransaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &result)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		expected := []models.ComputedTransaction{
+			{Transaction: &models.Transaction{Amount: 1000, Date: "2025-01-01", Description: "automatic-transaction", Account: "chequing"}, Balance: 1000},
+			{Transaction: &models.Transaction{Amount: 500, Date: "2025-01-01", Description: "automatic-transaction-2", Account: "chequing"}, Balance: 1500},
+			{Transaction: &models.Transaction{Amount: 100, Date: "2025-01-01", Description: "manual-deposit", Account: "chequing"}, Balance: 1600},
+			{Transaction: &models.Transaction{Amount: -500, Date: "2025-01-01", Description: "manual-withdrawal-2", Account: "chequing"}, Balance: 1100},
+			{Transaction: &models.Transaction{Amount: -1000, Date: "2025-01-01", Description: "manual-withdrawal", Account: "chequing"}, Balance: 100},
+		}
+
+		if len(result) != len(expected) {
+			t.Fatalf("expected %d transactions, got %d", len(expected), len(result))
+		}
+
+		for i, exp := range expected {
+			got := result[i]
+			if got.Balance != exp.Balance {
+				t.Errorf("transaction %d: expected balance %f, got %f", i, exp.Balance, got.Balance)
+			}
+		}
+	})
 }
