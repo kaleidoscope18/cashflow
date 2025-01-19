@@ -23,12 +23,12 @@ func TestAccounts(t *testing.T) {
 	t.Run("Filtering transactions from specific account", func(t *testing.T) {
 		t.Parallel()
 
-		// When I add a transaction on "2022-02-21" to savings account.
+		// When I add a transaction on "2015-02-21" to savings account.
 		query := `
 		mutation { 
 			createTransaction(input: {
 				amount: 100,
-				date: "2022-02-21",
+				date: "2015-02-21",
 				account: "savings"
 				description: "savings-transaction-test"
 			})
@@ -40,12 +40,12 @@ func TestAccounts(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		// When I add a transaction on "2022-02-22" to chequing account.
+		// When I add a transaction on "2015-02-22" to chequing account.
 		query = `
 		mutation { 
 			createTransaction(input: {
 				amount: 100,
-				date: "2022-02-22",
+				date: "2015-02-22",
 				account: "chequing"
 				description: "chequing-transaction-test"
 			})
@@ -62,8 +62,8 @@ func TestAccounts(t *testing.T) {
 		query {
 			listTransactions(input: {
 				account: "savings"
-				from: "2022-02-20"
-				to: "2022-02-23"
+				from: "2015-02-20"
+				to: "2015-02-23"
 			}) {
 				id
 			}

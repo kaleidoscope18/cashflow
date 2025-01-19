@@ -21,5 +21,9 @@ func (r *supabaseRepository) ListAccounts(ctx context.Context) ([]string, error)
 		rows.Scan(&account)
 		accounts = append(accounts, account)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("error when iterating over rows: %v", err)
+		return nil, err
+	}
 	return accounts, nil
 }

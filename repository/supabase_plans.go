@@ -56,8 +56,6 @@ func (r *supabaseRepository) CreatePlan(ctx context.Context, plan models.Plan, t
 
 func (r *supabaseRepository) ReadPlans(ctx context.Context) ([]models.Plan, error) {
 	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
 	rows, err := r.db.Query(ctx,
 		"SELECT id, name, to_account, from_account, "+
 			"start_date, recurrency, total_amount, "+
@@ -66,11 +64,13 @@ func (r *supabaseRepository) ReadPlans(ctx context.Context) ([]models.Plan, erro
 			"WHERE author = $1 "+
 			"ORDER BY start_date ASC",
 		utils.GetContextValue(ctx, models.UserId))
+	r.mutex.Unlock()
 
 	if err != nil {
 		log.Printf("error when querying SELECT on cashflow.plans: %v", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	type plan struct {
 		Id                  string
@@ -115,6 +115,7 @@ func (r *supabaseRepository) ReadPlans(ctx context.Context) ([]models.Plan, erro
 
 	return convertedPlans, nil
 }
+
 func (r *supabaseRepository) DeletePlan(ctx context.Context, id string) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

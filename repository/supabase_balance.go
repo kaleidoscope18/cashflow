@@ -31,10 +31,10 @@ func (repo *supabaseRepository) ListBalances(ctx context.Context, from time.Time
 	defer repo.mutex.RUnlock()
 
 	rows, err := repo.db.Query(ctx, "SELECT amount, to_char(date, 'YYYY-MM-DD') as date, account FROM cashflow.balances WHERE date >= $1 AND date <= $2 AND author = $3 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId))
-
 	if err != nil {
 		return make([]models.Balance, 0), err
 	}
+	defer rows.Close()
 
 	var balances []models.Balance
 	balances, err = pgx.CollectRows(rows, pgx.RowToStructByName[models.Balance])

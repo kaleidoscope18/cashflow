@@ -37,5 +37,5 @@ func main() {
 		PlanService:        &ps,
 	}
 
-	defer api.Run(app)
+	api.Run(app)
 }

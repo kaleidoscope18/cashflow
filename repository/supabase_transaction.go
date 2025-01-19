@@ -16,22 +16,15 @@ func (repo *supabaseRepository) ReadTransactionById(ctx context.Context, id stri
 	defer repo.mutex.RUnlock()
 
 	author := utils.GetContextValue(ctx, models.UserId)
-	row, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency, account FROM cashflow.transactions WHERE id = $1 AND author = $2 AND account = $3", id, author, account)
-
-	if err != nil {
-		log.Printf("error querying transaction: %v", err)
-		return models.Transaction{}, fmt.Errorf("error querying transaction: %w", err)
-	}
-
-	if !row.Next() {
-		return models.Transaction{}, fmt.Errorf("transaction not found")
-	}
-
+	row := repo.db.QueryRow(ctx, "SELECT id, description, amount, date::text, recurrency, account FROM cashflow.transactions WHERE id = $1 AND author = $2 AND account = $3", id, author, account)
 	var transaction models.Transaction
-	err = row.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date, &transaction.Recurrency, &transaction.Account)
+	err := row.Scan(&transaction.Id, &transaction.Description, &transaction.Amount, &transaction.Date, &transaction.Recurrency, &transaction.Account)
 	if err != nil {
-		log.Printf("error scanning transaction: %v", err)
-		return models.Transaction{}, fmt.Errorf("error scanning transaction: %w", err)
+		if err == pgx.ErrNoRows {
+			return models.Transaction{}, fmt.Errorf("transaction not found")
+		}
+		log.Printf("error SELECT on cashflow.transactions: %v", err)
+		return models.Transaction{}, err
 	}
 
 	transaction.Date = utils.ParseDate(transaction.Date)
@@ -44,13 +37,14 @@ func (repo *supabaseRepository) ReadTransactions(ctx context.Context, from time.
 
 	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency, account FROM cashflow.transactions WHERE date >= $1 AND date <= $2 AND author = $3 AND account = $4 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId), account)
 	if err != nil {
-		log.Printf("error listing transactions: %v", err)
+		log.Printf("error SELECT on cashflow.transactions: %v", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	transactions, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Transaction])
-
 	if err != nil {
+		log.Printf("error collecting rows: %v", err)
 		return nil, err
 	}
 
@@ -65,8 +59,8 @@ func (repo *supabaseRepository) CreateTransaction(ctx context.Context, transacti
 	var id string
 	err := row.Scan(&id)
 	if err != nil {
-		log.Printf("error inserting transaction: %v", err)
-		return "", fmt.Errorf("error inserting transaction: %w", err)
+		log.Printf("error INSERT on cashflow.transactions: %v", err)
+		return "", err
 	}
 
 	return id, nil
@@ -79,7 +73,7 @@ func (repo *supabaseRepository) DeleteTransaction(ctx context.Context, id string
 	_, err := repo.db.Exec(ctx, "DELETE FROM cashflow.transactions WHERE id = $1 AND author = $2 AND account = $3", id, utils.GetContextValue(ctx, models.UserId), account)
 
 	if err != nil {
-		log.Printf("error deleting transaction: %v", err)
+		log.Printf("error DELETE on cashflow.transactions: %v", err)
 		return err
 	}
 
@@ -93,7 +87,7 @@ func (repo *supabaseRepository) UpdateTransaction(ctx context.Context, transacti
 	_, err := repo.db.Exec(ctx, "UPDATE cashflow.transactions SET description = $1, amount = $2, recurrency = $3, date = $4 WHERE id = $5 AND author = $6 AND account = $7", transaction.Description, transaction.Amount, transaction.Recurrency, transaction.Date, transaction.Id, utils.GetContextValue(ctx, models.UserId), transaction.Account)
 
 	if err != nil {
-		log.Printf("error editing transaction: %v", err)
+		log.Printf("error UPDATE on cashflow.transactions: %v", err)
 		return err
 	}
 
