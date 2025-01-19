@@ -7,8 +7,6 @@ import (
 )
 
 func TestAccounts(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As an authenticated customer
 		        I need to be able to manage my accounts.
@@ -21,8 +19,6 @@ func TestAccounts(t *testing.T) {
 	}
 
 	t.Run("Filtering transactions from specific account", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a transaction on "2015-02-21" to savings account.
 		query := `
 		mutation { 

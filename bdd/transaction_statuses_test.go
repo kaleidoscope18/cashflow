@@ -8,8 +8,6 @@ import (
 )
 
 func TestTransactionsStatuses(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As a customer
 		        I need to be able to see the statuses of my transactions.
@@ -22,8 +20,6 @@ func TestTransactionsStatuses(t *testing.T) {
 	}
 
 	t.Run("Getting transactions statuses", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I add a transaction today and another later.
 		query := `
 			mutation {

@@ -7,8 +7,6 @@ import (
 )
 
 func TestPlans(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As an authenticated customer
 		        I need to be able to create financial plans.
@@ -21,8 +19,6 @@ func TestPlans(t *testing.T) {
 	}
 
 	t.Run("List plans", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I created plans.
 		query := `
 		mutation {
@@ -98,8 +94,6 @@ func TestPlans(t *testing.T) {
 	})
 
 	t.Run("Create a plan between existing accounts", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I named my plan "ping-pong table".
 		// And I need a total amount of 934.34 dollars.
 		// And I start this plan on 2076-01-01.
@@ -213,8 +207,6 @@ func TestPlans(t *testing.T) {
 	})
 
 	t.Run("Create a plan to an external account", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I named my plan "popcorn maker".
 		// And I need a total amount of 300 dollars.
 		// And I start this plan on 2084-01-01.
@@ -363,8 +355,6 @@ func TestPlans(t *testing.T) {
 	})
 
 	t.Run("Create a plan from an external account", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I named my plan "smoothie machine".
 		// And I need a total amount of 2 dollars.
 		// And I start this plan on 2081-01-01.
@@ -445,8 +435,6 @@ func TestPlans(t *testing.T) {
 	})
 
 	t.Run("Delete a plan", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I created a plan.
 		query := `
 		mutation {
@@ -521,8 +509,6 @@ func TestPlans(t *testing.T) {
 	})
 
 	t.Run("Create a plan with both external accounts", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I create a plan with both external accounts.
 		query := `
 		mutation {

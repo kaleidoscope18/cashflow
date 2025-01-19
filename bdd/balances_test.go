@@ -8,8 +8,6 @@ import (
 )
 
 func TestBalances(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As a customer
 		        I need to be able to set an end-of-day balance for any given day
@@ -23,8 +21,6 @@ func TestBalances(t *testing.T) {
 	}
 
 	t.Run("Adding a balance", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a balance to chequing account.
 		query := `
 		mutation { 
@@ -76,8 +72,6 @@ func TestBalances(t *testing.T) {
 	})
 
 	t.Run("Adding a balance without a date", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a balance without a date to chequing account.
 		query := `
 		mutation { 
@@ -106,8 +100,6 @@ func TestBalances(t *testing.T) {
 	})
 
 	t.Run("Listing transactions with balances", func(t *testing.T) {
-		t.Parallel()
-
 		// Given there is a chequing account with a transaction.
 		query := `
 		mutation { 

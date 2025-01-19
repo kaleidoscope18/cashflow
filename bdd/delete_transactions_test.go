@@ -8,8 +8,6 @@ import (
 )
 
 func TestDeleteTransactions(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As a customer
 		        I need to be able to delete my transactions.
@@ -22,8 +20,6 @@ func TestDeleteTransactions(t *testing.T) {
 	}
 
 	t.Run("Deleting a non-recurring transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// Given there is a chequing account with transactions.
 		query := `
 			mutation {
@@ -84,8 +80,6 @@ func TestDeleteTransactions(t *testing.T) {
 	})
 
 	t.Run("Deleting a recurring transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "2030-09-20" until "2031-09-31".
 		query := `
 			mutation {

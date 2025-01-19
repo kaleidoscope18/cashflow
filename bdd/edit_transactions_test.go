@@ -10,8 +10,6 @@ import (
 )
 
 func TestEditTransactions(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As a customer
 		I need to be able to edit my transactions.
@@ -24,8 +22,6 @@ func TestEditTransactions(t *testing.T) {
 	}
 
 	t.Run("Editing a transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a transaction.
 		query := `
 		mutation { 
@@ -94,8 +90,6 @@ func TestEditTransactions(t *testing.T) {
 	})
 
 	t.Run("Editing a recurring transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction between "1999-09-20" until "2000-09-30".
 		query := `
 		mutation {
@@ -168,8 +162,6 @@ func TestEditTransactions(t *testing.T) {
 	})
 
 	t.Run("Editing a recurring transaction from given date", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "1986-09-20" until "1987-10-31".
 		query := `
 		mutation {
@@ -256,8 +248,6 @@ func TestEditTransactions(t *testing.T) {
 	})
 
 	t.Run("Editing a recurring transaction from given date but no date is provided", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "1980-09-20" until "1981-10-31".
 		query := `
 		mutation {
@@ -303,10 +293,7 @@ func TestEditTransactions(t *testing.T) {
 		}
 	})
 
-	// TODO: Fix this test
 	t.Run("Editing a recurring transaction only on date", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "1970-09-20" until "1971-10-31".
 		query := `
 		mutation {

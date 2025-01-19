@@ -10,8 +10,6 @@ import (
 )
 
 func TestCreateTransactions(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As an authenticated customer
 		        I need to be able to create my transactions.
@@ -24,8 +22,6 @@ func TestCreateTransactions(t *testing.T) {
 	}
 
 	t.Run("Creating a transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a transaction.
 		query := `
 			mutation {
@@ -77,8 +73,6 @@ func TestCreateTransactions(t *testing.T) {
 	})
 
 	t.Run("Creating a recurring transaction", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "1940-09-20" until "1941-10-31".
 		query := `
 			mutation {
@@ -321,8 +315,6 @@ func TestCreateTransactions(t *testing.T) {
 	})
 
 	t.Run("Creating a mix of recurring and non recurring transactions", func(t *testing.T) {
-		t.Parallel()
-
 		// When I add a recurring transaction to it on "2020-09-20" until "2021-10-31".
 		query := `
 			mutation {

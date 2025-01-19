@@ -7,8 +7,6 @@ import (
 )
 
 func TestTransactions(t *testing.T) {
-	t.Parallel()
-
 	/*
 		As an authenticated customer
 		        I need to be able to list all my transactions.
@@ -21,8 +19,6 @@ func TestTransactions(t *testing.T) {
 	}
 
 	t.Run("List transactions", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I created a plan starting on 1111-01-11.
 		query := `
 		mutation {
@@ -177,8 +173,6 @@ func TestTransactions(t *testing.T) {
 	})
 
 	t.Run("Transactions with recurrency on weekdays only", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I created a recurring transaction on the 11th once a month on weekdays only.
 		// And I want transactions to be postponed to the next weekday if it falls on a weekend.
 		query := `
@@ -307,8 +301,6 @@ func TestTransactions(t *testing.T) {
 	})
 
 	t.Run("Transactions and balances together", func(t *testing.T) {
-		t.Parallel()
-
 		// Given I create a realistic budget starting on 2025-01-01.
 		query := `
 			mutation {
