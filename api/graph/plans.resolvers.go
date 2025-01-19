@@ -7,16 +7,46 @@ package graph
 import (
 	"cashflow/api/graph/generated"
 	"cashflow/models"
+	"cashflow/utils"
 	"context"
 	"fmt"
 )
 
 // CreatePlan is the resolver for the createPlan field.
 func (r *mutationResolver) CreatePlan(ctx context.Context, input generated.NewPlanInput) (string, error) {
-	panic(fmt.Errorf("not implemented: CreatePlan - createPlan"))
+	if input.Name == "" {
+		return "", fmt.Errorf("name is required")
+	}
+
+	if input.ToAccount == "" {
+		return "", fmt.Errorf("to account is required")
+	}
+
+	err := validateDate(&input.StartDate, true)
+	if err != nil {
+		return "", fmt.Errorf("invalid start date: %w", err)
+	}
+	date := utils.ParseDateToTime(input.StartDate)
+
+	var recurrency string
+	if input.Recurrency == nil {
+		recurrency = ""
+	} else {
+		err := validatePlanRecurrency(input.Recurrency)
+		if err != nil {
+			return "", fmt.Errorf("invalid recurrency: %w", err)
+		}
+		recurrency = *input.Recurrency
+	}
+
+	return (*r.PlanService).CreatePlan(ctx, input.Name, input.ToAccount, input.FromAccount, date.Format(utils.DateLayout), recurrency, input.TotalAmount)
 }
 
 // ListPlans is the resolver for the listPlans field.
 func (r *queryResolver) ListPlans(ctx context.Context) ([]*models.Plan, error) {
-	panic(fmt.Errorf("not implemented: ListPlans - listPlans"))
+	plans, err := (*r.PlanService).ListPlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return utils.ConvertStructToPointersArray(plans), nil
 }

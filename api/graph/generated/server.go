@@ -605,10 +605,10 @@ type Mutation
 input NewPlanInput {
   name: String!
   toAccount: String!
-  fromAccount: String
   startDate: String!
-  recurrency: String
   totalAmount: Float!
+  fromAccount: String
+  recurrency: String
 }
 
 extend type Query {
@@ -4965,7 +4965,7 @@ func (ec *executionContext) unmarshalInputNewPlanInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "toAccount", "fromAccount", "startDate", "recurrency", "totalAmount"}
+	fieldsInOrder := [...]string{"name", "toAccount", "startDate", "totalAmount", "fromAccount", "recurrency"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4986,13 +4986,6 @@ func (ec *executionContext) unmarshalInputNewPlanInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.ToAccount = data
-		case "fromAccount":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromAccount"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FromAccount = data
 		case "startDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -5000,13 +4993,6 @@ func (ec *executionContext) unmarshalInputNewPlanInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.StartDate = data
-		case "recurrency":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recurrency"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Recurrency = data
 		case "totalAmount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalAmount"))
 			data, err := ec.unmarshalNFloat2float64(ctx, v)
@@ -5014,6 +5000,20 @@ func (ec *executionContext) unmarshalInputNewPlanInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.TotalAmount = data
+		case "fromAccount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromAccount"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FromAccount = data
+		case "recurrency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recurrency"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recurrency = data
 		}
 	}
 

@@ -26,7 +26,7 @@ type TransactionService interface {
 type Transaction struct {
 	Id          string
 	Amount      float64
-	Date        string // TODO: change to time.Time
+	Date        string
 	Description string
 	Recurrency  string
 	Account     string

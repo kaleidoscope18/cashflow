@@ -3,7 +3,6 @@ package main
 import (
 	"cashflow/bdd/utils"
 	"cashflow/models"
-	cutils "cashflow/utils"
 	"testing"
 )
 
@@ -32,7 +31,7 @@ func TestPlans(t *testing.T) {
 				fromAccount: "chequing"
 				toAccount: "savings"
 				startDate: "2022-02-21"
-				recurrency: "FREQ=DAILY"
+				recurrency: "FREQ=DAILY;COUNT=2"
 				totalAmount: 100
 			})
 		}
@@ -80,7 +79,7 @@ func TestPlans(t *testing.T) {
 			t.Fatalf("Expected plan toAccount to be 'savings', got %s", plans[0].ToAccount)
 		}
 
-		if plans[0].StartDate.Format(cutils.DateLayout) != "2022-02-21" {
+		if plans[0].StartDate != "2022-02-21" {
 			t.Fatalf("Expected plan startDate to be '2022-02-21', got %s", plans[0].StartDate)
 		}
 
@@ -91,66 +90,118 @@ func TestPlans(t *testing.T) {
 		// cleanup
 	})
 
-	t.Run("Create a plan between accounts", func(t *testing.T) {
+	t.Run("Create a plan between existing accounts", func(t *testing.T) {
 		t.Parallel()
 
 		// Given I named my plan "ping-pong table".
-
 		// And I need a total amount of 934.34 dollars.
-
-		// And I start this plan on 2025-01-01.
-
+		// And I start this plan on 2076-01-01.
 		// And the money comes from my chequing account.
-
 		// And the money goes to my savings account.
-
-		// And I want to transfer money every 3 days.
-
+		// And I want to transfer money every 3 days, two times.
 		// When I create a plan.
+		query := `
+		mutation {
+			createPlan(input: {
+				name: "ping-pong table"
+				fromAccount: "chequing"
+				toAccount: "savings"
+				startDate: "2076-01-01"
+				recurrency: "FREQ=DAILY;INTERVAL=3;COUNT=2"
+				totalAmount: 934.34
+			})
+		}
+		`
+		var planId string
+		err = utils.PostGraphQL(query, "createPlan", token, &planId)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 
 		// Then I should be able to list the transactions for this plan.
+		query = `
+		query {
+			listTransactions(input: {
+				from: "2076-01-01"
+				to: "2076-01-10"
+				account: "savings"
+			}) {
+				id
+				amount
+				date
+				description
+				account
+			}
+		}
+		`
+		var transactionsSavings []models.Transaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &transactionsSavings)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 
-	})
+		query = `
+		query {
+			listTransactions(input: {
+				from: "2076-01-01"
+				to: "2076-01-10"
+				account: "chequing"
+			}) {
+				id
+				amount
+				date
+				description
+				account
+			}
+		}
+		`
+		var transactionsChequing []models.Transaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &transactionsChequing)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 
-	t.Run("Create a plan with external account", func(t *testing.T) {
-		t.Parallel()
+		transactions := append(transactionsSavings, transactionsChequing...)
 
-		// Given I named my plan "ping-pong table".
+		expected := []models.Transaction{
+			{
+				Amount:      467.17,
+				Date:        "2076-01-01",
+				Description: "from plan: ping-pong table",
+				Account:     "savings",
+			},
+			{
+				Amount:      467.17,
+				Date:        "2076-01-04",
+				Description: "from plan: ping-pong table",
+				Account:     "savings",
+			},
+			{
+				Amount:      -467.17,
+				Date:        "2076-01-01",
+				Description: "from plan: ping-pong table",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -467.17,
+				Date:        "2076-01-04",
+				Description: "from plan: ping-pong table",
+				Account:     "chequing",
+			},
+		}
 
-		// And I need a total amount of 934.34 dollars.
+		for i, transaction := range transactions {
+			if transaction.Amount != expected[i].Amount ||
+				transaction.Date != expected[i].Date ||
+				transaction.Description != expected[i].Description ||
+				transaction.Account != expected[i].Account {
+				t.Fatalf("Transaction %d does not match expected values.\nGot: %+v\nWant: %+v",
+					i,
+					transaction,
+					expected[i])
+			}
+		}
 
-		// And I start this plan on 2025-01-01.
-
-		// And the money comes from my chequing account.
-
-		// And the money goes to an external account named "piggy bank".
-
-		// And I want to transfer money every 3 days.
-
-		// When I create a plan.
-
-		// Then I should be able to list the transactions for this plan.
-
-	})
-
-	t.Run("Create a one-time plan", func(t *testing.T) {
-		t.Parallel()
-
-		// Given I named my plan "jelly beans".
-
-		// And I need a total amount of 1 dollars.
-
-		// And I start this plan on 2025-01-01.
-
-		// And the money comes from my savings account.
-
-		// And the money goes to my chequing account.
-
-		// And I want to transfer money only once.
-
-		// When I create a plan.
-
-		// Then I should be able to list the single transaction for this plan.
-
+		// cleanup
 	})
 }

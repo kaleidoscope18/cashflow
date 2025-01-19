@@ -46,3 +46,16 @@ func validateType(input generated.TransactionEditInput) error {
 
 	return nil
 }
+
+func validatePlanRecurrency(recurrency *string) error {
+	if recurrency != nil {
+		rule, err := rrule.StrToRRule(*recurrency)
+		if err != nil {
+			return err
+		}
+		if rule.OrigOptions.Count == 0 {
+			return fmt.Errorf("should have a minimum of 1 occurrence: %s", *recurrency)
+		}
+	}
+	return nil
+}

@@ -49,10 +49,10 @@ type NewBalanceInput struct {
 type NewPlanInput struct {
 	Name        string  `json:"name"`
 	ToAccount   string  `json:"toAccount"`
-	FromAccount *string `json:"fromAccount,omitempty"`
 	StartDate   string  `json:"startDate"`
-	Recurrency  *string `json:"recurrency,omitempty"`
 	TotalAmount float64 `json:"totalAmount"`
+	FromAccount *string `json:"fromAccount,omitempty"`
+	Recurrency  *string `json:"recurrency,omitempty"`
 }
 
 type NewTransactionInput struct {
