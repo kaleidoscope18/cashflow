@@ -31,7 +31,11 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 		recurrency = *input.Recurrency
 	}
 	date := utils.ParseDateToTime(input.Date)
-	id, err := (*r.TransactionService).CreateTransaction(ctx, date, input.Amount, description, recurrency, input.Account)
+	isManual := false
+	if input.IsManual != nil {
+		isManual = *input.IsManual
+	}
+	id, err := (*r.TransactionService).CreateTransaction(ctx, date, input.Amount, description, recurrency, isManual, input.Account)
 	if err != nil {
 		log.Println(err)
 		return "", fmt.Errorf("failed to create transaction")
@@ -87,6 +91,7 @@ func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.
 		Recurrency:  input.Recurrency,
 		Amount:      input.Amount,
 		Account:     input.Account,
+		IsManual:    input.IsManual,
 	})
 	if err != nil {
 		log.Println(err)

@@ -21,6 +21,7 @@ func GenerateTransactionFromPlan(planName string, account string, startDate stri
 		Description: "from plan: " + planName,
 		Recurrency:  recurrency,
 		Account:     account,
+		IsManual:    true,
 	}
 
 	return transaction, nil

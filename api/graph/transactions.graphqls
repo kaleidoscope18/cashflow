@@ -9,6 +9,7 @@ type Transaction {
   date: String!
   description: String
   account: String!
+  isManual: Boolean!
 }
 
 type ComputedTransaction {
@@ -19,6 +20,7 @@ type ComputedTransaction {
   balance: Float!
   status: Status!
   account: String!
+  isManual: Boolean!
 }
 
 input ListTransactionsInput {
@@ -30,9 +32,10 @@ input ListTransactionsInput {
 input NewTransactionInput {
   date: String!
   amount: Float!
+  account: String!
   recurrency: String
   description: String
-  account: String!
+  isManual: Boolean
 }
 
 enum TransactionEditType {
@@ -49,6 +52,7 @@ input TransactionEditInput {
   description: String
   recurrency: String
   account: String!
+  isManual: Boolean
 }
 
 input DeleteTransactionInput {

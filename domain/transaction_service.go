@@ -37,13 +37,14 @@ func (s *transactionService) ListTransactions(ctx context.Context, from time.Tim
 	return results, err
 }
 
-func (s *transactionService) CreateTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, account string) (string, error) {
+func (s *transactionService) CreateTransaction(ctx context.Context, date time.Time, amount float64, description string, recurrency string, isManual bool, account string) (string, error) {
 	id, err := (*s.repository).CreateTransaction(ctx, models.Transaction{
 		Amount:      utils.RoundToTwoDigits(amount),
 		Date:        date.Format(utils.DateLayout),
 		Description: description,
 		Recurrency:  recurrency,
 		Account:     account,
+		IsManual:    isManual,
 	})
 
 	if err != nil {
@@ -81,6 +82,7 @@ func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id 
 		Amount:      existingT.Amount,
 		Date:        existingT.Date,
 		Account:     account,
+		IsManual:    existingT.IsManual,
 	})
 	if err != nil {
 		return err
@@ -93,6 +95,7 @@ func (s *transactionService) DeleteRecurringTransaction(ctx context.Context, id 
 		Date:        utils.ParseDateToTime(date.Format(utils.DateLayout)).AddDate(0, 0, 1).Format(utils.DateLayout),
 		Recurrency:  existingT.Recurrency,
 		Account:     account,
+		IsManual:    existingT.IsManual,
 	}
 	newEndTId, err := (*s.repository).CreateTransaction(ctx, newT)
 	if err != nil {
@@ -139,13 +142,16 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		if edited.Recurrency != nil {
 			editedTransaction.Recurrency = *edited.Recurrency
 		}
+		if edited.IsManual != nil {
+			editedTransaction.IsManual = *edited.IsManual
+		}
 		return (*s.repository).UpdateTransaction(ctx, editedTransaction)
 	case models.FromDate:
 		/*
 		     | ---------------- | ---- edited ---- |
 		   start            from date             end
 		*/
-		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
+		recurrencyWithStop, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
 		if err != nil {
 			return err
 		}
@@ -156,7 +162,8 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 			Date:        (*edited.Date).Format(utils.DateLayout),
 			Description: existingT.Description,
 			Recurrency:  existingT.Recurrency,
-			Account:     edited.Account,
+			Account:     existingT.Account,
+			IsManual:    existingT.IsManual,
 		}
 		if edited.Amount != nil {
 			newT.Amount = *edited.Amount
@@ -167,6 +174,9 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		if edited.Recurrency != nil && *edited.Recurrency != "" {
 			newT.Recurrency = *edited.Recurrency
 		}
+		if edited.IsManual != nil {
+			newT.IsManual = *edited.IsManual
+		}
 		newTId, err := (*s.repository).CreateTransaction(ctx, newT)
 		if err != nil {
 			return err
@@ -174,11 +184,12 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 
 		err = (*s.repository).UpdateTransaction(ctx, models.Transaction{
 			Id:          existingT.Id,
-			Recurrency:  newRecurrency,
+			Recurrency:  recurrencyWithStop,
 			Description: existingT.Description,
 			Amount:      existingT.Amount,
 			Date:        existingT.Date,
-			Account:     edited.Account,
+			Account:     existingT.Account,
+			IsManual:    existingT.IsManual,
 		})
 		if err != nil {
 			return (*s.repository).DeleteTransaction(ctx, string(newTId), edited.Account)
@@ -192,16 +203,17 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		*/
 
 		// Create new recurrent transaction to end until new date - 1 day
-		newRecurrency, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
+		recurrencyWithStop, err := recurrency.ChangeRecurrencyEnd(existingT.Recurrency, *edited.Date)
 		if err != nil {
 			return err
 		}
 		newStartTId, err := (*s.repository).CreateTransaction(ctx, models.Transaction{
-			Recurrency:  newRecurrency,
+			Recurrency:  recurrencyWithStop,
 			Description: existingT.Description,
 			Amount:      existingT.Amount,
 			Date:        existingT.Date,
-			Account:     edited.Account,
+			Account:     existingT.Account,
+			IsManual:    existingT.IsManual,
 		})
 		if err != nil {
 			return err
@@ -213,7 +225,8 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 			Amount:      existingT.Amount,
 			Date:        (*edited.Date).AddDate(0, 0, 1).Format(utils.DateLayout),
 			Recurrency:  existingT.Recurrency,
-			Account:     edited.Account,
+			Account:     existingT.Account,
+			IsManual:    existingT.IsManual,
 		}
 		newEndTId, err := (*s.repository).CreateTransaction(ctx, newT)
 		if err != nil {
@@ -225,12 +238,17 @@ func (s *transactionService) EditTransaction(ctx context.Context, editType model
 		if edited.Description != nil {
 			description = *edited.Description
 		}
+		isManual := existingT.IsManual
+		if edited.IsManual != nil {
+			isManual = *edited.IsManual
+		}
 		_, err = (*s.repository).CreateTransaction(ctx, models.Transaction{
 			Description: description,
 			Amount:      *edited.Amount,
 			Date:        (*edited.Date).Format(utils.DateLayout),
 			Recurrency:  "",
 			Account:     edited.Account,
+			IsManual:    isManual,
 		})
 		if err != nil {
 			errOne := (*s.repository).DeleteTransaction(ctx, string(newStartTId), edited.Account)

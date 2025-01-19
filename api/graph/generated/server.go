@@ -60,6 +60,7 @@ type ComplexityRoot struct {
 		Date        func(childComplexity int) int
 		Description func(childComplexity int) int
 		Id          func(childComplexity int) int
+		IsManual    func(childComplexity int) int
 		Status      func(childComplexity int) int
 	}
 
@@ -98,6 +99,7 @@ type ComplexityRoot struct {
 		Date        func(childComplexity int) int
 		Description func(childComplexity int) int
 		Id          func(childComplexity int) int
+		IsManual    func(childComplexity int) int
 	}
 }
 
@@ -200,6 +202,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ComputedTransaction.Id(childComplexity), true
+
+	case "ComputedTransaction.isManual":
+		if e.complexity.ComputedTransaction.IsManual == nil {
+			break
+		}
+
+		return e.complexity.ComputedTransaction.IsManual(childComplexity), true
 
 	case "ComputedTransaction.status":
 		if e.complexity.ComputedTransaction.Status == nil {
@@ -438,6 +447,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Transaction.Id(childComplexity), true
 
+	case "Transaction.isManual":
+		if e.complexity.Transaction.IsManual == nil {
+			break
+		}
+
+		return e.complexity.Transaction.IsManual(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -645,6 +661,7 @@ type Transaction {
   date: String!
   description: String
   account: String!
+  isManual: Boolean!
 }
 
 type ComputedTransaction {
@@ -655,6 +672,7 @@ type ComputedTransaction {
   balance: Float!
   status: Status!
   account: String!
+  isManual: Boolean!
 }
 
 input ListTransactionsInput {
@@ -666,9 +684,10 @@ input ListTransactionsInput {
 input NewTransactionInput {
   date: String!
   amount: Float!
+  account: String!
   recurrency: String
   description: String
-  account: String!
+  isManual: Boolean
 }
 
 enum TransactionEditType {
@@ -685,6 +704,7 @@ input TransactionEditInput {
   description: String
   recurrency: String
   account: String!
+  isManual: Boolean
 }
 
 input DeleteTransactionInput {
@@ -1398,6 +1418,50 @@ func (ec *executionContext) fieldContext_ComputedTransaction_account(_ context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComputedTransaction_isManual(ctx context.Context, field graphql.CollectedField, obj *models.ComputedTransaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComputedTransaction_isManual(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsManual, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComputedTransaction_isManual(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComputedTransaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2698,6 +2762,8 @@ func (ec *executionContext) fieldContext_Query_listTransactions(ctx context.Cont
 				return ec.fieldContext_ComputedTransaction_status(ctx, field)
 			case "account":
 				return ec.fieldContext_ComputedTransaction_account(ctx, field)
+			case "isManual":
+				return ec.fieldContext_ComputedTransaction_isManual(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ComputedTransaction", field.Name)
 		},
@@ -3057,6 +3123,50 @@ func (ec *executionContext) fieldContext_Transaction_account(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transaction_isManual(ctx context.Context, field graphql.CollectedField, obj *models.Transaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transaction_isManual(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsManual, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transaction_isManual(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5136,7 +5246,7 @@ func (ec *executionContext) unmarshalInputNewTransactionInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"date", "amount", "recurrency", "description", "account"}
+	fieldsInOrder := [...]string{"date", "amount", "account", "recurrency", "description", "isManual"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5157,6 +5267,13 @@ func (ec *executionContext) unmarshalInputNewTransactionInput(ctx context.Contex
 				return it, err
 			}
 			it.Amount = data
+		case "account":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Account = data
 		case "recurrency":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recurrency"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -5171,13 +5288,13 @@ func (ec *executionContext) unmarshalInputNewTransactionInput(ctx context.Contex
 				return it, err
 			}
 			it.Description = data
-		case "account":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+		case "isManual":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isManual"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Account = data
+			it.IsManual = data
 		}
 	}
 
@@ -5191,7 +5308,7 @@ func (ec *executionContext) unmarshalInputTransactionEditInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "type", "date", "amount", "description", "recurrency", "account"}
+	fieldsInOrder := [...]string{"id", "type", "date", "amount", "description", "recurrency", "account", "isManual"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5247,6 +5364,13 @@ func (ec *executionContext) unmarshalInputTransactionEditInput(ctx context.Conte
 				return it, err
 			}
 			it.Account = data
+		case "isManual":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isManual"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsManual = data
 		}
 	}
 
@@ -5350,6 +5474,11 @@ func (ec *executionContext) _ComputedTransaction(ctx context.Context, sel ast.Se
 			}
 		case "account":
 			out.Values[i] = ec._ComputedTransaction_account(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isManual":
+			out.Values[i] = ec._ComputedTransaction_isManual(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5733,6 +5862,11 @@ func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._Transaction_description(ctx, field, obj)
 		case "account":
 			out.Values[i] = ec._Transaction_account(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isManual":
+			out.Values[i] = ec._Transaction_isManual(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

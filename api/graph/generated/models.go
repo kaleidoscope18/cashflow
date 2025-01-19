@@ -58,9 +58,10 @@ type NewPlanInput struct {
 type NewTransactionInput struct {
 	Date        string  `json:"date"`
 	Amount      float64 `json:"amount"`
+	Account     string  `json:"account"`
 	Recurrency  *string `json:"recurrency,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Account     string  `json:"account"`
+	IsManual    *bool   `json:"isManual,omitempty"`
 }
 
 type Query struct {
@@ -74,6 +75,7 @@ type TransactionEditInput struct {
 	Description *string                    `json:"description,omitempty"`
 	Recurrency  *string                    `json:"recurrency,omitempty"`
 	Account     string                     `json:"account"`
+	IsManual    *bool                      `json:"isManual,omitempty"`
 }
 
 type Role string
