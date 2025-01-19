@@ -23,7 +23,7 @@ func NewTransactionService(repo *models.Repository, balanceService *models.Balan
 }
 
 func (s *transactionService) ListTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]models.ComputedTransaction, error) {
-	transactions, err := (*s.repository).ReadTransactions(ctx, from, to, account)
+	transactions, err := (*s.repository).ReadTransactions(ctx, to, account)
 	if err != nil {
 		return nil, err
 	}

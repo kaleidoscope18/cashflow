@@ -31,11 +31,11 @@ func (repo *supabaseRepository) ReadTransactionById(ctx context.Context, id stri
 	return transaction, nil
 }
 
-func (repo *supabaseRepository) ReadTransactions(ctx context.Context, from time.Time, to time.Time, account string) ([]models.Transaction, error) {
+func (repo *supabaseRepository) ReadTransactions(ctx context.Context, to time.Time, account string) ([]models.Transaction, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency, account FROM cashflow.transactions WHERE date >= $1 AND date <= $2 AND author = $3 AND account = $4 ORDER BY date ASC", from.Format(utils.DateLayout), to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId), account)
+	rows, err := repo.db.Query(ctx, "SELECT id, description, amount, date::text, recurrency, account FROM cashflow.transactions WHERE date <= $1 AND author = $2 AND account = $3 ORDER BY date ASC", to.Format(utils.DateLayout), utils.GetContextValue(ctx, models.UserId), account)
 	if err != nil {
 		log.Printf("error SELECT on cashflow.transactions: %v", err)
 		return nil, err
