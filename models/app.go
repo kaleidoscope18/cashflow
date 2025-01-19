@@ -26,6 +26,7 @@ type Repository interface {
 	BalanceRepository
 	TransactionRepository
 	PlanRepository
+	AccountRepository
 	Init() error
 	Close() error
 }

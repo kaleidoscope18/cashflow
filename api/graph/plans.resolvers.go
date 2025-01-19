@@ -10,6 +10,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"log"
 )
 
 // CreatePlan is the resolver for the createPlan field.
@@ -17,36 +18,45 @@ func (r *mutationResolver) CreatePlan(ctx context.Context, input generated.NewPl
 	if input.Name == "" {
 		return "", fmt.Errorf("name is required")
 	}
-
-	if input.ToAccount == "" {
-		return "", fmt.Errorf("to account is required")
-	}
-
 	err := validateDate(&input.StartDate, true)
 	if err != nil {
 		return "", fmt.Errorf("invalid start date: %w", err)
 	}
 	date := utils.ParseDateToTime(input.StartDate)
 
-	var recurrency string
-	if input.Recurrency == nil {
-		recurrency = ""
-	} else {
-		err := validatePlanRecurrency(input.Recurrency)
-		if err != nil {
-			return "", fmt.Errorf("invalid recurrency: %w", err)
-		}
-		recurrency = *input.Recurrency
+	err = validatePlanRecurrency(&input.Recurrency)
+	if err != nil {
+		return "", fmt.Errorf("invalid recurrency: %w", err)
+	}
+	err = validatePlanAccounts(input.FromAccount, input.ToAccount)
+	if err != nil {
+		return "", fmt.Errorf("invalid accounts: %w", err)
 	}
 
-	return (*r.PlanService).CreatePlan(ctx, input.Name, input.ToAccount, input.FromAccount, date.Format(utils.DateLayout), recurrency, input.TotalAmount)
+	id, err := (*r.PlanService).CreatePlan(ctx, input.Name, input.ToAccount, input.FromAccount, date.Format(utils.DateLayout), input.Recurrency, input.TotalAmount)
+	if err != nil {
+		log.Printf("error on creating a plan: %v", err)
+		return "", fmt.Errorf("could not create plan")
+	}
+	return id, nil
+}
+
+// DeletePlan is the resolver for the deletePlan field.
+func (r *mutationResolver) DeletePlan(ctx context.Context, id string) (bool, error) {
+	err := (*r.PlanService).DeletePlan(ctx, id)
+	if err != nil {
+		log.Printf("error on deleting a plan: %v", err)
+		return false, fmt.Errorf("could not delete plan")
+	}
+	return true, nil
 }
 
 // ListPlans is the resolver for the listPlans field.
 func (r *queryResolver) ListPlans(ctx context.Context) ([]*models.Plan, error) {
 	plans, err := (*r.PlanService).ListPlans(ctx)
 	if err != nil {
-		return nil, err
+		log.Printf("error on listing plans: %v", err)
+		return nil, fmt.Errorf("could not list plans")
 	}
 	return utils.ConvertStructToPointersArray(plans), nil
 }

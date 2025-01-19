@@ -123,10 +123,16 @@ Contains all the data structures and interfaces that represent the core domain c
 
 Handles data persistence and retrieval operations. This layer abstracts the database interactions from the rest of the application, mapping from and to the domain models. It allows the application to remain database-agnostic. The repository layer encapsulates all SQL queries, database connections, and data mapping logic.
 
+### backup of supabase schema
+
+```sh
+pg_dump "postgresql://<username>:<password>@<host>:<port>/postgres?sslmode=require" -n cashflow -s -F p > dev/schema_backup.sql
+```
+
 ## Lessons learned
 
 - Use channels to validate inputs simultaneously in resolvers.
 - We can create modules inside modules.
-- Decide on ONE format, easy to manipulate (time.Time)
 - Resolvers do validate fields first, then map the values then call the services
-- Its not a good idea to use models for the api or repository layer since date objects are not easy to manipulate
+- Its not a good idea to use models for the api or repository layers
+- Errors should be logged at every layer, but resolver should return a custom error message

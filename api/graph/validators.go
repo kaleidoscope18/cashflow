@@ -59,3 +59,13 @@ func validatePlanRecurrency(recurrency *string) error {
 	}
 	return nil
 }
+
+func validatePlanAccounts(fromAccount string, toAccount string) error {
+	if fromAccount == "" || toAccount == "" {
+		return fmt.Errorf("from and to accounts cannot be empty")
+	}
+	if fromAccount == toAccount {
+		return fmt.Errorf("from and to accounts cannot be the same")
+	}
+	return nil
+}

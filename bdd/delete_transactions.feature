@@ -11,3 +11,8 @@ Feature: Transactions
         When I add a recurring transaction to it on "2030-09-20" until "2031-10-31"
             And I delete the recurring transaction on "2030-12-15"
         Then I should not see the recurring transaction on "2030-12-15" but see the rest
+
+    Scenario: Deleting a transaction from a plan
+        When I add a plan to "2030-09-20" until "2031-10-31"
+            And I delete the transaction
+        Then I should have an error since the transaction is part of a plan

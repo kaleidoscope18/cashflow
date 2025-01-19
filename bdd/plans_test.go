@@ -63,31 +63,38 @@ func TestPlans(t *testing.T) {
 		}
 
 		// Then I should receive a list of plans.
-		if len(plans) != 1 {
-			t.Fatalf("Expected 1 plan, got %d", len(plans))
+		var found models.Plan
+		for _, plan := range plans {
+			if plan.Id == planId {
+				found = plan
+				break
+			}
+		}
+		if found.Id == "" {
+			t.Fatalf("Could not find plan with id %s", planId)
 		}
 
-		if plans[0].Name != "plan-1" {
-			t.Fatalf("Expected plan name to be 'plan-1', got %s", plans[0].Name)
+		if found.Name != "plan-1" {
+			t.Fatalf("Expected plan name to be 'plan-1', got %s", found.Name)
 		}
 
-		if plans[0].FromAccount != "chequing" {
-			t.Fatalf("Expected plan fromAccount to be 'chequing', got %s", plans[0].FromAccount)
+		if found.FromAccount != "chequing" {
+			t.Fatalf("Expected plan fromAccount to be 'chequing', got %s", found.FromAccount)
 		}
 
-		if plans[0].ToAccount != "savings" {
-			t.Fatalf("Expected plan toAccount to be 'savings', got %s", plans[0].ToAccount)
+		if found.ToAccount != "savings" {
+			t.Fatalf("Expected plan toAccount to be 'savings', got %s", found.ToAccount)
 		}
 
-		if plans[0].StartDate != "2022-02-21" {
-			t.Fatalf("Expected plan startDate to be '2022-02-21', got %s", plans[0].StartDate)
+		if found.StartDate != "2022-02-21" {
+			t.Fatalf("Expected plan startDate to be '2022-02-21', got %s", found.StartDate)
 		}
 
-		if plans[0].TotalAmount != 100 {
-			t.Fatalf("Expected plan totalAmount to be '100', got %f", plans[0].TotalAmount)
+		if found.TotalAmount != 100 {
+			t.Fatalf("Expected plan totalAmount to be '100', got %f", found.TotalAmount)
 		}
 
-		// cleanup
+		utils.CleanupPlan(planId, token)
 	})
 
 	t.Run("Create a plan between existing accounts", func(t *testing.T) {
@@ -202,6 +209,338 @@ func TestPlans(t *testing.T) {
 			}
 		}
 
-		// cleanup
+		utils.CleanupPlan(planId, token)
+	})
+
+	t.Run("Create a plan to an external account", func(t *testing.T) {
+		t.Parallel()
+
+		// Given I named my plan "popcorn maker".
+		// And I need a total amount of 300 dollars.
+		// And I start this plan on 2084-01-01.
+		// And the money comes from my chequing account.
+		// And the money goes to an external account named "piggy bank".
+		// And I want to transfer money every 2 days, ten times.
+		// When I create a plan.
+		query := `
+		mutation {
+			createPlan(input: {
+				name: "popcorn maker"
+				fromAccount: "chequing"
+				toAccount: "piggy bank"
+				startDate: "2084-01-01"
+				recurrency: "FREQ=DAILY;INTERVAL=2;COUNT=10"
+				totalAmount: 300
+			})
+		}
+		`
+		var planId string
+		err = utils.PostGraphQL(query, "createPlan", token, &planId)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Then I should be able to list the plans.
+		query = `
+		query {
+			listPlans {
+				id
+				name
+				toAccount
+				fromAccount
+				startDate
+				recurrency
+				totalAmount
+			}
+		}
+		`
+		var plans []models.Plan
+		err = utils.PostGraphQL(query, "listPlans", token, &plans)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Then I should be able to list the transactions for this plan.
+		query = `
+		query {
+			listTransactions(input: {
+				from: "2084-01-01"
+				to: "2084-01-30"
+				account: "chequing"
+			}) {
+				id
+				amount
+				date
+				description
+				account
+			}
+		}
+		`
+		var transactions []models.Transaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &transactions)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		expected := []models.Transaction{
+			{
+				Amount:      -30,
+				Date:        "2084-01-01",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-03",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-05",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-07",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-09",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-11",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-13",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-15",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-17",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+			{
+				Amount:      -30,
+				Date:        "2084-01-19",
+				Description: "from plan: popcorn maker",
+				Account:     "chequing",
+			},
+		}
+		if len(transactions) != 10 {
+			t.Fatalf("Expected 10 transactions, got %d", len(transactions))
+		}
+		for i, e := range expected {
+			if transactions[i].Amount != e.Amount ||
+				transactions[i].Date != e.Date ||
+				transactions[i].Description != e.Description ||
+				transactions[i].Account != e.Account {
+				t.Fatalf("Transaction %d does not match expected values.\nGot: %+v\nWant: %+v",
+					i,
+					transactions[i],
+					e)
+			}
+		}
+
+		utils.CleanupPlan(planId, token)
+	})
+
+	t.Run("Create a plan from an external account", func(t *testing.T) {
+		t.Parallel()
+
+		// Given I named my plan "smoothie machine".
+		// And I need a total amount of 2 dollars.
+		// And I start this plan on 2081-01-01.
+		// And the money comes from an external account named "piggy bank".
+		// And the money goes to my savings account.
+		// And I want to transfer money every 2 days, two times.
+		// When I create a plan.
+		query := `
+		mutation {
+			createPlan(input: {
+				name: "smoothie machine"
+				fromAccount: "piggy bank"
+				toAccount: "savings"
+				startDate: "2081-01-01"
+				recurrency: "FREQ=DAILY;INTERVAL=2;COUNT=2"
+				totalAmount: 2
+			})
+		}
+		`
+		var planId string
+		err = utils.PostGraphQL(query, "createPlan", token, &planId)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Then I should be able to list the plans.
+		query = `
+		query {
+			listPlans {
+				id
+			}
+		}
+		`
+		var plans []models.Plan
+		err = utils.PostGraphQL(query, "listPlans", token, &plans)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		found := false
+		for _, plan := range plans {
+			if plan.Id == planId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("Could not find plan with id %s", planId)
+		}
+
+		// Then I should be able to list the transactions for this plan only on savings.
+		query = `
+		query {
+			listTransactions(input: {
+				from: "2081-01-01"
+				to: "2081-01-30"
+				account: "savings"
+			}) {
+				id
+				amount
+				date
+				description
+				account
+			}
+		}
+		`
+		var transactions []models.Transaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &transactions)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		if len(transactions) != 2 {
+			t.Fatalf("Expected 2 transactions, got %d", len(transactions))
+		}
+
+		utils.CleanupPlan(planId, token)
+	})
+
+	t.Run("Delete a plan", func(t *testing.T) {
+		t.Parallel()
+
+		// Given I created a plan.
+		query := `
+		mutation {
+			createPlan(input: {
+				name: "popcorn maker"
+				fromAccount: "chequing"
+				toAccount: "piggy bank"
+				startDate: "2099-01-01"
+				recurrency: "FREQ=DAILY;COUNT=1"
+				totalAmount: 300
+			})
+		}
+		`
+		var planId string
+		err = utils.PostGraphQL(query, "createPlan", token, &planId)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// When I delete the plan.
+		query = `
+		mutation {
+			deletePlan(id: "` + planId + `")
+		}
+		`
+		err = utils.PostGraphQL(query, "deletePlan", token, nil)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		// Then I should not see the plan or its transactions anymore.
+		query = `
+		query {
+			listPlans {
+				id
+			}
+		}
+		`
+		var plans []models.Plan
+		err = utils.PostGraphQL(query, "listPlans", token, &plans)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		for _, plan := range plans {
+			if plan.Id == planId {
+				t.Fatalf("Expected plan to be deleted, but found plan with id %s", planId)
+			}
+		}
+
+		query = `
+		query {
+			listTransactions(input: {
+				from: "2099-01-01"
+				to: "2099-01-30"
+				account: "chequing"
+			}) {
+				id
+			}
+		}
+		`
+		var transactions []models.Transaction
+		err = utils.PostGraphQL(query, "listTransactions", token, &transactions)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		if len(transactions) != 0 {
+			t.Fatalf("Expected 0 transactions, got %d", len(transactions))
+		}
+
+		utils.CleanupPlan(planId, token)
+	})
+
+	t.Run("Create a plan with both external accounts", func(t *testing.T) {
+		t.Parallel()
+
+		// Given I create a plan with both external accounts.
+		query := `
+		mutation {
+			createPlan(input: {
+				name: "smoothie machine"
+				fromAccount: "piggy bank"
+				toAccount: "dream land"
+				startDate: "2081-01-01"
+				recurrency: "FREQ=DAILY;COUNT=1"
+				totalAmount: 2
+			})
+		}
+		`
+		err = utils.PostGraphQL(query, "createPlan", token, nil)
+
+		// Then I should not be able to create the plan.
+		if err == nil {
+			t.Fatalf("Expected error, got nil")
+		}
 	})
 }
