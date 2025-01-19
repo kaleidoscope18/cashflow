@@ -92,7 +92,7 @@ CREATE TABLE cashflow.plans (
     total_amount numeric NOT NULL,
     from_external_account text,
     from_transaction_id integer,
-    to_transaction_id integer NOT NULL,
+    to_transaction_id integer,
     to_external_account text,
     CONSTRAINT check_only_one_from_account CHECK ((((from_account IS NOT NULL) AND (from_external_account IS NULL)) OR ((from_account IS NULL) AND (from_external_account IS NOT NULL))))
 );
