@@ -34,10 +34,13 @@ CREATE FUNCTION cashflow.delete_related_transactions() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    SET search_path = cashflow, public;
+
     DELETE FROM cashflow.transactions WHERE id = OLD.to_transaction_id;
     IF OLD.from_transaction_id IS NOT NULL THEN
-      DELETE FROM cashflow.transactions WHERE id = OLD.from_transaction_id;
+        DELETE FROM cashflow.transactions WHERE id = OLD.from_transaction_id;
     END IF;
+
     RETURN OLD;
 END;
 $$;

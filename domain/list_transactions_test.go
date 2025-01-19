@@ -16,32 +16,32 @@ var balances = []models.Balance{
 }
 var transactions = []models.Transaction{
 	{Id: "000", Amount: -2.99, Date: "1999-12-30", Description: "No balance yet"},
-	{Id: "001", Amount: 2.00, Date: "2000-01-01", Description: "Balance will override this"},
+	{Id: "001", Amount: 2.00, Date: "2000-01-01", Description: "Balance will NOT override this and will increase"},
 	{Id: "002", Amount: -3.00, Date: "2000-01-02", Description: "Balance will decrease"},
 	{Id: "003", Amount: 4.00, Date: "2000-01-03", Description: "Balance will increase"},
 	{Id: "004", Amount: -5.00, Date: "2000-01-11", Description: "Balance will change and decrease"},
 }
 var expected = []models.ComputedTransaction{
 	{Transaction: &transactions[0], Balance: -2.99},
-	{Transaction: &transactions[1], Balance: 20},
+	{Transaction: &transactions[1], Balance: -0.99},
 	{Transaction: &transactions[2], Balance: 17},
 	{Transaction: &transactions[3], Balance: 21},
 	{Transaction: &transactions[4], Balance: 95},
 }
 
-func TestGetBalanceOnSameDayFound(t *testing.T) {
-	result := getBalanceOnSameDay("2000-01-01", balances)
+func TestGetBalanceOneDayBeforeFound(t *testing.T) {
+	result := getBalanceOneDayBefore("2000-01-02", balances)
 
 	if result == nil {
-		t.Error("It should have found the balance on same day")
+		t.Error("It should have found the balance one day before")
 	}
 }
 
-func TestGetBalanceOnSameDayNotFound(t *testing.T) {
-	result := getBalanceOnSameDay("2000-01-02", balances)
+func TestGetBalanceOneDayBeforeNotFound(t *testing.T) {
+	result := getBalanceOneDayBefore("2000-01-01", balances)
 
 	if result != nil {
-		t.Error("It not should have found the balance on same day")
+		t.Error("It should not have found the balance one day before")
 	}
 }
 

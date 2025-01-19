@@ -6,6 +6,7 @@ import (
 
 func TestValidateRecurrency(t *testing.T) {
 	validRecurrency := "FREQ=DAILY;INTERVAL=1"
+	validMultipleRecurrency := "RRULE:FREQ=MONTHLY;BYMONTHDAY=15;BYDAY=MO,TU,WE,TH,FR\nRRULE:FREQ=MONTHLY;BYMONTHDAY=16;BYDAY=MO\nRRULE:FREQ=MONTHLY;BYMONTHDAY=17;BYDAY=MO"
 	invalidRecurrency := "INVALID"
 
 	tests := []struct {
@@ -16,6 +17,11 @@ func TestValidateRecurrency(t *testing.T) {
 		{
 			name:        "Valid recurrency",
 			recurrency:  &validRecurrency,
+			expectError: false,
+		},
+		{
+			name:        "Valid multiple recurrency",
+			recurrency:  &validMultipleRecurrency,
 			expectError: false,
 		},
 		{

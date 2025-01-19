@@ -83,9 +83,7 @@ func TestShouldHandleRecurrencyOnWeekdaysOnceAMonth(t *testing.T) {
 			Date:        "2025-01-15",
 			Amount:      2000,
 			Description: "Mortgage",
-			Recurrency: "RRULE:FREQ=MONTHLY;BYMONTHDAY=15;BYDAY=MO,TU,WE,TH,FR\n" +
-				"RRULE:FREQ=MONTHLY;BYMONTHDAY=16;BYDAY=MO\n" +
-				"RRULE:FREQ=MONTHLY;BYMONTHDAY=17;BYDAY=MO",
+			Recurrency:  "RRULE:FREQ=MONTHLY;BYMONTHDAY=15;BYDAY=MO,TU,WE,TH,FR\nRRULE:FREQ=MONTHLY;BYMONTHDAY=16;BYDAY=MO\nRRULE:FREQ=MONTHLY;BYMONTHDAY=17;BYDAY=MO",
 		},
 	}
 	results, _ := GenerateTransactionsFromRecurrency(data, from, to)

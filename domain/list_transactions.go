@@ -23,7 +23,7 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 	today := utils.GetTodayDate()
 
 	for i, t := range transactionsToEnrich {
-		balanceOnSameDay := getBalanceOnSameDay(t.Date, balances)
+		balanceOneDayBefore := getBalanceOneDayBefore(t.Date, balances)
 		latestBalance, latestBalanceError := getLatestBalanceBefore(t.Date, balances)
 		previousTransaction, previousTransactionError := getPreviousTransaction(i, enrichedTransactions)
 
@@ -34,8 +34,8 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 		}
 
 		switch {
-		case balanceOnSameDay != nil:
-			enrichedTransactions[i].Balance = balanceOnSameDay.Amount
+		case balanceOneDayBefore != nil:
+			enrichedTransactions[i].Balance = balanceOneDayBefore.Amount + t.Amount
 		case latestBalanceError != nil && previousTransactionError != nil:
 			enrichedTransactions[i].Balance = t.Amount
 		case latestBalanceError != nil:
@@ -52,9 +52,9 @@ func listTransactions(transactions []models.Transaction, balances []models.Balan
 	return enrichedTransactions, nil
 }
 
-func getBalanceOnSameDay(date string, balances []models.Balance) *models.Balance {
+func getBalanceOneDayBefore(date string, balances []models.Balance) *models.Balance {
 	for _, b := range balances {
-		if b.Date == date {
+		if b.Date == utils.ParseDateToTime(date).AddDate(0, 0, -1).Format(utils.DateLayout) {
 			return &b
 		}
 	}

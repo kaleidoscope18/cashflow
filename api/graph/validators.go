@@ -5,17 +5,21 @@ import (
 	"cashflow/models"
 	"cashflow/utils"
 	"fmt"
+	"strings"
 
 	"github.com/teambition/rrule-go"
 )
 
 func validateRecurrency(recurrency *string) error {
 	if recurrency != nil {
-		_, err := rrule.StrToRRule(*recurrency)
-		if err != nil {
-			return err
+		// Split by newline in case there are multiple recurrency rules
+		rules := strings.Split(*recurrency, "\n")
+		for _, rule := range rules {
+			_, err := rrule.StrToRRule(rule)
+			if err != nil {
+				return err
+			}
 		}
-		return err
 	}
 	return nil
 }

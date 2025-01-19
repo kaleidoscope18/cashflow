@@ -44,6 +44,7 @@ func TestBalances(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
+		defer utils.CleanupBalance(balance.Date, balance.Account, token)
 
 		// Then it should be in balances list.
 		query = `
@@ -72,20 +73,6 @@ func TestBalances(t *testing.T) {
 		if balances[0].Amount != 1000 {
 			t.Fatalf("expected amount 1000, got %f", balances[0].Amount)
 		}
-
-		// and delete the balance
-		query = `
-		mutation { 
-			deleteBalance(input: {
-				date: "` + balances[0].Date + `"
-				account: "chequing"
-			})
-		}
-		`
-		err = utils.PostGraphQL(query, "deleteBalance", token, nil)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
 	})
 
 	t.Run("Adding a balance without a date", func(t *testing.T) {
@@ -109,25 +96,12 @@ func TestBalances(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
+		defer utils.CleanupBalance(balance.Date, balance.Account, token)
 
 		// Then the new balance should have today's date.
 		today := time.Now().UTC().Format("2006-01-02")
 		if balance.Date != today {
 			t.Fatalf("expected today's date (%s), got %s", today, balance.Date)
-		}
-
-		// and delete the balance
-		query = `
-		mutation { 
-			deleteBalance(input: {
-				date: "` + balance.Date + `"
-				account: "chequing"
-			})
-		}
-		`
-		err = utils.PostGraphQL(query, "deleteBalance", token, nil)
-		if err != nil {
-			t.Fatalf(err.Error())
 		}
 	})
 
@@ -170,6 +144,7 @@ func TestBalances(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
+		defer utils.CleanupBalance(balance.Date, balance.Account, token)
 
 		// Then I should be able to see the transactions with the right balance.
 		query = `
@@ -200,32 +175,6 @@ func TestBalances(t *testing.T) {
 			t.Fatalf("expected balance of 2000, got %f", transactions[0].Balance)
 		}
 
-		// and delete the balance
-		query = `
-		mutation { 
-			deleteBalance(input: {
-				date: "` + balance.Date + `"
-				account: "chequing"
-			})
-		}
-		`
-		err = utils.PostGraphQL(query, "deleteBalance", token, nil)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
-
-		// and delete the transaction
-		query = `
-		mutation { 
-			deleteTransaction(input: {
-				id: "` + id + `"
-				account: "chequing"
-			})
-		}
-		`
-		err = utils.PostGraphQL(query, "deleteTransaction", token, nil)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
+		defer utils.CleanupTransactions([]string{id}, token)
 	})
 }
