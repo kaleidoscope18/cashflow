@@ -11,6 +11,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -32,7 +33,8 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 	date := utils.ParseDateToTime(input.Date)
 	id, err := (*r.TransactionService).CreateTransaction(ctx, date, input.Amount, description, recurrency, input.Account)
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("failed to create transaction")
 	}
 
 	return string(id), nil
@@ -42,7 +44,8 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input generate
 func (r *mutationResolver) DeleteTransaction(ctx context.Context, input generated.DeleteTransactionInput) (bool, error) {
 	err := (*r.TransactionService).DeleteTransaction(ctx, input.ID, input.Account)
 	if err != nil {
-		return false, err
+		log.Println(err)
+		return false, fmt.Errorf("failed to delete transaction")
 	}
 	return true, nil
 }
@@ -56,7 +59,8 @@ func (r *mutationResolver) DeleteRecurringTransaction(ctx context.Context, input
 	date := utils.ParseDateToTime(input.Date)
 	err = (*r.TransactionService).DeleteRecurringTransaction(ctx, input.ID, date, input.Account)
 	if err != nil {
-		return false, err
+		log.Println(err)
+		return false, fmt.Errorf("failed to delete recurring transaction")
 	}
 	return true, nil
 }
@@ -85,7 +89,8 @@ func (r *mutationResolver) EditTransaction(ctx context.Context, input generated.
 		Account:     input.Account,
 	})
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("failed to edit transaction")
 	}
 
 	return input.ID, nil
@@ -102,13 +107,13 @@ func (r *queryResolver) ListTransactions(ctx context.Context, input generated.Li
 		return nil, fmt.Errorf("invalid to date: %w", err)
 	}
 	if fromDate == nil || toDate == nil {
-		err := fmt.Errorf("please provide from and to dates")
-		return nil, err
+		return nil, fmt.Errorf("please provide from and to dates")
 	}
 
 	result, err := (*r.TransactionService).ListTransactions(ctx, utils.ParseDateToTime(*fromDate), utils.ParseDateToTime(*toDate), input.Account)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, fmt.Errorf("failed to list transactions")
 	}
 
 	return utils.ConvertStructToPointersArray(result), nil

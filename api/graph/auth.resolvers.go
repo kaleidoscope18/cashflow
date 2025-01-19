@@ -6,9 +6,14 @@ package graph
 
 import (
 	"context"
+	"fmt"
 )
 
 // LoginEmail is the resolver for the loginEmail field.
 func (r *queryResolver) LoginEmail(ctx context.Context, email string, password string) (string, error) {
-	return (*r.AuthService).LoginEmail(ctx, email, password)
+	token, err := (*r.AuthService).LoginEmail(ctx, email, password)
+	if err != nil {
+		return "", fmt.Errorf("failed to login: %w", err)
+	}
+	return token, nil
 }

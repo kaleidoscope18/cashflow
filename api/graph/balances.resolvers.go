@@ -10,6 +10,7 @@ import (
 	"cashflow/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -17,7 +18,8 @@ import (
 func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.NewBalanceInput) (*models.Balance, error) {
 	err := validateDate(input.Date, false)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, fmt.Errorf("please provide a valid date")
 	}
 	var date *time.Time
 	if input.Date != nil {
@@ -25,19 +27,25 @@ func (r *mutationResolver) CreateBalance(ctx context.Context, input generated.Ne
 		date = &parsed
 	}
 	newBalance, err := (*r.BalanceService).WriteBalance(ctx, input.Amount, date, input.Account)
-	return &newBalance, err
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("failed to create balance")
+	}
+	return &newBalance, nil
 }
 
 // DeleteBalance is the resolver for the deleteBalance field.
 func (r *mutationResolver) DeleteBalance(ctx context.Context, input generated.DeleteBalanceInput) (string, error) {
 	err := validateDate(&input.Date, true)
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("please provide a valid date")
 	}
 	date := utils.ParseDateToTime(input.Date)
 	err = (*r.BalanceService).DeleteBalance(ctx, date, input.Account)
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("failed to delete balance")
 	}
 	return input.Date, nil
 }
@@ -53,5 +61,9 @@ func (r *queryResolver) ListBalances(ctx context.Context, input generated.ListBa
 	fromDate := utils.ParseDateToTime(input.From)
 	toDate := utils.ParseDateToTime(input.To)
 	balances, err := (*r.BalanceService).ListBalances(ctx, fromDate, toDate, input.Account)
-	return utils.ConvertStructToPointersArray(balances), err
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("failed to list balances")
+	}
+	return utils.ConvertStructToPointersArray(balances), nil
 }
