@@ -128,11 +128,19 @@ CREATE TABLE cashflow.transactions (
     date date NOT NULL,
     recurrency text NOT NULL,
     author uuid,
-    account text NOT NULL
+    account text NOT NULL,
+    is_manual boolean DEFAULT false NOT NULL
 );
 
 
 ALTER TABLE cashflow.transactions OWNER TO postgres;
+
+--
+-- Name: COLUMN transactions.is_manual; Type: COMMENT; Schema: cashflow; Owner: postgres
+--
+
+COMMENT ON COLUMN cashflow.transactions.is_manual IS 'Mark a transaction as automatic or manual';
+
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE; Schema: cashflow; Owner: postgres
@@ -194,14 +202,6 @@ ALTER TABLE ONLY cashflow.plans
 
 ALTER TABLE ONLY cashflow.transactions
     ADD CONSTRAINT transactions_pkey PRIMARY KEY (id);
-
-
---
--- Name: balances unique_date_author; Type: CONSTRAINT; Schema: cashflow; Owner: postgres
---
-
-ALTER TABLE ONLY cashflow.balances
-    ADD CONSTRAINT unique_date_author UNIQUE (date, author);
 
 
 --

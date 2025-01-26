@@ -28,7 +28,7 @@ func Run(app *models.App) {
 	server := handler.NewDefaultServer(schema)
 
 	http.Handle("/playground", playground.Handler("Cashflow GraphQL Playground", "/graphql"))
-	http.Handle("/graphql", middlewares.AuthMiddleware(server))
+	http.Handle("/graphql", middlewares.CorsMiddleware(middlewares.AuthMiddleware(server)))
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

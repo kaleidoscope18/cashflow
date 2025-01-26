@@ -69,11 +69,7 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 ```
 
 - All files under `api/graph/generated` will be regenerated
-- If the regeneration throws an error, check your schemas first and backup the resolver files and erase their contents for a clean slate and try again.
-
-### Debugging
-
-When the containers are running in docker, launch `Go Containerized Debug` VSCode configuration.  
+- If the regeneration throws an error, that means you made a breaking change. Fix these errors and make sure no errors occur when running the above command.
 
 ### Suggested vscode extensions
 
@@ -131,8 +127,8 @@ pg_dump "postgresql://<username>:<password>@<host>:<port>/postgres?sslmode=requi
 
 ## Lessons learned
 
-- Use channels to validate inputs simultaneously in resolvers.
 - We can create modules inside modules.
 - Resolvers do validate fields first, then map the values then call the services
 - Its not a good idea to use models for the api or repository layers
 - Errors should be logged at every layer, but resolver should return a custom error message
+- Use channels to validate inputs simultaneously in resolvers.
