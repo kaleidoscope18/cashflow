@@ -15,15 +15,15 @@ Developing with a prod database since this is a hobby project.
 
 Packages:
 
-| Name        | Description                                 |
-| ---         | ---                                         |
-| api         | graphql api                                 |
-| bdd         | bdd tests in gherkin                        |
-| dev         | dev tools                                   |
-| domain      | business logic                              |
-| models      | contracts                                   |
-| repository  | database layer                              |
-| utils       | reusable functions independent from domain  |
+| Name       | Description                                |
+| ---------- | ------------------------------------------ |
+| api        | graphql api                                |
+| bdd        | bdd tests in gherkin                       |
+| dev        | dev tools                                  |
+| domain     | business logic                             |
+| models     | contracts                                  |
+| repository | database layer                             |
+| utils      | reusable functions independent from domain |
 
 ## Commands
 
@@ -50,12 +50,12 @@ go test -cover                                  # Show test coverage
 
 ## Development flow
 
-I develop this app in a TDD way (red-green-refactor), here's how:  
+I develop this app in a TDD way (red-green-refactor), here's how:
 
-- I first write the scenarios I need to code in a `*.feature` file.  
-- Then I run `gherkingen <feature_file>.feature` to print the tests I need to implement.  
+- I first write the scenarios I need to code in a `*.feature` file.
+- Then I run `gherkingen <feature_file>.feature` to print the tests I need to implement.
 - I implement them and the test will be failing first (red).
-- I implement the code to make the tests pass (green).  
+- I implement the code to make the tests pass (green).
 - I improve and refactor the code.
 - I add unit tests with AI to speed me up.
 - I make sure the tests are not flaky by running the whole test suite many times.
@@ -70,14 +70,6 @@ cd api && rm -rf /graph/generated && go run github.com/99designs/gqlgen generate
 
 - All files under `api/graph/generated` will be regenerated
 - If the regeneration throws an error, that means you made a breaking change. Fix these errors and make sure no errors occur when running the above command.
-
-### Suggested vscode extensions
-
-- golang.go
-- DavidAnson.vscode-markdownlint
-- GraphQL.vscode-graphql-syntax
-- esbenp.prettier-vscode
-- korostylov.gherkin-highlight
 
 ### BDD
 
@@ -105,7 +97,7 @@ All domain models are in `models` package.
 ### api package
 
 Resolvers for each GraphQL mutation and query.
-This layer is responsible for validating the input and calling the services.  
+This layer is responsible for validating the input and calling the services.
 
 ### domain package
 

@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "golang.go",
+    "davidanson.vscode-markdownlint",
+    "graphql.vscode-graphql-syntax",
+    "korostylov.gherkin-highlight",
+    "esbenp.prettier-vscode"
+  ]
+}
